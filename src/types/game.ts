@@ -26,6 +26,8 @@ export interface AutonomyInfo {
 
 export type ScreenTab = 
   | 'command'
+  | 'swarm'
+  | 'terminal'
   | 'agents'
   | 'product'
   | 'growth'

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useGameStore } from '../../state/gameStore';
 import confetti from 'canvas-confetti';
 import { Crown, Building2 } from 'lucide-react';
+import { soundEngine } from '../../audio/soundEffects';
 
 export const UnicornVictoryModal: React.FC = () => {
   const {
@@ -17,6 +18,7 @@ export const UnicornVictoryModal: React.FC = () => {
 
   useEffect(() => {
     if (isUnicornModalOpen) {
+      soundEngine.playCelebration();
       try {
         const duration = 4 * 1000;
         const animationEnd = Date.now() + duration;
@@ -47,85 +49,85 @@ export const UnicornVictoryModal: React.FC = () => {
   if (!isUnicornModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-lg">
-      <div className="bg-[#0f111c] border-2 border-purple-500 rounded-3xl max-w-xl w-full p-8 text-center shadow-[0_0_80px_rgba(168,85,247,0.4)]">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center mx-auto mb-4 shadow-[0_0_30px_rgba(168,85,247,0.6)]">
-          <Crown className="w-10 h-10 text-white" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-2xl">
+      <div className="apple-card rounded-3xl max-w-xl w-full p-8 text-center shadow-2xl">
+        <div className="w-16 h-16 rounded-2xl bg-[#ffd60a]/15 border border-[#ffd60a]/30 flex items-center justify-center mx-auto mb-4">
+          <Crown className="w-8 h-8 text-[#ffd60a]" />
         </div>
 
-        <span className="text-xs font-mono font-black tracking-widest uppercase text-purple-400 block mb-1">
-          ZERO EMPLOYEES — VICTORY CONDITION MET
+        <span className="text-[10px] font-mono font-semibold tracking-wider uppercase text-[#ffd60a] block mb-1">
+          Zero Employees — Victory Condition Met
         </span>
 
-        <h1 className="text-3xl sm:text-4xl font-black text-white glow-purple mb-2">
-          CONGRATULATIONS
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
+          Congratulations
         </h1>
 
-        <p className="text-sm text-purple-200 font-mono mb-6">
+        <p className="text-xs text-white/60 mb-6 font-sans">
           You built a $1 Billion Unicorn without ever hiring another human.
         </p>
 
         {/* Final Unicorn Scorecard Card */}
-        <div className="bg-[#151829] border border-purple-500/40 rounded-2xl p-5 mb-6 text-left space-y-2.5 font-mono text-xs">
-          <div className="flex justify-between items-center text-slate-300">
-            <span>Valuation:</span>
-            <span className="text-base font-black text-purple-300">
+        <div className="apple-inset rounded-2xl p-5 mb-6 text-left space-y-2.5 font-mono text-xs tabular-nums">
+          <div className="flex justify-between items-center text-white/70">
+            <span className="font-sans text-white/50">Valuation:</span>
+            <span className="text-base font-semibold text-white">
               ${(valuation / 1000000).toFixed(2)}M ($1.04B)
             </span>
           </div>
 
-          <div className="flex justify-between items-center text-slate-300">
-            <span>Annual Recurring Revenue (ARR):</span>
-            <span className="text-sm font-bold text-emerald-400">
+          <div className="flex justify-between items-center text-white/70">
+            <span className="font-sans text-white/50">Annual Recurring Revenue (ARR):</span>
+            <span className="text-sm font-semibold text-[#30d158]">
               ${(arr / 1000000).toFixed(2)}M
             </span>
           </div>
 
-          <div className="flex justify-between items-center text-slate-300 py-1 border-y border-slate-800">
-            <span className="font-bold text-white">Employees:</span>
-            <span className="text-xl font-black text-emerald-400 glow-green">
+          <div className="flex justify-between items-center text-white/70 py-1.5 border-y border-white/[0.06]">
+            <span className="font-sans font-medium text-white">Human Employees:</span>
+            <span className="text-lg font-bold text-[#30d158]">
               1
             </span>
           </div>
 
-          <div className="flex justify-between items-center text-slate-300">
-            <span>Autonomous Agents:</span>
-            <span className="font-bold text-cyan-300">
+          <div className="flex justify-between items-center text-white/70">
+            <span className="font-sans text-white/50">Autonomous Agents:</span>
+            <span className="font-semibold text-white">
               {agents.length}
             </span>
           </div>
 
-          <div className="flex justify-between items-center text-slate-300">
-            <span>Founder Ownership:</span>
-            <span className="font-bold text-amber-300">
+          <div className="flex justify-between items-center text-white/70">
+            <span className="font-sans text-white/50">Founder Ownership:</span>
+            <span className="font-semibold text-[#ff9f0a]">
               {founderOwnership.toFixed(1)}%
             </span>
           </div>
 
-          <div className="flex justify-between items-center text-slate-300">
-            <span>Technical Debt:</span>
-            <span className="font-bold text-rose-400">
+          <div className="flex justify-between items-center text-white/70">
+            <span className="font-sans text-white/50">Technical Debt:</span>
+            <span className="font-semibold text-[#ff453a]">
               {techDebt.toFixed(0)}%
             </span>
           </div>
         </div>
 
-        <p className="text-xs text-slate-400 italic mb-6">
-          "You did it. Somehow."
+        <p className="text-xs text-white/40 italic mb-6 font-serif">
+          "You did it. Perfectly automated."
         </p>
 
         {/* Action CTAs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
-            onClick={closeUnicornModal}
-            className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs tracking-wider uppercase transition-all"
+            onClick={() => { soundEngine.playClick(); closeUnicornModal(); }}
+            className="py-2.5 px-4 rounded-xl apple-btn-secondary text-xs font-medium transition-all"
           >
             Continue Operating
           </button>
 
           <button
-            onClick={startHoldingCompanyMode}
-            className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs tracking-wider uppercase transition-all shadow-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.5)]"
+            onClick={() => { soundEngine.playClick(); startHoldingCompanyMode(); }}
+            className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl apple-btn-primary text-xs tracking-tight transition-all shadow-sm"
           >
             <Building2 className="w-4 h-4" />
             <span>Form Holding Company</span>
@@ -135,3 +137,4 @@ export const UnicornVictoryModal: React.FC = () => {
     </div>
   );
 };
+

@@ -11,7 +11,9 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     hireCost: 150,
     unlockRequirement: 'None',
     unlockedByDefault: true,
-    description: 'Writes code furiously without running tests. Generates product features and technical debt.'
+    description: 'Writes code furiously without running tests. Generates product features and technical debt.',
+    defaultModel: 'CLAUDE_3_7_SONNET',
+    defaultTools: ['github', 'supabase']
   },
   GROWTH: {
     role: 'GROWTH',
@@ -23,7 +25,9 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     hireCost: 100,
     unlockRequirement: 'None',
     unlockedByDefault: true,
-    description: 'Spams X threads, LinkedIn carousel memes, and SEO content to generate viral attention.'
+    description: 'Spams X threads, LinkedIn carousel memes, and SEO content to generate viral attention.',
+    defaultModel: 'GEMINI_2_5_FLASH',
+    defaultTools: ['postiz', 'browser']
   },
   SALES: {
     role: 'SALES',
@@ -35,7 +39,9 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     hireCost: 200,
     unlockRequirement: 'Reach 10 Customers',
     unlockedByDefault: false,
-    description: 'Sends hyper-personalized cold DMs and auto-pitches leads to close new paying customers.'
+    description: 'Sends hyper-personalized cold DMs and auto-pitches leads to close new paying customers.',
+    defaultModel: 'DEEPSEEK_R1',
+    defaultTools: ['email', 'stripe', 'browser']
   },
   SUPPORT: {
     role: 'SUPPORT',
@@ -47,7 +53,9 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     hireCost: 80,
     unlockRequirement: 'Reach 15 Customers',
     unlockedByDefault: false,
-    description: 'Replies to customer support tickets with high empathy and frequent hallucinations.'
+    description: 'Replies to customer support tickets with high empathy and frequent hallucinations.',
+    defaultModel: 'GEMINI_2_5_FLASH',
+    defaultTools: ['email', 'supabase']
   },
   QA: {
     role: 'QA',
@@ -59,7 +67,9 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     hireCost: 250,
     unlockRequirement: 'Reach Tech Debt > 20',
     unlockedByDefault: false,
-    description: 'Silently fixes spaghetti code, regression bugs, and unhandled promise rejections.'
+    description: 'Silently fixes spaghetti code, regression bugs, and unhandled promise rejections.',
+    defaultModel: 'CLAUDE_3_7_SONNET',
+    defaultTools: ['github']
   },
   OPERATIONS: {
     role: 'OPERATIONS',
@@ -71,7 +81,9 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     hireCost: 400,
     unlockRequirement: 'Hire 4+ Agents',
     unlockedByDefault: false,
-    description: 'Optimizes token caching, cluster load-balancing, and cancels unused SaaS subscriptions.'
+    description: 'Optimizes token caching, cluster load-balancing, and cancels unused SaaS subscriptions.',
+    defaultModel: 'GPT_5_TURBO',
+    defaultTools: ['supabase', 'stripe', 'browser']
   },
   MANAGER: {
     role: 'MANAGER',
@@ -83,7 +95,9 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     hireCost: 1000,
     unlockRequirement: 'Reach Stage 3 (8+ Agents)',
     unlockedByDefault: false,
-    description: 'Schedules 1:1s with worker agents and optimizes prompt context windows.'
+    description: 'Schedules 1:1s with worker agents and optimizes prompt context windows.',
+    defaultModel: 'CLAUDE_3_7_SONNET',
+    defaultTools: ['github', 'email']
   },
   EXECUTIVE: {
     role: 'EXECUTIVE',
@@ -95,7 +109,9 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     hireCost: 5000,
     unlockRequirement: 'Reach Stage 4 (30+ Agents)',
     unlockedByDefault: false,
-    description: 'Executive agent (CTO, CMO, CRO, COO, CFO) delivering cross-departmental synergy.'
+    description: 'Executive agent (CTO, CMO, CRO, COO, CFO) delivering cross-departmental synergy.',
+    defaultModel: 'CLAUDE_3_7_SONNET',
+    defaultTools: ['github', 'email', 'stripe', 'browser']
   },
   CEO: {
     role: 'CEO',
@@ -107,7 +123,9 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     hireCost: 50000,
     unlockRequirement: 'Reach $1M ARR ($83.3k MRR)',
     unlockedByDefault: false,
-    description: 'Runs all company operations. The human founder is now purely an ornamental board member.'
+    description: 'Runs all company operations. The human founder is now purely an ornamental board member.',
+    defaultModel: 'CLAUDE_3_7_SONNET',
+    defaultTools: ['github', 'email', 'stripe', 'browser', 'postiz', 'supabase']
   }
 };
 

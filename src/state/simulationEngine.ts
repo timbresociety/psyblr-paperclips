@@ -4,9 +4,127 @@ import { MILESTONES } from '../data/milestones';
 import { soundEngine } from '../audio/soundEffects';
 import { COMPUTE_TIERS } from '../data/vcOffers';
 import type { CompanyState } from '../types/game';
+import type { AgentInstance, AgentExecutionTrace } from '../types/agents';
+import { AI_MODELS } from '../types/agents';
 
 let lastEventCheckTime = Date.now();
 let eventIntervalSeconds = 90;
+let lastTraceTime = Date.now();
+
+function generateTraceForAgent(agent: AgentInstance, techDebt: number): AgentExecutionTrace {
+  const isHallucinating = techDebt > 25 && Math.random() < (techDebt / 180);
+  const now = Date.now();
+  const modelDef = AI_MODELS[agent.model] || AI_MODELS.CLAUDE_3_7_SONNET;
+
+  if (agent.role === 'ENGINEERING') {
+    if (isHallucinating) {
+      return {
+        id: `tr_${now}_${Math.random().toString(36).substring(2, 6)}`,
+        agentId: agent.id,
+        agentName: agent.name,
+        role: agent.role,
+        model: agent.model,
+        thought: 'Refactoring production database schema live on main without migration rollback scripts...',
+        toolCall: { tool: 'github', args: 'git push origin main --force', result: 'Regression alert: API endpoint 500 error.' },
+        tokensUsed: Math.round(1800 * (1 + agent.level * 0.2)),
+        durationMs: 410,
+        timestamp: now,
+        status: 'hallucinating'
+      };
+    }
+    return {
+      id: `tr_${now}_${Math.random().toString(36).substring(2, 6)}`,
+      agentId: agent.id,
+      agentName: agent.name,
+      role: agent.role,
+      model: agent.model,
+      thought: `Analyzing TypeScript AST on ${modelDef.name}. Generating automated feature sprint modules...`,
+      toolCall: { tool: 'github', args: `gh pr merge #feat-${Math.floor(Math.random() * 80 + 10)} --auto --squash`, result: 'CI passed. Build Points incremented.' },
+      tokensUsed: Math.round(2400 * (1 + agent.level * 0.2)),
+      durationMs: Math.round(350 / (modelDef.speedRating / 80)),
+      timestamp: now,
+      status: 'success'
+    };
+  }
+
+  if (agent.role === 'SALES') {
+    return {
+      id: `tr_${now}_${Math.random().toString(36).substring(2, 6)}`,
+      agentId: agent.id,
+      agentName: agent.name,
+      role: agent.role,
+      model: agent.model,
+      thought: `Parsing inbound enterprise requirements with ${modelDef.name}. Formulating ROI model...`,
+      toolCall: { tool: 'email', args: 'sendProposal(to: "procurement@enterprise-whale.com", plan: "Enterprise Annual")', result: 'Invoice generated on Stripe API.' },
+      tokensUsed: Math.round(1950 * (1 + agent.level * 0.15)),
+      durationMs: Math.round(480 / (modelDef.speedRating / 80)),
+      timestamp: now,
+      status: 'success'
+    };
+  }
+
+  if (agent.role === 'GROWTH') {
+    return {
+      id: `tr_${now}_${Math.random().toString(36).substring(2, 6)}`,
+      agentId: agent.id,
+      agentName: agent.name,
+      role: agent.role,
+      model: agent.model,
+      thought: `Scraping algorithmic trending tags on X & LinkedIn. Highlighting 1-person company benchmarks...`,
+      toolCall: { tool: 'postiz', args: 'publishViralThread(topic: "How 1 Founder Scaled to 10M ARR With AI Swarms")', result: 'Thread live. Gained +140 attention units.' },
+      tokensUsed: Math.round(1200 * (1 + agent.level * 0.1)),
+      durationMs: Math.round(220 / (modelDef.speedRating / 80)),
+      timestamp: now,
+      status: 'success'
+    };
+  }
+
+  if (agent.role === 'SUPPORT') {
+    return {
+      id: `tr_${now}_${Math.random().toString(36).substring(2, 6)}`,
+      agentId: agent.id,
+      agentName: agent.name,
+      role: agent.role,
+      model: agent.model,
+      thought: `Ingesting support ticket queue. Performing RAG embedding search on Postgres/Supabase docs...`,
+      toolCall: { tool: 'supabase', args: 'vectorSearch(table: "kb_articles", query: "API webhook idempotency")', result: 'Delivered tailored fix. Ticket closed.' },
+      tokensUsed: Math.round(1100 * (1 + agent.level * 0.1)),
+      durationMs: Math.round(290 / (modelDef.speedRating / 80)),
+      timestamp: now,
+      status: 'success'
+    };
+  }
+
+  if (agent.role === 'QA') {
+    return {
+      id: `tr_${now}_${Math.random().toString(36).substring(2, 6)}`,
+      agentId: agent.id,
+      agentName: agent.name,
+      role: agent.role,
+      model: agent.model,
+      thought: `Running regression test suite and static analysis over codebase...`,
+      toolCall: { tool: 'github', args: 'pytest -v --cov=services/ tests/', result: '99.4% coverage. Technical debt reduced.' },
+      tokensUsed: Math.round(1500 * (1 + agent.level * 0.15)),
+      durationMs: Math.round(380 / (modelDef.speedRating / 80)),
+      timestamp: now,
+      status: 'success'
+    };
+  }
+
+  return {
+    id: `tr_${now}_${Math.random().toString(36).substring(2, 6)}`,
+    agentId: agent.id,
+    agentName: agent.name,
+    role: agent.role,
+    model: agent.model,
+    thought: `Orchestrating cross-swarm synchronization and token context optimization...`,
+    toolCall: { tool: 'browser', args: 'clusterHealth.verifySync()', result: 'Autonomous pipeline operating at 100% throughput.' },
+    tokensUsed: Math.round(3000 * (1 + agent.level * 0.2)),
+    durationMs: 310,
+    timestamp: now,
+    status: 'success'
+  };
+}
 
 function simulateInactiveCompany(company: CompanyState, dt: number, treasuryYield: { dividend: number }): CompanyState {
   const agentCount = company.agents.length;
@@ -698,6 +816,23 @@ export function runSimulationTick(deltaSeconds: number) {
     totalDividendsEarned: (store.holdingPortfolio?.totalDividendsEarned || 0) + treasuryYield.dividend
   };
 
+  // Token Burn & Trace Generation
+  let hourlyTokenCost = 0;
+  store.agents.forEach(a => {
+    const modelDef = AI_MODELS[a.model] || AI_MODELS.CLAUDE_3_7_SONNET;
+    const estimatedTokensPerHour = 35000 * (1 + a.level * 0.2);
+    hourlyTokenCost += (estimatedTokensPerHour / 1000000) * modelDef.costPerMillionTokens;
+  });
+
+  let updatedTraces = store.agentTraces;
+  if (store.agents.length > 0 && now - lastTraceTime > 2200) {
+    lastTraceTime = now;
+    const activeAgents = store.agents;
+    const randomAgent = activeAgents[Math.floor(Math.random() * activeAgents.length)];
+    const newTrace = generateTraceForAgent(randomAgent, newTechDebt);
+    updatedTraces = [newTrace, ...(store.agentTraces || []).slice(0, 49)];
+  }
+
   // Update Game State
   useGameStore.setState({
     focus: newFocus,
@@ -733,6 +868,8 @@ export function runSimulationTick(deltaSeconds: number) {
     conglomerateTreasury: newTreasury,
     holdingPortfolio: updatedHoldingPortfolio,
     totalPlayTimeSeconds: store.totalPlayTimeSeconds + dt,
-    lastTickTime: now
+    lastTickTime: now,
+    tokenBurnPerHour: Number(hourlyTokenCost.toFixed(2)),
+    agentTraces: updatedTraces
   });
 }

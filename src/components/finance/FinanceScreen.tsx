@@ -2,6 +2,7 @@ import React from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { COMPUTE_TIERS } from '../../data/vcOffers';
 import { DollarSign, Cpu, Handshake, CheckCircle2, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { soundEngine } from '../../audio/soundEffects';
 
 export const FinanceScreen: React.FC = () => {
   const {
@@ -53,33 +54,39 @@ export const FinanceScreen: React.FC = () => {
   return (
     <div className="space-y-6 text-left">
       {/* Financial Overview Header */}
-      <div className="bg-[#111422] border border-[#20263c] rounded-xl p-5">
+      <div className="apple-card rounded-2xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-emerald-400" />
-              <h2 className="text-lg font-black tracking-tight text-white">
-                FINANCIALS & VALUATION BENCHMARK
-              </h2>
-              <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800">
-                ${mrr.toLocaleString()} MRR
-              </span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#30d158]/15 text-[#30d158] flex items-center justify-center">
+                <DollarSign className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-base font-semibold text-white tracking-tight">
+                    Financials &amp; Valuation
+                  </h1>
+                  <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-[#30d158]/10 text-[#30d158] border border-[#30d158]/20 tabular-nums">
+                    ${mrr.toLocaleString()} MRR
+                  </span>
+                </div>
+                <p className="text-xs text-white/50 mt-0.5">
+                  Valuation is anchored to signed VC term sheets (Post-Money Valuation) or driven organically by ARR &times; Multiple.
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Valuation is anchored to your closed VC priced rounds (Post-Money Valuation) or driven higher organically by ARR &times; Multiple.
-            </p>
           </div>
 
           <div className="flex items-center gap-6 text-right">
             <div>
-              <span className="text-xs font-mono text-slate-400">Post-Money Valuation:</span>
-              <div className="text-xl font-black font-mono text-purple-300 glow-purple">
+              <span className="text-[11px] font-sans text-white/40 block">Post-Money Valuation</span>
+              <div className="text-lg font-semibold font-mono text-white tabular-nums mt-0.5">
                 ${valuation >= 1000000 ? `${(valuation / 1000000).toFixed(2)}M` : valuation.toLocaleString()}
               </div>
             </div>
             <div>
-              <span className="text-xs font-mono text-slate-400">Founder Stake:</span>
-              <div className="text-base font-black font-mono text-slate-200">
+              <span className="text-[11px] font-sans text-white/40 block">Founder Stake</span>
+              <div className="text-sm font-semibold font-mono text-white/90 tabular-nums mt-0.5">
                 {founderOwnership.toFixed(1)}%
               </div>
             </div>
@@ -87,48 +94,48 @@ export const FinanceScreen: React.FC = () => {
         </div>
 
         {/* Valuation Logic Breakdown Box */}
-        <div className="mt-4 pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
-          <div className="bg-[#171b2d] p-3 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px] uppercase tracking-wider">Latest Priced Round Floor</span>
+        <div className="mt-4 pt-4 border-t border-white/[0.06] grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 block text-[10px] font-sans uppercase tracking-wider">Latest Priced Round Floor</span>
             <div className="flex items-baseline gap-1.5 mt-1">
-              <span className="text-base font-bold text-purple-300">
+              <span className="text-sm font-semibold text-white tabular-nums">
                 ${(lastValuation || 0) >= 1000000 ? `${((lastValuation || 0) / 1000000).toFixed(1)}M` : (lastValuation || 0).toLocaleString()}
               </span>
-              <span className="text-[10px] text-slate-500">
+              <span className="text-[10px] text-white/40">
                 {latestAcceptedOffer ? `(${latestAcceptedOffer.roundStage})` : '(Pre-Funding)'}
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1 font-sans">
+            <p className="text-[11px] text-white/50 mt-1 font-sans">
               Post-money valuation agreed upon in your signed term sheet.
             </p>
           </div>
 
-          <div className="bg-[#171b2d] p-3 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px] uppercase tracking-wider">Organic Multiple Valuation</span>
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 block text-[10px] font-sans uppercase tracking-wider">Organic Multiple Valuation</span>
             <div className="flex items-baseline gap-1.5 mt-1">
-              <span className="text-base font-bold text-white">
+              <span className="text-sm font-semibold text-white tabular-nums">
                 ${organicValuation >= 1000000 ? `${(organicValuation / 1000000).toFixed(2)}M` : organicValuation.toLocaleString()}
               </span>
-              <span className="text-[10px] text-purple-400">
+              <span className="text-[10px] text-white/50">
                 (${arr.toLocaleString()} ARR &times; {valuationMultiple.toFixed(1)}x)
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1 font-sans">
+            <p className="text-[11px] text-white/50 mt-1 font-sans">
               Scales higher when revenue multiple surpasses priced round benchmark.
             </p>
           </div>
 
-          <div className="bg-[#171b2d] p-3 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px] uppercase tracking-wider">Total Capital Injected</span>
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 block text-[10px] font-sans uppercase tracking-wider">Total Capital Raised</span>
             <div className="flex items-baseline gap-1.5 mt-1">
-              <span className="text-base font-bold text-emerald-400">
+              <span className="text-sm font-semibold text-white tabular-nums">
                 ${totalCapitalRaised.toLocaleString()}
               </span>
-              <span className="text-[10px] text-slate-500">
+              <span className="text-[10px] text-white/40">
                 (${Math.floor(cash).toLocaleString()} in bank)
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1 font-sans">
+            <p className="text-[11px] text-white/50 mt-1 font-sans">
               Cumulative non-debt venture equity capital raised to date.
             </p>
           </div>
@@ -136,62 +143,62 @@ export const FinanceScreen: React.FC = () => {
       </div>
 
       {/* P&L / Income Statement & Cashflow Card */}
-      <div className="bg-[#121524] border border-[#20273e] rounded-xl p-5 space-y-4">
+      <div className="apple-card rounded-2xl p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+            <TrendingUp className="w-4 h-4 text-[#30d158]" />
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-white">
               Live SaaS Income Statement (P&amp;L) &amp; Runway
-            </h3>
+            </h2>
           </div>
-          <span className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+          <span className={`text-[11px] font-mono px-2.5 py-0.5 rounded-full border font-medium ${
             isProfitable
-              ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+              ? 'bg-[#30d158]/15 text-[#30d158] border-[#30d158]/30'
               : runwayMonths === 'Infinite' || Number(runwayMonths) > 12
-              ? 'bg-blue-950 text-blue-300 border-blue-800'
+              ? 'bg-white/[0.06] text-white/80 border-white/[0.08]'
               : Number(runwayMonths) > 6
-              ? 'bg-amber-950 text-amber-300 border-amber-800'
-              : 'bg-rose-950 text-rose-300 border-rose-800 animate-pulse'
+              ? 'bg-[#ff9f0a]/15 text-[#ff9f0a] border-[#ff9f0a]/30'
+              : 'bg-[#ff453a]/15 text-[#ff453a] border-[#ff453a]/30 animate-status-dot'
           }`}>
-            {isProfitable ? 'CASHFLOW POSITIVE' : `${runwayMonths} MONTHS RUNWAY`}
+            {isProfitable ? 'Cashflow Positive' : `${runwayMonths} Months Runway`}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs font-mono">
-          <div className="bg-[#171b2e] p-3 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px]">Monthly Revenue (MRR)</span>
-            <div className="flex items-center gap-1 text-emerald-400 font-bold text-sm mt-0.5">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs font-mono">
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 block text-[10px] font-sans">Monthly Revenue (MRR)</span>
+            <div className="flex items-center gap-1 text-[#30d158] font-semibold text-xs mt-1 tabular-nums">
               <ArrowUpRight className="w-3.5 h-3.5" />
               <span>+${mrr.toLocaleString()}/mo</span>
             </div>
           </div>
 
-          <div className="bg-[#171b2e] p-3 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px]">Compute Cloud OPEX</span>
-            <div className="flex items-center gap-1 text-rose-400 font-bold text-sm mt-0.5">
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 block text-[10px] font-sans">Compute Cloud OPEX</span>
+            <div className="flex items-center gap-1 text-[#ff453a] font-semibold text-xs mt-1 tabular-nums">
               <ArrowDownRight className="w-3.5 h-3.5" />
               <span>-${monthlyComputeCost.toLocaleString()}/mo</span>
             </div>
           </div>
 
-          <div className="bg-[#171b2e] p-3 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px]">Marketing Campaigns OPEX</span>
-            <div className="flex items-center gap-1 text-pink-400 font-bold text-sm mt-0.5">
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 block text-[10px] font-sans">Marketing Campaigns</span>
+            <div className="flex items-center gap-1 text-white/70 font-semibold text-xs mt-1 tabular-nums">
               <ArrowDownRight className="w-3.5 h-3.5" />
               <span>-${monthlyCampaignsCost.toLocaleString()}/mo</span>
             </div>
           </div>
 
-          <div className="bg-[#171b2e] p-3 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px]">Net Monthly Cashflow</span>
-            <div className={`flex items-center gap-1 font-bold text-sm mt-0.5 ${netMonthlyCashflow >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 block text-[10px] font-sans">Net Cashflow</span>
+            <div className={`flex items-center gap-1 font-semibold text-xs mt-1 tabular-nums ${netMonthlyCashflow >= 0 ? 'text-[#30d158]' : 'text-[#ff453a]'}`}>
               <span>{netMonthlyCashflow >= 0 ? `+$${netMonthlyCashflow.toLocaleString()}/mo` : `-$${Math.abs(netMonthlyCashflow).toLocaleString()}/mo`}</span>
             </div>
           </div>
 
-          <div className="bg-[#171b2e] p-3 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px]">Gross Margin</span>
-            <div className="text-cyan-300 font-bold text-sm mt-0.5">
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 block text-[10px] font-sans">Gross Margin</span>
+            <div className="text-white/90 font-semibold text-xs mt-1 tabular-nums">
               {grossMargin.toFixed(1)}%
             </div>
           </div>
@@ -202,10 +209,10 @@ export const FinanceScreen: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Venture Capital Term Sheets */}
         <div className="space-y-3">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Handshake className="w-4 h-4 text-emerald-400" />
-            Venture Capital Term Sheets
-          </h3>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-white/70 flex items-center gap-2">
+            <Handshake className="w-3.5 h-3.5 text-[#0a84ff]" />
+            <span>Venture Capital Term Sheets</span>
+          </h2>
 
           <div className="space-y-3">
             {vcOffers.map((offer) => {
@@ -229,82 +236,82 @@ export const FinanceScreen: React.FC = () => {
               return (
                 <div
                   key={offer.id}
-                  className={`p-4 rounded-xl border transition-all ${
+                  className={`p-4 rounded-2xl border transition-all ${
                     offer.isAccepted
-                      ? 'bg-[#131a26]/60 border-emerald-800/40 opacity-80'
+                      ? 'apple-inset opacity-75'
                       : offer.isAvailable
-                      ? 'bg-[#181c2f] border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
-                      : 'bg-slate-900/40 border-slate-800 opacity-80'
+                      ? 'bg-[#0a84ff]/10 border-[#0a84ff]/40 shadow-sm'
+                      : 'apple-card opacity-60'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-mono font-bold text-purple-300">
+                    <span className="text-xs font-mono font-semibold text-white/90">
                       {offer.roundStage.replace('_', ' ')}
                     </span>
-                    <span className="text-xs font-mono font-bold text-emerald-400">
+                    <span className="text-xs font-mono font-semibold text-[#30d158] tabular-nums">
                       Raise: ${offer.raiseAmount.toLocaleString()}
                     </span>
                   </div>
 
-                  <h4 className="font-bold text-white text-sm">
+                  <h3 className="font-semibold text-white text-xs tracking-tight">
                     {offer.firmName}
-                  </h4>
-                  <p className="text-xs text-slate-400 italic my-2">
+                  </h3>
+                  <p className="text-[11px] text-white/50 italic my-2 font-serif">
                     {offer.investorThesis}
                   </p>
 
-                  <div className="flex items-center justify-between text-xs font-mono text-slate-300 pt-2 border-t border-slate-800">
-                    <span className="font-bold text-purple-300">Valuation: ${(offer.valuation / 1000000).toFixed(1)}M</span>
-                    <span>Dilution: {offer.dilutionPercent}%</span>
+                  <div className="flex items-center justify-between text-xs font-mono text-white/80 pt-2 border-t border-white/[0.06] tabular-nums">
+                    <span className="font-semibold text-white">Valuation: ${(offer.valuation / 1000000).toFixed(1)}M</span>
+                    <span className="text-white/60">Dilution: {offer.dilutionPercent}%</span>
                   </div>
 
                   {/* Prerequisites Checklist */}
                   {!offer.isAccepted && (
-                    <div className="mt-3 pt-2.5 border-t border-slate-800/80 space-y-1.5 text-[11px] font-mono">
-                      <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-sans font-bold">
+                    <div className="mt-3 pt-2.5 border-t border-white/[0.06] space-y-1.5 text-[11px] font-mono">
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider block font-sans">
                         Round Prerequisites:
                       </span>
                       <div className="grid grid-cols-2 gap-1.5">
-                        <div className={`flex items-center gap-1.5 ${isMrrMet ? 'text-emerald-400' : 'text-slate-400'}`}>
+                        <div className={`flex items-center gap-1.5 ${isMrrMet ? 'text-[#30d158]' : 'text-white/40'}`}>
                           <span>{isMrrMet ? '✓' : '✗'}</span>
                           <span>${offer.requiredMrr.toLocaleString()} MRR</span>
                         </div>
-                        <div className={`flex items-center gap-1.5 ${isTrustMet ? 'text-emerald-400' : 'text-slate-400'}`}>
+                        <div className={`flex items-center gap-1.5 ${isTrustMet ? 'text-[#30d158]' : 'text-white/40'}`}>
                           <span>{isTrustMet ? '✓' : '✗'}</span>
                           <span>{offer.requiredTrust}% Trust</span>
                         </div>
                         {offer.requiredAgents && (
-                          <div className={`flex items-center gap-1.5 ${isAgentsMet ? 'text-emerald-400' : 'text-slate-400'}`}>
+                          <div className={`flex items-center gap-1.5 ${isAgentsMet ? 'text-[#30d158]' : 'text-white/40'}`}>
                             <span>{isAgentsMet ? '✓' : '✗'}</span>
                             <span>{offer.requiredAgents}+ Agents ({agents.length})</span>
                           </div>
                         )}
                         {offer.requiredProductLevel && (
-                          <div className={`flex items-center gap-1.5 ${isProductMet ? 'text-emerald-400' : 'text-slate-400'}`}>
+                          <div className={`flex items-center gap-1.5 ${isProductMet ? 'text-[#30d158]' : 'text-white/40'}`}>
                             <span>{isProductMet ? '✓' : '✗'}</span>
-                            <span>Product L{offer.requiredProductLevel}+</span>
+                            <span>Product Lv.{offer.requiredProductLevel}+</span>
                           </div>
                         )}
                         {reqComputeTier && (
-                          <div className={`flex items-center gap-1.5 ${hasReqCompute ? 'text-emerald-400' : 'text-slate-400'}`}>
+                          <div className={`flex items-center gap-1.5 ${hasReqCompute ? 'text-[#30d158]' : 'text-white/40'}`}>
                             <span>{hasReqCompute ? '✓' : '✗'}</span>
                             <span className="truncate">{reqComputeTier.name.split(' ')[0]} Tier</span>
                           </div>
                         )}
                         {offer.requiresManager && (
-                          <div className={`flex items-center gap-1.5 ${isManagerMet ? 'text-emerald-400' : 'text-slate-400'}`}>
+                          <div className={`flex items-center gap-1.5 ${isManagerMet ? 'text-[#30d158]' : 'text-white/40'}`}>
                             <span>{isManagerMet ? '✓' : '✗'}</span>
                             <span>Manager Agent</span>
                           </div>
                         )}
                         {offer.requiresExecutive && (
-                          <div className={`flex items-center gap-1.5 ${isExecMet ? 'text-emerald-400' : 'text-slate-400'}`}>
+                          <div className={`flex items-center gap-1.5 ${isExecMet ? 'text-[#30d158]' : 'text-white/40'}`}>
                             <span>{isExecMet ? '✓' : '✗'}</span>
                             <span>Executive Agent</span>
                           </div>
                         )}
                         {offer.requiresCEO && (
-                          <div className={`flex items-center gap-1.5 ${isCEOMet ? 'text-emerald-400' : 'text-slate-400'}`}>
+                          <div className={`flex items-center gap-1.5 ${isCEOMet ? 'text-[#30d158]' : 'text-white/40'}`}>
                             <span>{isCEOMet ? '✓' : '✗'}</span>
                             <span>CEO Agent</span>
                           </div>
@@ -315,17 +322,17 @@ export const FinanceScreen: React.FC = () => {
 
                   <div className="mt-3">
                     {offer.isAccepted ? (
-                      <div className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-emerald-950/60 text-emerald-300 border border-emerald-800/60 text-xs font-mono font-bold">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> ROUND CLOSED (${(offer.valuation / 1000000).toFixed(1)}M BENCHMARK)
+                      <div className="flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-[#30d158]/15 text-[#30d158] border border-[#30d158]/30 text-xs font-mono font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Round Closed (${(offer.valuation / 1000000).toFixed(1)}M Benchmark)
                       </div>
                     ) : (
                       <button
-                        onClick={() => acceptVcOffer(offer.id)}
+                        onClick={() => { soundEngine.playCash(); acceptVcOffer(offer.id); }}
                         disabled={!offer.isAvailable}
-                        className={`w-full py-2 px-3 rounded-lg font-bold text-xs transition-all ${
+                        className={`w-full py-2 px-3 rounded-xl font-medium text-xs transition-all ${
                           offer.isAvailable
-                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md'
-                            : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                            ? 'apple-btn-primary'
+                            : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.05]'
                         }`}
                       >
                         {offer.isAvailable
@@ -343,11 +350,11 @@ export const FinanceScreen: React.FC = () => {
         {/* Compute Infrastructure Tiers */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-cyan-400" />
-              Compute Infrastructure Tiers
-            </h3>
-            <span className="text-xs font-mono font-bold text-cyan-300">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-white/70 flex items-center gap-2">
+              <Cpu className="w-3.5 h-3.5 text-[#64d2ff]" />
+              <span>Compute Infrastructure Tiers</span>
+            </h2>
+            <span className="text-xs font-mono font-medium text-white/80 tabular-nums">
               Load: {computeUsed.toFixed(1)} / {computeCapacity} CU
             </span>
           </div>
@@ -360,38 +367,38 @@ export const FinanceScreen: React.FC = () => {
               return (
                 <div
                   key={tier.id}
-                  className={`p-4 rounded-xl border transition-all ${
+                  className={`p-4 rounded-2xl border transition-all ${
                     isCurrent
-                      ? 'bg-[#151c2e] border-cyan-500/60 shadow-[0_0_15px_rgba(6,182,212,0.15)]'
-                      : 'bg-[#151827] border-slate-800'
+                      ? 'bg-white/[0.04] border-white/[0.14] shadow-xs'
+                      : 'apple-card'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-white text-sm">{tier.name}</span>
-                    <span className="text-xs font-mono font-bold text-cyan-300">
+                    <span className="font-semibold text-white text-xs">{tier.name}</span>
+                    <span className="text-xs font-mono font-medium text-[#64d2ff] tabular-nums">
                       {tier.capacityCU} CU Capacity
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 mb-2">{tier.description}</p>
+                  <p className="text-[11px] text-white/50 mb-2 leading-relaxed">{tier.description}</p>
 
-                  <div className="flex items-center justify-between text-xs font-mono text-slate-400 pt-2 border-t border-slate-800">
+                  <div className="flex items-center justify-between text-xs font-mono text-white/40 pt-2 border-t border-white/[0.06] tabular-nums">
                     <span>Monthly OPEX: ${tier.monthlyCost}/mo</span>
                     <span>Setup: ${tier.setupCost.toLocaleString()}</span>
                   </div>
 
                   <div className="mt-3">
                     {isCurrent ? (
-                      <div className="text-center py-1.5 rounded-lg bg-cyan-950/60 text-cyan-300 border border-cyan-800/60 text-xs font-mono font-bold">
-                        ACTIVE INFRASTRUCTURE
+                      <div className="text-center py-1.5 rounded-xl bg-white/[0.06] text-white/80 border border-white/[0.08] text-xs font-mono font-medium">
+                        Active Infrastructure
                       </div>
                     ) : (
                       <button
-                        onClick={() => upgradeComputeTier(tier.id)}
+                        onClick={() => { soundEngine.playDeploy(); upgradeComputeTier(tier.id); }}
                         disabled={!canAfford}
-                        className={`w-full py-1.5 px-3 rounded-lg font-bold text-xs transition-all ${
+                        className={`w-full py-1.5 px-3 rounded-xl font-medium text-xs transition-all ${
                           canAfford
-                            ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-md'
-                            : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                            ? 'apple-btn-secondary'
+                            : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.05]'
                         }`}
                       >
                         Upgrade Infrastructure (${tier.setupCost.toLocaleString()})
@@ -407,4 +414,5 @@ export const FinanceScreen: React.FC = () => {
     </div>
   );
 };
+
 

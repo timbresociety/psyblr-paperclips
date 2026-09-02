@@ -2,14 +2,15 @@ import React from 'react';
 import type { ScreenTab } from '../../types/game';
 import { useGameStore } from '../../state/gameStore';
 import { Terminal, Bot, Boxes, TrendingUp, Users, DollarSign, Inbox, Building2 } from 'lucide-react';
+import { soundEngine } from '../../audio/soundEffects';
 
 interface TabConfig {
   id: ScreenTab;
   label: string;
+  shortcut: string;
   icon: React.ReactNode;
   badge?: string | number | null;
   badgeColor?: string;
-  showAlways?: boolean;
 }
 
 export const NavigationTabs: React.FC = () => {
@@ -18,49 +19,61 @@ export const NavigationTabs: React.FC = () => {
   const unreadEvents = activeEvents.length;
   const availableVc = vcOffers.filter(v => v.isAvailable).length;
 
+  const handleTabClick = (tabId: ScreenTab) => {
+    soundEngine.playClick();
+    setActiveTab(tabId);
+  };
+
   const tabs: TabConfig[] = [
     {
       id: 'command',
       label: 'Command',
-      icon: <Terminal className="w-4 h-4" />
+      shortcut: '1',
+      icon: <Terminal className="w-3.5 h-3.5" />
     },
     {
       id: 'agents',
-      label: 'Agents',
-      icon: <Bot className="w-4 h-4" />,
+      label: 'Workforce',
+      shortcut: '2',
+      icon: <Bot className="w-3.5 h-3.5" />,
       badge: agents.length > 0 ? agents.length : null,
-      badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+      badgeColor: 'bg-white/[0.08] text-white/90 border-white/[0.1]'
     },
     {
       id: 'product',
       label: 'Product',
-      icon: <Boxes className="w-4 h-4" />
+      shortcut: '3',
+      icon: <Boxes className="w-3.5 h-3.5" />
     },
     {
       id: 'growth',
       label: 'Growth',
-      icon: <TrendingUp className="w-4 h-4" />
+      shortcut: '4',
+      icon: <TrendingUp className="w-3.5 h-3.5" />
     },
     {
       id: 'customers',
       label: 'Customers',
-      icon: <Users className="w-4 h-4" />,
-      badge: tickets > 1 ? `${Math.floor(tickets)} tix` : null,
-      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+      shortcut: '5',
+      icon: <Users className="w-3.5 h-3.5" />,
+      badge: tickets > 1 ? `${Math.floor(tickets)}` : null,
+      badgeColor: 'bg-[#ff9f0a]/15 text-[#ff9f0a] border-[#ff9f0a]/30'
     },
     {
       id: 'finance',
       label: 'Finance',
-      icon: <DollarSign className="w-4 h-4" />,
-      badge: availableVc > 0 ? 'VC Offer' : null,
-      badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+      shortcut: '6',
+      icon: <DollarSign className="w-3.5 h-3.5" />,
+      badge: availableVc > 0 ? 'VC' : null,
+      badgeColor: 'bg-[#30d158]/15 text-[#30d158] border-[#30d158]/30'
     },
     {
       id: 'inbox',
       label: 'Inbox',
-      icon: <Inbox className="w-4 h-4" />,
+      shortcut: '7',
+      icon: <Inbox className="w-3.5 h-3.5" />,
       badge: unreadEvents > 0 ? unreadEvents : null,
-      badgeColor: 'bg-rose-500 text-white font-bold animate-pulse'
+      badgeColor: 'bg-[#ff453a] text-white font-bold border-transparent'
     }
   ];
 
@@ -68,33 +81,44 @@ export const NavigationTabs: React.FC = () => {
     tabs.push({
       id: 'holding',
       label: 'Holding Co.',
-      icon: <Building2 className="w-4 h-4" />,
-      badge: 'Unlocked',
-      badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40'
+      shortcut: '8',
+      icon: <Building2 className="w-3.5 h-3.5" />,
+      badge: 'Active',
+      badgeColor: 'bg-[#5e5ce6]/15 text-[#5e5ce6] border-[#5e5ce6]/30'
     });
   }
 
   return (
-    <nav className="bg-[#0f111a] border-b border-[#1c2133] px-4">
-      <div className="max-w-7xl mx-auto flex items-center gap-1 sm:gap-2 overflow-x-auto py-2 scrollbar-none">
+    <nav className="bg-[#161618]/90 backdrop-blur-xl border-b border-white/[0.06] px-3 sm:px-5">
+      <div className="max-w-7xl mx-auto flex items-center gap-1.5 overflow-x-auto py-2 scrollbar-none">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+              onClick={() => handleTabClick(tab.id)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
                 isActive
-                  ? 'bg-purple-600/20 text-purple-200 border border-purple-500/50 shadow-[0_0_12px_rgba(168,85,247,0.15)]'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-[#181b28] border border-transparent'
+                  ? 'bg-[#0a84ff] text-white shadow-xs font-medium'
+                  : 'text-white/60 hover:text-white hover:bg-white/[0.04] border border-transparent'
               }`}
             >
-              {tab.icon}
-              <span>{tab.label}</span>
+              <div className="flex items-center gap-1.5">
+                {tab.icon}
+                <span className="font-sans font-medium">{tab.label}</span>
+              </div>
+
+              {/* Numerical hotkey badge */}
+              <span className={`text-[9px] px-1 py-0.2 rounded font-mono ${
+                isActive ? 'bg-white/20 text-white/80' : 'bg-white/[0.04] text-white/30'
+              }`}>
+                {tab.shortcut}
+              </span>
+
               {tab.badge && (
                 <span
                   className={`text-[10px] px-1.5 py-0.2 rounded-full border font-mono ${
-                    tab.badgeColor || 'bg-slate-800 text-slate-300 border-slate-700'
+                    tab.badgeColor || 'bg-white/[0.06] text-white/70 border-white/[0.08]'
                   }`}
                 >
                   {tab.badge}
@@ -107,3 +131,4 @@ export const NavigationTabs: React.FC = () => {
     </nav>
   );
 };
+

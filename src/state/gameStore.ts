@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { GameStage, ScreenTab, StartupIdea, ActivityLog, CustomerSegment, OfflineRecapData, HoldingCompanyStats, AutonomyInfo, CompanyState } from '../types/game';
-import type { AgentInstance, AgentRoleType, AgentTraitType } from '../types/agents';
+import type { AgentInstance, AgentRoleType, AgentTraitType, AgentModelType, AgentExecutionTrace } from '../types/agents';
 import type { ProductFeature, ArchitectureUpgrade } from '../types/product';
 import type { Trend, GrowthCampaign } from '../types/growth';
 import type { VCTermSheet } from '../types/finance';
@@ -86,6 +86,11 @@ export interface GameState {
   isUnicornModalOpen: boolean;
   hasSeenUnicorn: boolean;
 
+  // Orchestration & Swarm Canvas
+  selectedCanvasAgentId: string | null;
+  agentTraces: AgentExecutionTrace[];
+  tokenBurnPerHour: number;
+
   // Actions
   initCompany: (idea: StartupIdea) => void;
   setActiveTab: (tab: ScreenTab) => void;
@@ -105,10 +110,15 @@ export interface GameState {
   sellManual: () => void;
   supportManual: () => void;
 
-  // Agents Management
+  // Agents Management & Orchestrator
   hireAgent: (role: AgentRoleType, customTrait?: AgentTraitType, customName?: string) => boolean;
   upgradeAgent: (agentId: string) => boolean;
   fireAgent: (agentId: string) => void;
+  setSelectedCanvasAgent: (agentId: string | null) => void;
+  updateAgentModel: (agentId: string, model: AgentModelType) => void;
+  updateAgentConfig: (agentId: string, updates: Partial<AgentInstance>) => void;
+  patchAgentPrompt: (agentId: string, newInstruction: string) => void;
+  addAgentExecutionTrace: (trace: AgentExecutionTrace) => void;
   
   // Product Roadmap & Tech Debt
   setActiveRoadmap: (featureId: string) => void;
@@ -151,7 +161,7 @@ export function calcAutonomyInfo(state: { agents: AgentInstance[]; valuation: nu
       percent: 100,
       title: 'L5: Fully Autonomous Unicorn',
       subtitle: '100% Self-Driving Enterprise',
-      badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-[0_0_12px_rgba(16,185,129,0.3)]',
+      badgeClass: 'bg-[#30d158]/15 text-[#30d158] border-[#30d158]/40 shadow-[0_0_12px_rgba(48,209,88,0.25)]',
       nextRequirement: '★ Peak Autonomy Achieved (Generates Conglomerate Dividends)',
       isMax: true
     };
@@ -164,7 +174,7 @@ export function calcAutonomyInfo(state: { agents: AgentInstance[]; valuation: nu
       percent: 75,
       title: 'L4: Autonomous Startup',
       subtitle: 'C-Suite Orchestration & Cross-Functional Autonomy',
-      badgeClass: 'bg-purple-500/20 text-purple-300 border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.2)]',
+      badgeClass: 'bg-[#5e5ce6]/15 text-[#5e5ce6] border-[#5e5ce6]/30',
       nextRequirement: hasCEO
         ? `Reach $1B Valuation ($${valM}M / $1000M)`
         : `Appoint Autonomous CEO Agent & Reach $1B Valuation ($${valM}M / $1000M)`,
@@ -178,7 +188,7 @@ export function calcAutonomyInfo(state: { agents: AgentInstance[]; valuation: nu
       percent: 50,
       title: 'L3: Managed Operations',
       subtitle: 'Department Pods & Automated Triage',
-      badgeClass: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50',
+      badgeClass: 'bg-[#5e5ce6]/15 text-[#5e5ce6] border-[#5e5ce6]/30',
       nextRequirement: hasExec
         ? `Scale workforce to 30+ agents (${agentCount}/30)`
         : `Scale to 30+ agents (${agentCount}/30) & Hire C-Suite Executive`,
@@ -192,7 +202,7 @@ export function calcAutonomyInfo(state: { agents: AgentInstance[]; valuation: nu
       percent: 25,
       title: 'L2: Assisted Vibe Coder',
       subtitle: 'Specialist Agent Automation',
-      badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/50',
+      badgeClass: 'bg-[#5e5ce6]/15 text-[#5e5ce6] border-[#5e5ce6]/30',
       nextRequirement: hasManager
         ? `Scale workforce to 8+ agents (${agentCount}/8)`
         : `Scale to 8+ agents (${agentCount}/8) & Hire Department Manager`,
@@ -205,7 +215,7 @@ export function calcAutonomyInfo(state: { agents: AgentInstance[]; valuation: nu
     percent: 0,
     title: 'L1: Manual Founder',
     subtitle: 'Solo Founder In A Garage',
-    badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/50',
+    badgeClass: 'bg-white/[0.08] text-white/70 border-white/[0.12]',
     nextRequirement: 'Hire your first Specialist Agent (Engineering or Growth)',
     isMax: false
   };
@@ -480,7 +490,11 @@ export const getInitialState = () => ({
   offlineRecapData: null,
   activeMilestoneCelebration: null,
   isUnicornModalOpen: false,
-  hasSeenUnicorn: false
+  hasSeenUnicorn: false,
+
+  selectedCanvasAgentId: null,
+  agentTraces: [],
+  tokenBurnPerHour: 0
 });
 
 
@@ -923,7 +937,13 @@ export const useGameStore = create<GameState>()(
           hiredAt: Date.now(),
           department: roleDef.department,
           isExecutive: role === 'EXECUTIVE',
-          isCEO: role === 'CEO'
+          isCEO: role === 'CEO',
+          model: roleDef.defaultModel || 'CLAUDE_3_7_SONNET',
+          temperature: 0.7,
+          systemPrompt: `You are an autonomous ${roleDef.title} at a 1-person billion dollar AI startup. Maximize throughput, execute assigned workflows with high reliability, and preserve trust.`,
+          enabledTools: roleDef.defaultTools || ['github', 'browser'],
+          tokensConsumedTotal: 0,
+          hallucinationRisk: 5
         };
 
         const updatedAgents = [...state.agents, newAgent];
@@ -958,7 +978,7 @@ export const useGameStore = create<GameState>()(
           unlockedAgentRoles: Array.from(unlockedRoles)
         });
 
-        get().addLog(`🤖 Hired ${roleDef.title} "${name}" [${traitDef.name}]. ${quote}`, 'agent', 'success');
+        get().addLog(`🤖 Hired ${roleDef.title} "${name}" [${traitDef.name}] (${newAgent.model}). ${quote}`, 'agent', 'success');
         return true;
       },
 
@@ -999,9 +1019,52 @@ export const useGameStore = create<GameState>()(
         if (!agent) return;
 
         set({
-          agents: state.agents.filter(a => a.id !== agentId)
+          agents: state.agents.filter(a => a.id !== agentId),
+          selectedCanvasAgentId: state.selectedCanvasAgentId === agentId ? null : state.selectedCanvasAgentId
         });
         get().addLog(`Terminated ${agent.name}'s API token. Employee count remains exactly 1.`, 'agent', 'warning');
+      },
+
+      setSelectedCanvasAgent: (agentId: string | null) => set({ selectedCanvasAgentId: agentId }),
+
+      updateAgentModel: (agentId: string, model: AgentModelType) => {
+        const state = get();
+        const agent = state.agents.find(a => a.id === agentId);
+        if (!agent) return;
+
+        set({
+          agents: state.agents.map(a => a.id === agentId ? { ...a, model } : a)
+        });
+        soundEngine.playClick();
+        get().addLog(`Switched ${agent.name} engine to ${model}.`, 'agent', 'info');
+      },
+
+      updateAgentConfig: (agentId: string, updates: Partial<AgentInstance>) => {
+        set((state) => ({
+          agents: state.agents.map(a => a.id === agentId ? { ...a, ...updates } : a)
+        }));
+      },
+
+      patchAgentPrompt: (agentId: string, newInstruction: string) => {
+        const state = get();
+        const agent = state.agents.find(a => a.id === agentId);
+        if (!agent) return;
+
+        set({
+          agents: state.agents.map(a => a.id === agentId ? {
+            ...a,
+            systemPrompt: newInstruction,
+            hallucinationRisk: Math.max(2, a.hallucinationRisk - 15)
+          } : a)
+        });
+        soundEngine.playDeploy();
+        get().addLog(`🛡️ Guardrail patched for ${agent.name}. Hallucination risk mitigated.`, 'agent', 'success');
+      },
+
+      addAgentExecutionTrace: (trace: AgentExecutionTrace) => {
+        set((state) => ({
+          agentTraces: [trace, ...state.agentTraces.slice(0, 49)]
+        }));
       },
 
       setActiveRoadmap: (featureId: string) => {

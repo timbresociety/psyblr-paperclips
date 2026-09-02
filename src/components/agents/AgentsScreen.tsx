@@ -11,33 +11,39 @@ export const AgentsScreen: React.FC = () => {
   const [isHireOpen, setIsHireOpen] = useState(false);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 text-left">
       {/* Header with View Toggle & Hire CTA */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#111422] border border-[#20263c] rounded-xl p-4">
+      <div className="apple-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <Bot className="w-5 h-5 text-purple-400" />
-            <h2 className="text-lg font-black tracking-tight text-white">
-              AUTONOMOUS WORKFORCE
-            </h2>
-            <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-800">
-              {agents.length} AGENTS ACTIVE
-            </span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#ff9f0a]/15 text-[#ff9f0a] flex items-center justify-center">
+              <Bot className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base font-semibold text-white tracking-tight">
+                  Workforce Fleet
+                </h1>
+                <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-white/[0.06] text-white/80 border border-white/[0.08]">
+                  {agents.length} Active Nodes
+                </span>
+              </div>
+              <p className="text-xs text-white/50 mt-0.5">
+                Autonomous agent workers executing 24/7 without salaries, equity dilution, or office overhead.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Every agent works 24/7 without human salaries, stock options, or offsites.
-          </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* Roster vs Org Chart View Switch */}
-          <div className="flex bg-[#181c2e] p-1 rounded-lg border border-slate-700/60">
+          <div className="flex bg-black/40 p-0.5 rounded-lg border border-white/[0.06]">
             <button
               onClick={() => setViewMode('roster')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
                 viewMode === 'roster'
-                  ? 'bg-purple-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-white/[0.16] text-white shadow-xs'
+                  : 'text-white/40 hover:text-white/80'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -45,10 +51,10 @@ export const AgentsScreen: React.FC = () => {
             </button>
             <button
               onClick={() => setViewMode('org')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
                 viewMode === 'org'
-                  ? 'bg-purple-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-white/[0.16] text-white shadow-xs'
+                  : 'text-white/40 hover:text-white/80'
               }`}
             >
               <Network className="w-3.5 h-3.5" />
@@ -59,10 +65,10 @@ export const AgentsScreen: React.FC = () => {
           {/* Hire Agent CTA */}
           <button
             onClick={() => setIsHireOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs tracking-wide shadow-md hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl apple-btn-primary text-xs font-medium tracking-tight shadow-sm"
           >
-            <Plus className="w-4 h-4" />
-            <span>Hire Agent</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>Deploy Agent</span>
           </button>
         </div>
       </div>
@@ -73,24 +79,24 @@ export const AgentsScreen: React.FC = () => {
       ) : (
         <>
           {agents.length === 0 ? (
-            <div className="bg-[#121524] border border-dashed border-slate-800 rounded-2xl p-12 text-center">
-              <Bot className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-              <h3 className="text-base font-bold text-white mb-1">
-                Zero Agents Hired
+            <div className="apple-card border-dashed rounded-2xl p-12 text-center">
+              <Bot className="w-12 h-12 text-white/30 mx-auto mb-3" />
+              <h3 className="text-sm font-semibold text-white mb-1">
+                Zero Agents Deployed
               </h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto mb-5 leading-relaxed">
-                You are currently doing everything manually. Hire your first Engineering or Growth agent to automate production.
+              <p className="text-xs text-white/50 max-w-sm mx-auto mb-5 leading-relaxed">
+                You are currently handling tasks manually. Deploy your first Engineering or Growth agent to automate production.
               </p>
               <button
                 onClick={() => setIsHireOpen(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-lg transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl apple-btn-primary text-xs font-medium shadow-sm transition-all"
               >
-                <Plus className="w-4 h-4" />
-                <span>Hire First Agent</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>Deploy First Agent</span>
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {agents.map((agent) => (
                 <AgentCard key={agent.id} agent={agent} />
               ))}
@@ -104,3 +110,4 @@ export const AgentsScreen: React.FC = () => {
     </div>
   );
 };
+

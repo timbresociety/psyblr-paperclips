@@ -1,26 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { Inbox, CheckCircle2, ArrowRight, History, AlertTriangle } from 'lucide-react';
+import { soundEngine } from '../../audio/soundEffects';
 
 export const InboxScreen: React.FC = () => {
   const { activeEvents, eventHistory, resolveEvent } = useGameStore();
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(activeEvents[0]?.id || null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
-  // Sync selected event if activeEvents list changes or current selection was resolved
-  useEffect(() => {
-    if (activeEvents.length > 0) {
-      if (!selectedEventId || !activeEvents.some(e => e.id === selectedEventId)) {
-        setSelectedEventId(activeEvents[0].id);
-      }
-    } else {
-      setSelectedEventId(null);
-    }
-  }, [activeEvents, selectedEventId]);
-
-  const selectedEvent = activeEvents.find(e => e.id === selectedEventId) || activeEvents[0];
+  const selectedEvent =
+    (selectedEventId ? activeEvents.find(e => e.id === selectedEventId) : null) ||
+    activeEvents[0] ||
+    null;
 
   const handleResolve = (eventId: string, choiceId: string) => {
+    soundEngine.playDecision();
     const remaining = activeEvents.filter(e => e.id !== eventId);
     setSelectedEventId(remaining[0]?.id || null);
     resolveEvent(eventId, choiceId);
@@ -29,88 +23,89 @@ export const InboxScreen: React.FC = () => {
   const getCategoryBadgeClass = (category: string) => {
     switch (category) {
       case 'Crisis':
-        return 'bg-rose-950 text-rose-300 border-rose-800 animate-pulse';
+        return 'bg-[#ff453a]/15 text-[#ff453a] border-[#ff453a]/30';
       case 'Legal':
-        return 'bg-amber-950 text-amber-300 border-amber-800';
+        return 'bg-[#ff9f0a]/15 text-[#ff9f0a] border-[#ff9f0a]/30';
       case 'Growth':
-        return 'bg-emerald-950 text-emerald-300 border-emerald-800';
+        return 'bg-[#bf5af2]/15 text-[#bf5af2] border-[#bf5af2]/30';
       case 'Founder':
-        return 'bg-indigo-950 text-indigo-300 border-indigo-800';
-      case 'Product':
-        return 'bg-cyan-950 text-cyan-300 border-cyan-800';
       case 'Executive':
-        return 'bg-fuchsia-950 text-fuchsia-300 border-fuchsia-800';
-      case 'Agent':
-        return 'bg-purple-950 text-purple-300 border-purple-800';
+        return 'bg-[#5e5ce6]/15 text-[#5e5ce6] border-[#5e5ce6]/30';
+      case 'Product':
+        return 'bg-[#64d2ff]/15 text-[#64d2ff] border-[#64d2ff]/30';
       case 'Customer':
-        return 'bg-sky-950 text-sky-300 border-sky-800';
-      case 'Competitor':
-        return 'bg-orange-950 text-orange-300 border-orange-800';
-      case 'Infrastructure':
-        return 'bg-blue-950 text-blue-300 border-blue-800';
+        return 'bg-[#30d158]/15 text-[#30d158] border-[#30d158]/30';
       case 'Investor':
-        return 'bg-teal-950 text-teal-300 border-teal-800';
+        return 'bg-[#5e5ce6]/15 text-[#5e5ce6] border-[#5e5ce6]/30';
+      case 'Competitor':
+      case 'Infrastructure':
       case 'Market':
-        return 'bg-violet-950 text-violet-300 border-violet-800';
+        return 'bg-[#ff9f0a]/15 text-[#ff9f0a] border-[#ff9f0a]/30';
       default:
-        return 'bg-purple-950 text-purple-300 border-purple-800';
+        return 'bg-white/[0.06] text-white/70 border-white/[0.08]';
     }
   };
 
   return (
     <div className="space-y-6 text-left">
       {/* Inbox Header */}
-      <div className="bg-[#111422] border border-[#20263c] rounded-xl p-5">
+      <div className="apple-card rounded-2xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Inbox className="w-5 h-5 text-purple-400" />
-            <h2 className="text-lg font-black tracking-tight text-white">
-              EXECUTIVE INBOX & DECISION DESK
-            </h2>
-            <span className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-full ${
-              activeEvents.length > 0
-                ? 'bg-rose-950 text-rose-300 border border-rose-800 animate-pulse'
-                : 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-            }`}>
-              {activeEvents.length} ACTION REQUIRED
-            </span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#ffd60a]/15 text-[#ffd60a] flex items-center justify-center">
+              <Inbox className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-base font-semibold text-white tracking-tight">
+                  Executive Inbox &amp; Decisions
+                </h1>
+                <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full font-medium border ${
+                  activeEvents.length > 0
+                    ? 'bg-[#ff453a] text-white border-transparent font-bold'
+                    : 'bg-white/[0.06] text-white/80 border-white/[0.08]'
+                }`}>
+                  {activeEvents.length} Action Required
+                </span>
+              </div>
+              <p className="text-xs text-white/50 mt-0.5">
+                High-stakes dilemmas from customers, agents, regulators, and venture capitalists.
+              </p>
+            </div>
           </div>
           
           <button
-            onClick={() => setShowHistory(!showHistory)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#181c2f] border border-slate-700 hover:border-purple-500 text-xs text-slate-300 hover:text-white transition-all font-mono"
+            onClick={() => { soundEngine.playClick(); setShowHistory(!showHistory); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl apple-btn-secondary text-xs transition-all font-medium"
           >
-            <History className="w-3.5 h-3.5 text-purple-400" />
+            <History className="w-3.5 h-3.5 text-white/60" />
             <span>{showHistory ? 'Hide History' : `History (${eventHistory.length})`}</span>
           </button>
         </div>
-        <p className="text-xs text-slate-400 mt-1">
-          High-stakes dilemmas generated by customers, agents, regulators, and venture capitalists.
-        </p>
       </div>
 
       {/* Decision History View */}
       {showHistory && (
-        <div className="bg-[#101320] border border-slate-800 rounded-xl p-4 space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-            <History className="w-3.5 h-3.5 text-purple-400" />
-            Archived Executive Decisions
-          </h3>
+        <div className="apple-card rounded-2xl p-4 space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-white/60 flex items-center gap-2">
+            <History className="w-3.5 h-3.5 text-white/50" />
+            <span>Archived Executive Decisions</span>
+          </h2>
           {eventHistory.length === 0 ? (
-            <p className="text-xs text-slate-500 italic">No decisions archived yet.</p>
+            <p className="text-xs text-white/40 italic">No decisions archived yet.</p>
           ) : (
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1 scrollbar-thin">
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
               {eventHistory.map((hist) => {
                 const chosen = hist.choices.find(c => c.id === hist.resolvedChoiceId);
                 return (
-                  <div key={hist.id} className="p-3 bg-[#151829] rounded-lg border border-slate-800 text-xs">
+                  <div key={hist.id} className="p-3 apple-inset rounded-xl text-xs">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-white">{hist.title}</span>
-                      <span className="text-[10px] font-mono text-slate-500">
+                      <span className="font-semibold text-white">{hist.title}</span>
+                      <span className="text-[10px] font-mono text-white/40">
                         {new Date(hist.timestamp).toLocaleTimeString()}
                       </span>
                     </div>
-                    <p className="text-[11px] text-purple-300 font-mono">
+                    <p className="text-[11px] text-[#30d158]">
                       Choice: "{chosen?.label}" &rarr; {chosen?.flavorOutcome}
                     </p>
                   </div>
@@ -125,15 +120,15 @@ export const InboxScreen: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Event List (1 Col) */}
         <div className="space-y-2">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-white/60">
             Pending Decisions
-          </h3>
+          </h2>
 
           {activeEvents.length === 0 ? (
-            <div className="p-8 bg-[#131625] border border-slate-800 rounded-xl text-center">
-              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-              <h4 className="text-xs font-bold text-white">Inbox Zero</h4>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+            <div className="p-8 apple-card rounded-2xl text-center">
+              <CheckCircle2 className="w-7 h-7 text-[#30d158] mx-auto mb-2" />
+              <h3 className="text-xs font-semibold text-white">Inbox Zero</h3>
+              <p className="text-[11px] text-white/40 mt-0.5">
                 No active operational emergencies.
               </p>
             </div>
@@ -144,25 +139,25 @@ export const InboxScreen: React.FC = () => {
               return (
                 <div
                   key={evt.id}
-                  onClick={() => setSelectedEventId(evt.id)}
-                  className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                  onClick={() => { soundEngine.playClick(); setSelectedEventId(evt.id); }}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-[#181c2f] border-purple-500 shadow-md'
-                      : 'bg-[#141727] border-slate-800 hover:border-slate-700'
+                      ? 'apple-card border-[#0a84ff] ring-1 ring-[#0a84ff]/30 shadow-xs'
+                      : 'apple-card hover:border-white/[0.14]'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${getCategoryBadgeClass(evt.category)}`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border font-medium ${getCategoryBadgeClass(evt.category)}`}>
                       {evt.category}
                     </span>
-                    <span className="text-[10px] text-slate-500 font-mono">
+                    <span className="text-[10px] text-white/40 font-mono">
                       {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <h4 className="font-bold text-white text-xs truncate">
+                  <h3 className="font-semibold text-white text-xs truncate">
                     {evt.title}
-                  </h4>
-                  <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                  </h3>
+                  <p className="text-[11px] text-white/40 truncate mt-0.5">
                     {evt.source}
                   </p>
                 </div>
@@ -174,38 +169,38 @@ export const InboxScreen: React.FC = () => {
         {/* Selected Event Details & Choice Action Buttons (2 Cols) */}
         <div className="lg:col-span-2">
           {selectedEvent ? (
-            <div className="bg-[#141727] border border-purple-500/30 rounded-xl p-5 space-y-4 shadow-[0_0_25px_rgba(168,85,247,0.1)]">
+            <div className="apple-card rounded-2xl p-5 space-y-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border ${
                     selectedEvent.severity === 3
-                      ? 'bg-rose-950 text-rose-300 border-rose-800'
+                      ? 'bg-[#ff453a]/15 text-[#ff453a] border-[#ff453a]/30'
                       : selectedEvent.severity === 2
-                      ? 'bg-amber-950 text-amber-300 border-amber-800'
-                      : 'bg-blue-950 text-blue-300 border-blue-800'
+                      ? 'bg-[#ff9f0a]/15 text-[#ff9f0a] border-[#ff9f0a]/30'
+                      : 'bg-white/[0.06] text-white/80 border-white/[0.08]'
                   }`}>
-                    SEVERITY {selectedEvent.severity}
+                    Severity {selectedEvent.severity}
                   </span>
-                  <span className={`text-xs font-mono px-2 py-0.5 rounded border ${getCategoryBadgeClass(selectedEvent.category)}`}>
+                  <span className={`text-[11px] font-mono px-2 py-0.5 rounded-full border font-medium ${getCategoryBadgeClass(selectedEvent.category)}`}>
                     {selectedEvent.category}
                   </span>
-                  <span className="text-xs font-mono text-slate-400 ml-auto">
+                  <span className="text-xs text-white/40 ml-auto">
                     Source: {selectedEvent.source}
                   </span>
                 </div>
-                <h3 className="text-lg font-black text-white mt-2">
+                <h3 className="text-base font-semibold text-white mt-2">
                   {selectedEvent.title}
                 </h3>
-                <p className="text-xs text-slate-300 leading-relaxed mt-2 p-3.5 bg-[#0e101a] rounded-lg border border-slate-800">
+                <p className="text-xs text-white/80 leading-relaxed mt-2.5 p-3.5 apple-inset rounded-xl">
                   {selectedEvent.body}
                 </p>
               </div>
 
               {/* Choices */}
               <div className="space-y-3 pt-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-purple-400" />
-                  Choose Strategic Response:
+                <span className="text-xs font-semibold uppercase tracking-wider text-white/60 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-[#ff9f0a]" />
+                  <span>Choose Strategic Response</span>
                 </span>
 
                 <div className="space-y-2.5">
@@ -213,15 +208,15 @@ export const InboxScreen: React.FC = () => {
                     <button
                       key={choice.id}
                       onClick={() => handleResolve(selectedEvent.id, choice.id)}
-                      className="w-full text-left p-4 rounded-xl bg-[#181c2f] hover:bg-[#20253f] border border-slate-700 hover:border-purple-500 transition-all group shadow-sm hover:shadow-md"
+                      className="w-full text-left p-4 rounded-xl apple-inset hover:border-white/[0.18] hover:bg-white/[0.04] transition-all group shadow-sm"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">
+                        <span className="text-xs font-semibold text-white group-hover:text-white transition-colors">
                           {choice.label}
                         </span>
-                        <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-purple-400 group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-white group-hover:translate-x-1 transition-transform" />
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-1">
+                      <p className="text-[11px] text-white/50 mt-1 leading-relaxed">
                         {choice.summary}
                       </p>
                     </button>
@@ -230,7 +225,7 @@ export const InboxScreen: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center p-12 bg-[#121524] border border-slate-800 rounded-xl text-slate-500 text-xs font-mono">
+            <div className="h-full flex items-center justify-center p-12 apple-card rounded-2xl text-white/40 text-xs">
               Select an incident from the left to review details.
             </div>
           )}
@@ -239,3 +234,4 @@ export const InboxScreen: React.FC = () => {
     </div>
   );
 };
+

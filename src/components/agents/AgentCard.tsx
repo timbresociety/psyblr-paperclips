@@ -17,91 +17,91 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
   const upgradeCost = Math.round(roleDef.hireCost * 0.75 * Math.pow(1.3, agent.level));
   const canUpgrade = cash >= upgradeCost && agent.level < 10;
 
-  const getRoleBadgeColor = (role: string) => {
+  const getRoleBadgeStyle = (role: string) => {
     switch (role) {
-      case 'ENGINEERING': return 'bg-cyan-950 text-cyan-300 border-cyan-800';
-      case 'GROWTH': return 'bg-pink-950 text-pink-300 border-pink-800';
-      case 'SALES': return 'bg-emerald-950 text-emerald-300 border-emerald-800';
-      case 'SUPPORT': return 'bg-blue-950 text-blue-300 border-blue-800';
-      case 'QA': return 'bg-amber-950 text-amber-300 border-amber-800';
-      case 'OPERATIONS': return 'bg-teal-950 text-teal-300 border-teal-800';
-      case 'MANAGER': return 'bg-purple-950 text-purple-300 border-purple-800';
-      case 'EXECUTIVE': return 'bg-indigo-950 text-indigo-300 border-indigo-800';
-      case 'CEO': return 'bg-yellow-950 text-yellow-300 border-yellow-700 font-bold';
-      default: return 'bg-slate-800 text-slate-300 border-slate-700';
+      case 'CEO': return 'bg-[#5e5ce6]/15 text-[#5e5ce6] border-[#5e5ce6]/30 font-semibold';
+      case 'EXECUTIVE':
+      case 'MANAGER': return 'bg-[#5e5ce6]/15 text-[#5e5ce6] border-[#5e5ce6]/30';
+      case 'ENGINEERING':
+      case 'QA': return 'bg-[#64d2ff]/15 text-[#64d2ff] border-[#64d2ff]/30';
+      case 'GROWTH': return 'bg-[#bf5af2]/15 text-[#bf5af2] border-[#bf5af2]/30';
+      case 'SALES': return 'bg-[#30d158]/15 text-[#30d158] border-[#30d158]/30';
+      case 'SUPPORT':
+      case 'OPERATIONS': return 'bg-[#ff9f0a]/15 text-[#ff9f0a] border-[#ff9f0a]/30';
+      default: return 'bg-white/[0.06] text-white/70 border-white/[0.08]';
     }
   };
 
   return (
-    <div className="bg-[#151827] border border-[#23293f] hover:border-purple-500/50 rounded-xl p-4 flex flex-col justify-between transition-all duration-200">
+    <div className="apple-card rounded-2xl p-4 flex flex-col justify-between transition-all group hover:border-white/[0.14] text-left">
       <div>
         {/* Header: Name, Role, Level */}
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="flex items-center gap-1.5">
-              <Bot className="w-4 h-4 text-purple-400" />
-              <h4 className="font-mono font-bold text-white text-sm tracking-wide">
+              <Bot className="w-4 h-4 text-white/80" />
+              <h4 className="font-semibold text-white text-xs tracking-tight">
                 {agent.name}
               </h4>
             </div>
-            <span className={`inline-block mt-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded border ${getRoleBadgeColor(agent.role)}`}>
+            <span className={`inline-block mt-1 text-[10px] font-mono font-medium px-2 py-0.5 rounded-full border ${getRoleBadgeStyle(agent.role)}`}>
               {roleDef.title}
             </span>
           </div>
 
           <div className="text-right">
-            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-purple-600/30 text-purple-200 border border-purple-500/40">
-              LVL {agent.level}
+            <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-white/[0.06] text-white/80 border border-white/[0.08]">
+              Lv.{agent.level}
             </span>
           </div>
         </div>
 
         {/* Trait Badge */}
         <div className="mt-3">
-          <span className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded border ${traitDef.badgeColor}`}>
+          <span className={`inline-block text-[10px] font-medium px-2 py-0.5 rounded-full border ${traitDef.badgeColor}`}>
             {traitDef.name}
           </span>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-[11px] text-white/50 mt-1 line-clamp-2">
             {traitDef.description}
           </p>
         </div>
 
         {/* Output & Compute Metrics */}
-        <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-1.5 text-xs font-mono">
-          <div className="flex justify-between text-slate-300">
-            <span className="text-slate-500 flex items-center gap-1">
-              <Zap className="w-3 h-3 text-amber-400" /> Output:
+        <div className="mt-3.5 pt-3 border-t border-white/[0.06] space-y-1.5 text-xs font-mono">
+          <div className="flex justify-between text-white/80">
+            <span className="text-white/40 flex items-center gap-1">
+              <Zap className="w-3 h-3 text-[#ff9f0a]" /> Output
             </span>
-            <span className="font-bold text-emerald-400">
-              {agent.outputPerSec.toFixed(2)} / sec
+            <span className="font-semibold text-[#30d158] tabular-nums">
+              +{agent.outputPerSec.toFixed(2)}/s
             </span>
           </div>
 
-          <div className="flex justify-between text-slate-300">
-            <span className="text-slate-500 flex items-center gap-1">
-              <Cpu className="w-3 h-3 text-cyan-400" /> Compute:
+          <div className="flex justify-between text-white/80">
+            <span className="text-white/40 flex items-center gap-1">
+              <Cpu className="w-3 h-3 text-white/40" /> Compute
             </span>
-            <span className="font-bold text-cyan-300">
+            <span className="font-semibold text-white/80 tabular-nums">
               {agent.computeCost.toFixed(1)} CU
             </span>
           </div>
         </div>
 
         {/* Agent Quote */}
-        <p className="mt-3 text-[11px] text-purple-300/80 italic font-mono bg-purple-950/20 p-2 rounded border border-purple-900/30">
-          {agent.quote}
+        <p className="mt-3 text-[11px] text-white/60 italic font-serif bg-white/[0.03] p-2.5 rounded-xl border border-white/[0.05]">
+          "{agent.quote}"
         </p>
       </div>
 
       {/* Action Buttons: Upgrade / Fire */}
-      <div className="mt-4 pt-3 border-t border-slate-800 flex items-center gap-2">
+      <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center gap-2">
         <button
           onClick={() => upgradeAgent(agent.id)}
           disabled={!canUpgrade}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl text-xs font-medium transition-all ${
             canUpgrade
-              ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-sm'
-              : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+              ? 'apple-btn-secondary'
+              : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.05]'
           }`}
         >
           <ArrowUpCircle className="w-3.5 h-3.5" />
@@ -116,7 +116,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
               fireAgent(agent.id);
             }
           }}
-          className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-800 transition-colors"
+          className="p-2 rounded-xl bg-[#ff453a]/10 hover:bg-[#ff453a]/20 text-[#ff453a] border border-[#ff453a]/20 transition-colors"
           title="Revoke Agent API Key"
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -125,3 +125,4 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
     </div>
   );
 };
+

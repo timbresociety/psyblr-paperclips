@@ -15,6 +15,7 @@ import {
   Send,
   X
 } from 'lucide-react';
+import { soundEngine } from '../../audio/soundEffects';
 
 export const HoldingCompanyScreen: React.FC = () => {
   const {
@@ -43,12 +44,14 @@ export const HoldingCompanyScreen: React.FC = () => {
   const totalAvailableCapital = cash + (conglomerateTreasury || 0);
 
   const handleLaunch = (idea: StartupIdea) => {
+    soundEngine.playCelebration();
     launchSubsidiary(idea, selectedSeedFunding, switchImmediately);
     setIsNewStartupModalOpen(false);
   };
 
   const handleExecuteInjection = () => {
     if (!injectModalTarget) return;
+    soundEngine.playCash();
     const success = injectCapital(injectModalTarget.id, injectAmount);
     if (success) {
       setInjectModalTarget(null);
@@ -58,26 +61,29 @@ export const HoldingCompanyScreen: React.FC = () => {
   return (
     <div className="space-y-6 text-left">
       {/* Holding Company Header Banner */}
-      <div className="bg-[#101222] border border-purple-500/40 rounded-2xl p-6 shadow-[0_0_30px_rgba(168,85,247,0.15)]">
+      <div className="apple-card rounded-2xl p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <Building2 className="w-6 h-6 text-purple-400" />
-              <h2 className="text-xl font-black tracking-tight text-white glow-purple">
-                AUTONOMOUS HOLDING CONGLOMERATE
-              </h2>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#5e5ce6]/15 text-[#5e5ce6] flex items-center justify-center">
+                <Building2 className="w-4 h-4" />
+              </div>
+              <h1 className="text-base font-semibold text-white tracking-tight">
+                Autonomous Holding Conglomerate
+              </h1>
             </div>
-            <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-              Your autonomous conglomerate launches and operates independent AI startups. Take operational command of any subsidiary to guide it from <strong>Level 1 (Manual Founder)</strong> to <strong>Level 5 (100% Autonomous Unicorn)</strong>.
+            <p className="text-xs text-white/50 mt-1.5 max-w-2xl leading-relaxed">
+              Your autonomous conglomerate launches and operates independent AI startups. Take operational command of any subsidiary to guide it from <strong>Level 1 (Founder)</strong> to <strong>Level 5 (Unicorn Autonomy)</strong>.
             </p>
           </div>
 
           <button
             onClick={() => {
+              soundEngine.playClick();
               setChoices(getRandomStartupChoices(3));
               setIsNewStartupModalOpen(true);
             }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl apple-btn-primary text-xs shadow-sm transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Launch Subsidiary Venture</span>
@@ -85,71 +91,71 @@ export const HoldingCompanyScreen: React.FC = () => {
         </div>
 
         {/* Aggregate Conglomerate Metrics */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3 mt-5 pt-5 border-t border-slate-800 font-mono text-xs">
-          <div className="bg-[#161a2f] p-3 rounded-xl border border-slate-800">
-            <span className="text-slate-400 text-[10px] block uppercase font-medium">Total Conglomerate Value</span>
-            <span className="text-base font-black text-purple-300">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2.5 mt-5 pt-5 border-t border-white/[0.06] font-mono text-xs">
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 text-[10px] block uppercase font-sans">Total Conglomerate Value</span>
+            <span className="text-sm font-semibold text-white tabular-nums mt-0.5 block">
               ${(totalPortfolioValuation / 1000000).toFixed(1)}M
             </span>
           </div>
 
-          <div className="bg-[#161a2f] p-3 rounded-xl border border-slate-800">
-            <span className="text-slate-400 text-[10px] block uppercase font-medium">Portfolio Subsidiaries</span>
-            <span className="text-base font-black text-white">
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 text-[10px] block uppercase font-sans">Portfolio Subsidiaries</span>
+            <span className="text-sm font-semibold text-white tabular-nums mt-0.5 block">
               {companies.length} Startup{companies.length !== 1 ? 's' : ''}
             </span>
           </div>
 
-          <div className="bg-[#161a2f] p-3 rounded-xl border border-slate-800">
-            <span className="text-slate-400 text-[10px] block uppercase font-medium">Consolidated Agents</span>
-            <span className="text-base font-black text-cyan-300">
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 text-[10px] block uppercase font-sans">Consolidated Agents</span>
+            <span className="text-sm font-semibold text-white/80 tabular-nums mt-0.5 block">
               {totalAgents} Agents
             </span>
           </div>
 
-          <div className="bg-[#161a2f] p-3 rounded-xl border border-slate-800">
-            <span className="text-slate-400 text-[10px] block uppercase font-medium">Consolidated ARR</span>
-            <span className="text-base font-black text-emerald-400">
+          <div className="apple-inset p-3 rounded-xl">
+            <span className="text-white/40 text-[10px] block uppercase font-sans">Consolidated ARR</span>
+            <span className="text-sm font-semibold text-[#30d158] tabular-nums mt-0.5 block">
               ${(totalPortfolioArr / 1000).toFixed(0)}k ARR
             </span>
           </div>
 
-          <div className="col-span-2 sm:col-span-4 lg:col-span-1 bg-[#161a2f] p-3 rounded-xl border border-slate-800">
-            <span className="text-slate-400 text-[10px] block uppercase font-medium">Conglomerate Treasury</span>
-            <span className="text-base font-black text-amber-300">
+          <div className="col-span-2 sm:col-span-4 lg:col-span-1 apple-inset p-3 rounded-xl">
+            <span className="text-white/40 text-[10px] block uppercase font-sans">Conglomerate Treasury</span>
+            <span className="text-sm font-semibold text-white/90 tabular-nums mt-0.5 block">
               ${Math.floor(conglomerateTreasury || 0).toLocaleString()}
             </span>
           </div>
         </div>
 
         {/* Synergies Bar */}
-        <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-slate-300">
-            <Zap className="w-4 h-4 text-yellow-400" />
-            <span className="font-bold">Conglomerate Synergies:</span>
-            <span className="text-slate-400 text-[11px]">
+        <div className="mt-4 pt-3 border-t border-white/[0.06] flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-white/70">
+            <Zap className="w-3.5 h-3.5 text-[#ff9f0a]" />
+            <span className="font-semibold text-white">Conglomerate Synergies:</span>
+            <span className="text-white/40 text-[11px]">
               {companies.length >= 3 ? 'Shared Brand Trust (+10% Conversion) & Compute Bulk Discount (-20% Costs)' : 'Shared Talent Pool (+10% Agent Output)'}
             </span>
           </div>
-          <div className="text-[11px] font-mono text-purple-300">
-            Synergy Level: <strong>{Math.max(1, companies.length)}x</strong>
+          <div className="text-[11px] font-mono text-[#ff9f0a]">
+            Synergy Multiplier: <strong>{Math.max(1, companies.length)}x</strong>
           </div>
         </div>
       </div>
 
       {/* Portfolio Subsidiaries List */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Layers className="w-4 h-4 text-purple-400" />
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-white/70 flex items-center gap-2">
+            <Layers className="w-3.5 h-3.5 text-[#5e5ce6]" />
             <span>Portfolio Subsidiaries ({companies.length})</span>
-          </h3>
-          <span className="text-xs text-slate-400 font-mono">
+          </h2>
+          <span className="text-[11px] text-white/40">
             Click any company to assume operational command
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {companies.map((sub) => {
             const autonomy = calcAutonomyInfo(sub);
             const isActive = sub.id === activeCompanyId;
@@ -157,20 +163,20 @@ export const HoldingCompanyScreen: React.FC = () => {
             return (
               <div
                 key={sub.id}
-                className={`bg-[#131627] border rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 ${
+                className={`rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 border ${
                   isActive
-                    ? 'border-purple-500 shadow-[0_0_25px_rgba(168,85,247,0.25)] ring-1 ring-purple-500/50'
-                    : 'border-slate-800 hover:border-slate-700'
+                    ? 'apple-card border-[#0a84ff] ring-1 ring-[#0a84ff]/30 shadow-xs'
+                    : 'apple-card hover:border-white/[0.14]'
                 }`}
               >
                 <div>
                   {/* Top Badges */}
                   <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-white/70 border border-white/[0.08]">
                       {sub.idea.archetype}
                     </span>
 
-                    <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border ${autonomy.badgeClass}`}>
+                    <span className={`text-[10px] font-mono font-medium px-2.5 py-0.5 rounded-full border ${autonomy.badgeClass}`}>
                       {autonomy.title.split(':')[0]} ({autonomy.percent}% Auto)
                     </span>
                   </div>
@@ -178,75 +184,75 @@ export const HoldingCompanyScreen: React.FC = () => {
                   {/* Company Name & Tagline */}
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h4 className="text-lg font-black text-white">{sub.name}</h4>
-                      <p className="text-xs text-purple-200/80 italic font-medium mt-0.5">
+                      <h3 className="text-sm font-semibold text-white">{sub.name}</h3>
+                      <p className="text-[11px] text-white/50 italic mt-0.5 font-serif">
                         "{sub.idea.tagline}"
                       </p>
                     </div>
                     {isActive && (
-                      <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono font-bold shrink-0">
-                        ACTIVE HELM
+                      <span className="px-2 py-0.5 rounded-full bg-[#0a84ff] text-white text-[10px] font-mono font-medium shrink-0 shadow-xs">
+                        Active Helm
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs text-slate-400 mt-2.5 line-clamp-2">
+                  <p className="text-xs text-white/50 mt-2.5 line-clamp-2 leading-relaxed">
                     {sub.idea.description}
                   </p>
 
                   {/* Autonomy Level Progress Section */}
-                  <div className="mt-4 p-3 rounded-xl bg-[#0d0f1a] border border-slate-800/80 space-y-2">
+                  <div className="mt-4 p-3 rounded-xl apple-inset space-y-2">
                     <div className="flex items-center justify-between text-xs font-mono">
-                      <span className="text-slate-400 text-[11px] font-bold">Autonomy Level:</span>
-                      <span className="text-white font-bold">{autonomy.title}</span>
+                      <span className="text-white/40 text-[10px] font-sans">Autonomy Level</span>
+                      <span className="text-white font-medium">{autonomy.title}</span>
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="w-full h-1 bg-white/[0.08] rounded-full overflow-hidden">
                       <div
                         className={`h-full transition-all duration-300 ${
                           autonomy.level === 5
-                            ? 'bg-emerald-400'
+                            ? 'bg-[#30d158]'
                             : autonomy.level >= 3
-                            ? 'bg-cyan-400'
-                            : 'bg-amber-400'
+                            ? 'bg-[#64d2ff]'
+                            : 'bg-[#ff9f0a]'
                         }`}
                         style={{ width: `${Math.max(5, autonomy.percent)}%` }}
                       />
                     </div>
 
-                    <div className="text-[10px] text-slate-400 flex items-start gap-1.5 pt-0.5">
-                      <TrendingUp className="w-3 h-3 text-purple-400 shrink-0 mt-0.5" />
+                    <div className="text-[10px] text-white/40 flex items-start gap-1.5 pt-0.5">
+                      <TrendingUp className="w-3.5 h-3.5 text-[#30d158] shrink-0 mt-0.5" />
                       <span className="leading-tight">{autonomy.nextRequirement}</span>
                     </div>
                   </div>
 
                   {/* Financial & Workforce Stats */}
-                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-mono">
-                    <div className="bg-[#171b2d] p-2 rounded-lg border border-slate-850">
-                      <span className="text-slate-500 text-[10px] block">VALUATION</span>
-                      <span className="font-black text-purple-300">
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-mono tabular-nums">
+                    <div className="apple-inset p-2 rounded-xl">
+                      <span className="text-white/40 text-[10px] font-sans block uppercase">Valuation</span>
+                      <span className="font-semibold text-white">
                         ${sub.valuation >= 1000000 ? `${(sub.valuation / 1000000).toFixed(2)}M` : sub.valuation.toLocaleString()}
                       </span>
                     </div>
 
-                    <div className="bg-[#171b2d] p-2 rounded-lg border border-slate-850">
-                      <span className="text-slate-500 text-[10px] block">REVENUE</span>
-                      <span className="font-black text-emerald-400">
+                    <div className="apple-inset p-2 rounded-xl">
+                      <span className="text-white/40 text-[10px] font-sans block uppercase">Revenue</span>
+                      <span className="font-semibold text-[#30d158]">
                         ${(sub.arr / 1000).toFixed(0)}k ARR
                       </span>
                     </div>
 
-                    <div className="bg-[#171b2d] p-2 rounded-lg border border-slate-850">
-                      <span className="text-slate-500 text-[10px] block">CASH</span>
-                      <span className="font-bold text-white">
+                    <div className="apple-inset p-2 rounded-xl">
+                      <span className="text-white/40 text-[10px] font-sans block uppercase">Cash</span>
+                      <span className="font-semibold text-white/90">
                         ${Math.floor(sub.cash).toLocaleString()}
                       </span>
                     </div>
 
-                    <div className="bg-[#171b2d] p-2 rounded-lg border border-slate-850">
-                      <span className="text-slate-500 text-[10px] block">WORKFORCE</span>
-                      <span className="font-bold text-cyan-300">
+                    <div className="apple-inset p-2 rounded-xl">
+                      <span className="text-white/40 text-[10px] font-sans block uppercase">Workforce</span>
+                      <span className="font-semibold text-white">
                         {sub.agents.length} Agents
                       </span>
                     </div>
@@ -254,19 +260,19 @@ export const HoldingCompanyScreen: React.FC = () => {
                 </div>
 
                 {/* Actions: Take Operational Command & Wire Capital */}
-                <div className="mt-5 pt-4 border-t border-slate-800/80 flex items-center gap-2">
+                <div className="mt-5 pt-3.5 border-t border-white/[0.06] flex items-center gap-2">
                   {isActive ? (
                     <button
-                      onClick={() => setActiveTab('command')}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all shadow-md"
+                      onClick={() => { soundEngine.playClick(); setActiveTab('command'); }}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl apple-btn-primary text-xs transition-all shadow-sm"
                     >
                       <span>Command Center</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   ) : (
                     <button
-                      onClick={() => switchActiveCompany(sub.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-800 hover:bg-purple-600 text-slate-200 hover:text-white font-bold text-xs transition-all border border-slate-700 hover:border-purple-500"
+                      onClick={() => { soundEngine.playClick(); switchActiveCompany(sub.id); }}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl apple-btn-secondary text-xs transition-all"
                     >
                       <span>Take Operational Helm</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -274,11 +280,11 @@ export const HoldingCompanyScreen: React.FC = () => {
                   )}
 
                   <button
-                    onClick={() => setInjectModalTarget(sub)}
-                    className="p-2 rounded-xl bg-[#181c2f] hover:bg-[#222742] text-emerald-400 hover:text-emerald-300 border border-slate-700 transition-colors"
+                    onClick={() => { soundEngine.playClick(); setInjectModalTarget(sub); }}
+                    className="p-1.5 rounded-xl apple-btn-secondary transition-colors"
                     title="Inject Seed Capital"
                   >
-                    <DollarSign className="w-4 h-4" />
+                    <DollarSign className="w-4 h-4 text-[#30d158]" />
                   </button>
                 </div>
               </div>
@@ -289,29 +295,29 @@ export const HoldingCompanyScreen: React.FC = () => {
 
       {/* Launch New Subsidiary Modal */}
       {isNewStartupModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="bg-[#111422] border border-purple-500/40 rounded-2xl max-w-4xl w-full p-6 sm:p-8 shadow-[0_0_50px_rgba(168,85,247,0.25)] text-left max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xl">
+          <div className="apple-card rounded-2xl max-w-4xl w-full p-6 sm:p-7 shadow-2xl text-left max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-4 mb-5">
               <div>
-                <h3 className="text-lg font-black text-white tracking-wide">
-                  LAUNCH SUBSIDIARY VENTURE
+                <h3 className="text-base font-semibold text-white tracking-tight">
+                  Launch Subsidiary Venture
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-white/50 mt-0.5">
                   Select a business model to launch as a new subsidiary under your autonomous holding umbrella.
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setChoices(getRandomStartupChoices(3))}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+                  onClick={() => { soundEngine.playClick(); setChoices(getRandomStartupChoices(3)); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xl apple-btn-secondary transition-colors font-medium"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#ff9f0a]" />
                   <span>Reroll Ideas</span>
                 </button>
                 <button
                   onClick={() => setIsNewStartupModalOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors"
+                  className="p-1.5 rounded-xl text-white/40 hover:text-white bg-white/[0.06] hover:bg-white/[0.12] transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -319,22 +325,22 @@ export const HoldingCompanyScreen: React.FC = () => {
             </div>
 
             {/* Seed Capital Allocation Picker */}
-            <div className="bg-[#161a2d] border border-slate-800 rounded-xl p-4 mb-6">
+            <div className="apple-inset rounded-xl p-4 mb-6">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <span className="text-xs uppercase font-bold tracking-wider text-slate-300">
+                  <span className="text-xs font-semibold text-white/80">
                     Seed Capital Allocation
                   </span>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-white/40 mt-0.5">
                     Wire funding from holding capital to kickstart agent hiring.
                   </p>
                 </div>
-                <span className="text-xs font-mono text-emerald-400">
+                <span className="text-xs font-mono text-white/90 font-medium tabular-nums">
                   Available: ${Math.floor(totalAvailableCapital).toLocaleString()}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs tabular-nums">
                 {[
                   { label: 'Bootstrap', amount: 2000 },
                   { label: 'Angel Seed', amount: 25000 },
@@ -347,31 +353,31 @@ export const HoldingCompanyScreen: React.FC = () => {
                     <button
                       key={opt.amount}
                       disabled={!canAfford && opt.amount > 2000}
-                      onClick={() => setSelectedSeedFunding(opt.amount)}
+                      onClick={() => { soundEngine.playClick(); setSelectedSeedFunding(opt.amount); }}
                       className={`p-2.5 rounded-xl border text-left transition-all ${
                         isSelected
-                          ? 'bg-purple-600/20 border-purple-500 text-white shadow-sm'
+                          ? 'bg-[#0a84ff] border-[#0a84ff] text-white shadow-xs'
                           : canAfford
-                          ? 'bg-[#1a1f36] border-slate-750 text-slate-300 hover:border-slate-600'
-                          : 'bg-slate-900/40 border-slate-850 text-slate-600 cursor-not-allowed'
+                          ? 'apple-card text-white/80 hover:border-white/[0.14]'
+                          : 'bg-white/[0.02] border-white/[0.04] text-white/30 cursor-not-allowed'
                       }`}
                     >
-                      <div className="text-[11px] font-sans font-bold">{opt.label}</div>
-                      <div className="font-bold text-emerald-400 mt-0.5">${opt.amount.toLocaleString()}</div>
+                      <div className="text-[11px] font-sans font-medium">{opt.label}</div>
+                      <div className={`font-semibold mt-0.5 ${isSelected ? 'text-white' : 'text-[#30d158]'}`}>${opt.amount.toLocaleString()}</div>
                     </button>
                   );
                 })}
               </div>
 
-              <div className="mt-4 flex items-center gap-2 pt-3 border-t border-slate-800">
+              <div className="mt-4 flex items-center gap-2 pt-3 border-t border-white/[0.06]">
                 <input
                   type="checkbox"
                   id="switchImmediately"
                   checked={switchImmediately}
                   onChange={(e) => setSwitchImmediately(e.target.checked)}
-                  className="rounded border-slate-700 bg-slate-900 text-purple-600 focus:ring-purple-500"
+                  className="rounded border-white/[0.2] bg-black/40 text-[#0a84ff] focus:ring-[#0a84ff]"
                 />
-                <label htmlFor="switchImmediately" className="text-xs text-slate-300 cursor-pointer">
+                <label htmlFor="switchImmediately" className="text-xs text-white/70 cursor-pointer">
                   Take operational command immediately upon founding (recommended)
                 </label>
               </div>
@@ -383,31 +389,31 @@ export const HoldingCompanyScreen: React.FC = () => {
                 <div
                   key={idea.id}
                   onClick={() => handleLaunch(idea)}
-                  className="group flex flex-col justify-between bg-[#171b2d] hover:bg-[#1f253d] border border-slate-800 hover:border-purple-500 rounded-xl p-5 cursor-pointer transition-all hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]"
+                  className="group flex flex-col justify-between apple-inset hover:border-white/[0.2] rounded-xl p-4 cursor-pointer transition-all hover:shadow-sm"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-white/70 border border-white/[0.08]">
                         {idea.archetype}
                       </span>
-                      <span className="text-xs font-mono font-bold text-emerald-400">
+                      <span className="text-xs font-mono font-medium text-[#30d158] tabular-nums">
                         ${idea.arpu}/mo ARPU
                       </span>
                     </div>
 
-                    <h4 className="text-base font-black text-white group-hover:text-purple-300 transition-colors">
+                    <h4 className="text-xs font-semibold text-white group-hover:text-white transition-colors">
                       {idea.name}
                     </h4>
-                    <p className="text-xs text-purple-200/80 italic mt-0.5">
+                    <p className="text-[11px] text-white/50 italic mt-0.5 font-serif">
                       "{idea.tagline}"
                     </p>
 
-                    <p className="text-xs text-slate-400 mt-2.5 line-clamp-3">
+                    <p className="text-xs text-white/50 mt-2.5 line-clamp-3 leading-relaxed">
                       {idea.description}
                     </p>
                   </div>
 
-                  <button className="mt-5 w-full py-2 rounded-lg bg-purple-600 group-hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5">
+                  <button className="mt-5 w-full py-1.5 rounded-xl apple-btn-primary text-xs font-medium transition-all shadow-sm flex items-center justify-center gap-1.5">
                     <span>Found Subsidiary</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
@@ -415,10 +421,10 @@ export const HoldingCompanyScreen: React.FC = () => {
               ))}
             </div>
 
-            <div className="bg-[#141727] p-3 rounded-xl border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-purple-400 shrink-0" />
+            <div className="apple-inset p-3 rounded-xl text-xs text-white/50 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#30d158] shrink-0" />
               <span>
-                New subsidiaries start at <strong>Level 1 Autonomy (Manual Founder)</strong>. You can take operational command to vibe code, hire specialized agents, and guide it to <strong>Level 5 (Unicorn Autonomy)</strong>.
+                New subsidiaries start at <strong>Level 1 Autonomy (Founder)</strong>. You can take operational command to vibe code, hire specialized agents, and guide it to <strong>Level 5 (Unicorn Autonomy)</strong>.
               </span>
             </div>
           </div>
@@ -427,51 +433,51 @@ export const HoldingCompanyScreen: React.FC = () => {
 
       {/* Capital Injection Modal */}
       {injectModalTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-          <div className="bg-[#111422] border border-purple-500/40 rounded-2xl max-w-md w-full p-6 shadow-2xl text-left">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xl">
+          <div className="apple-card rounded-2xl max-w-md w-full p-6 shadow-2xl text-left">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3 mb-4">
               <div className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-base font-black text-white">
-                  INJECT HOLDING CAPITAL
+                <DollarSign className="w-4 h-4 text-[#30d158]" />
+                <h3 className="text-sm font-semibold text-white">
+                  Inject Holding Capital
                 </h3>
               </div>
               <button
                 onClick={() => setInjectModalTarget(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700"
+                className="p-1 rounded-xl text-white/40 hover:text-white bg-white/[0.06] hover:bg-white/[0.12]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-xs text-white/50 mb-4">
               Transfer funds from holding treasury/active cash to subsidiary <strong>"{injectModalTarget.name}"</strong>.
             </p>
 
-            <div className="bg-[#171b2d] p-3 rounded-xl border border-slate-800 space-y-1 mb-4 font-mono text-xs">
-              <div className="flex justify-between text-slate-400">
+            <div className="apple-inset p-3 rounded-xl space-y-1 mb-4 font-mono text-xs tabular-nums">
+              <div className="flex justify-between text-white/40">
                 <span>Target Company Cash:</span>
-                <span className="font-bold text-white">${Math.floor(injectModalTarget.cash).toLocaleString()}</span>
+                <span className="font-semibold text-white">${Math.floor(injectModalTarget.cash).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-slate-400">
+              <div className="flex justify-between text-white/40">
                 <span>Total Available Capital:</span>
-                <span className="font-bold text-emerald-400">${Math.floor(totalAvailableCapital).toLocaleString()}</span>
+                <span className="font-semibold text-white">${Math.floor(totalAvailableCapital).toLocaleString()}</span>
               </div>
             </div>
 
             <div className="space-y-2 mb-5">
-              <label className="text-xs uppercase font-bold tracking-wider text-slate-400">
+              <label className="text-xs font-medium text-white/70">
                 Select Wire Amount
               </label>
-              <div className="grid grid-cols-3 gap-2 font-mono text-xs">
+              <div className="grid grid-cols-3 gap-2 font-mono text-xs tabular-nums">
                 {[10000, 50000, 250000].map(amt => (
                   <button
                     key={amt}
-                    onClick={() => setInjectAmount(amt)}
-                    className={`py-2 rounded-lg border text-center transition-all ${
+                    onClick={() => { soundEngine.playClick(); setInjectAmount(amt); }}
+                    className={`py-2 rounded-xl border text-center transition-all ${
                       injectAmount === amt
-                        ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 font-bold'
-                        : 'bg-[#181c2f] border-slate-800 text-slate-300 hover:border-slate-600'
+                        ? 'bg-[#0a84ff] border-[#0a84ff] text-white font-medium shadow-xs'
+                        : 'apple-inset text-white/80 hover:border-white/[0.14]'
                     }`}
                   >
                     ${(amt / 1000).toFixed(0)}k
@@ -483,17 +489,17 @@ export const HoldingCompanyScreen: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setInjectModalTarget(null)}
-                className="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold"
+                className="flex-1 py-1.5 rounded-xl apple-btn-secondary text-xs font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleExecuteInjection}
                 disabled={totalAvailableCapital < injectAmount}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg font-bold text-xs transition-all ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl font-medium text-xs transition-all ${
                   totalAvailableCapital >= injectAmount
-                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg'
-                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                    ? 'apple-btn-primary'
+                    : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.05]'
                 }`}
               >
                 <Send className="w-3.5 h-3.5" />

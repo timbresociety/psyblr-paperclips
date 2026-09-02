@@ -4,16 +4,18 @@ import { AGENT_ROLES, AGENT_NAMES } from '../../data/agentRoles';
 import { AGENT_TRAITS, getRandomTrait } from '../../data/agentTraits';
 import type { AgentRoleType, AgentTraitType } from '../../types/agents';
 import { Bot, Sparkles, X, Plus } from 'lucide-react';
+import { soundEngine } from '../../audio/soundEffects';
 
 interface HireAgentModalProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultRole?: AgentRoleType;
 }
 
-export const HireAgentModal: React.FC<HireAgentModalProps> = ({ isOpen, onClose }) => {
+export const HireAgentModal: React.FC<HireAgentModalProps> = ({ isOpen, onClose, defaultRole }) => {
   const { cash, unlockedAgentRoles, hireAgent } = useGameStore();
 
-  const [selectedRole, setSelectedRole] = useState<AgentRoleType>('ENGINEERING');
+  const [selectedRole, setSelectedRole] = useState<AgentRoleType>(defaultRole || 'ENGINEERING');
   const [candidateTrait, setCandidateTrait] = useState<AgentTraitType>(getRandomTrait());
   const [candidateName, setCandidateName] = useState<string>(AGENT_NAMES[0]);
 
@@ -24,11 +26,13 @@ export const HireAgentModal: React.FC<HireAgentModalProps> = ({ isOpen, onClose 
   const canAfford = cash >= roleDef.hireCost;
 
   const handleRollCandidate = () => {
+    soundEngine.playClick();
     setCandidateTrait(getRandomTrait());
     setCandidateName(AGENT_NAMES[Math.floor(Math.random() * AGENT_NAMES.length)]);
   };
 
   const handleHire = () => {
+    soundEngine.playDeploy();
     const success = hireAgent(selectedRole, candidateTrait, candidateName);
     if (success) {
       handleRollCandidate();
@@ -37,19 +41,26 @@ export const HireAgentModal: React.FC<HireAgentModalProps> = ({ isOpen, onClose 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-      <div className="bg-[#111422] border border-purple-500/40 rounded-2xl max-w-2xl w-full p-6 shadow-[0_0_40px_rgba(168,85,247,0.2)] text-left">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-fade-in text-left">
+      <div className="bg-[#1c1c1e]/95 border border-white/[0.12] rounded-2xl max-w-2xl w-full p-6 shadow-2xl backdrop-blur-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
-          <div className="flex items-center gap-2">
-            <Bot className="w-5 h-5 text-purple-400" />
-            <h3 className="text-lg font-black text-white tracking-wide">
-              HIRE AUTONOMOUS AGENT
-            </h3>
+        <div className="flex items-center justify-between border-b border-white/[0.06] pb-4 mb-5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#0a84ff]/15 text-[#0a84ff] flex items-center justify-center">
+              <Bot className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-white tracking-tight">
+                Deploy Autonomous Agent
+              </h3>
+              <p className="text-xs text-white/50">
+                Configure candidate role, persona traits, and system initialization parameters.
+              </p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors"
+            className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -57,8 +68,8 @@ export const HireAgentModal: React.FC<HireAgentModalProps> = ({ isOpen, onClose 
 
         {/* Role Selector Tabs */}
         <div className="space-y-2 mb-4">
-          <label className="text-xs uppercase font-bold tracking-wider text-slate-400">
-            Select Role
+          <label className="text-xs font-semibold uppercase tracking-wider text-white/70">
+            Select Role Pipeline
           </label>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
             {(Object.keys(AGENT_ROLES) as AgentRoleType[]).map((role) => {
@@ -70,18 +81,18 @@ export const HireAgentModal: React.FC<HireAgentModalProps> = ({ isOpen, onClose 
                 <button
                   key={role}
                   disabled={!isUnlocked}
-                  onClick={() => setSelectedRole(role)}
-                  className={`p-2 rounded-xl text-left border transition-all ${
+                  onClick={() => { soundEngine.playClick(); setSelectedRole(role); }}
+                  className={`p-2.5 rounded-xl text-left border transition-all ${
                     isSelected
-                      ? 'bg-purple-600/20 border-purple-500 text-white shadow-sm'
+                      ? 'bg-[#0a84ff] text-white shadow-xs font-medium border-transparent'
                       : isUnlocked
-                      ? 'bg-[#171b2d] border-slate-800 text-slate-300 hover:border-slate-600'
-                      : 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed'
+                      ? 'apple-inset text-white/80 hover:border-white/[0.15]'
+                      : 'bg-white/[0.02] border-white/[0.04] text-white/30 cursor-not-allowed'
                   }`}
                 >
-                  <div className="text-xs font-bold truncate">{def.title.split(' ')[0]}</div>
-                  <div className="text-[10px] font-mono text-slate-400 mt-0.5">
-                    {isUnlocked ? `$${def.hireCost}` : 'Locked'}
+                  <div className="text-xs font-semibold truncate">{def.title.split(' ')[0]}</div>
+                  <div className={`text-[10px] font-mono mt-0.5 tabular-nums ${isSelected ? 'text-white/80' : 'text-white/50'}`}>
+                    {isUnlocked ? `$${def.hireCost.toLocaleString()}` : 'Locked'}
                   </div>
                 </button>
               );
@@ -90,84 +101,84 @@ export const HireAgentModal: React.FC<HireAgentModalProps> = ({ isOpen, onClose 
         </div>
 
         {/* Candidate Preview Card */}
-        <div className="bg-[#181c2f] border border-purple-500/30 rounded-xl p-4 mb-5">
-          <div className="flex items-center justify-between mb-2">
+        <div className="apple-card rounded-2xl p-4 mb-5 space-y-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-base font-black font-mono text-white">
+              <span className="text-sm font-semibold text-white">
                 {candidateName}
               </span>
-              <span className="text-xs font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-white/70 border border-white/[0.08]">
                 {roleDef.title}
               </span>
             </div>
 
             <button
               onClick={handleRollCandidate}
-              className="flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+              className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg apple-btn-secondary transition-colors font-medium"
             >
-              <Sparkles className="w-3 h-3 text-purple-400" />
+              <Sparkles className="w-3.5 h-3.5 text-[#ff9f0a]" />
               <span>Reroll Trait</span>
             </button>
           </div>
 
-          <p className="text-xs text-slate-400 mb-3">
+          <p className="text-xs text-white/60">
             {roleDef.description}
           </p>
 
           {/* Rolled Trait Info */}
-          <div className="bg-[#111422] p-3 rounded-lg border border-slate-800 space-y-1">
+          <div className="apple-inset p-3 rounded-xl space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-300">Rolled Trait:</span>
-              <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${traitDef.badgeColor}`}>
+              <span className="text-xs font-medium text-white/80">Persona Trait:</span>
+              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${traitDef.badgeColor}`}>
                 {traitDef.name}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-white/50">
               {traitDef.description}
             </p>
           </div>
 
           {/* Stats Breakdown */}
-          <div className="grid grid-cols-3 gap-2 mt-3 text-xs font-mono">
-            <div className="bg-[#121524] p-2 rounded border border-slate-800">
-              <span className="text-slate-500 text-[10px] uppercase">Base Output</span>
-              <div className="font-bold text-emerald-400 mt-0.5">{roleDef.baseOutputDescription}</div>
+          <div className="grid grid-cols-3 gap-2 text-xs font-mono">
+            <div className="apple-inset p-2.5 rounded-xl">
+              <span className="text-white/40 text-[10px] font-sans uppercase block">Base Output</span>
+              <div className="font-semibold text-[#30d158] mt-0.5 tabular-nums">{roleDef.baseOutputDescription}</div>
             </div>
-            <div className="bg-[#121524] p-2 rounded border border-slate-800">
-              <span className="text-slate-500 text-[10px] uppercase">Compute Load</span>
-              <div className="font-bold text-cyan-300 mt-0.5">+{roleDef.baseComputeCost} CU</div>
+            <div className="apple-inset p-2.5 rounded-xl">
+              <span className="text-white/40 text-[10px] font-sans uppercase block">Compute Load</span>
+              <div className="font-semibold text-white/80 mt-0.5 tabular-nums">+{roleDef.baseComputeCost} CU</div>
             </div>
-            <div className="bg-[#121524] p-2 rounded border border-slate-800">
-              <span className="text-slate-500 text-[10px] uppercase">Setup Fee</span>
-              <div className="font-bold text-white mt-0.5">${roleDef.hireCost}</div>
+            <div className="apple-inset p-2.5 rounded-xl">
+              <span className="text-white/40 text-[10px] font-sans uppercase block">Setup Fee</span>
+              <div className="font-semibold text-white mt-0.5 tabular-nums">${roleDef.hireCost.toLocaleString()}</div>
             </div>
           </div>
         </div>
 
         {/* Footer & Hire Action */}
-        <div className="flex items-center justify-between pt-2">
-          <div className="text-xs font-mono text-slate-400">
-            Available Cash: <span className="font-bold text-emerald-400">${Math.floor(cash).toLocaleString()}</span>
+        <div className="flex items-center justify-between pt-1 border-t border-white/[0.06]">
+          <div className="text-xs font-mono text-white/50">
+            Available Capital: <span className="font-semibold text-white tabular-nums">${Math.floor(cash).toLocaleString()}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors"
+              className="px-4 py-2 rounded-xl text-xs font-medium text-white/60 hover:text-white bg-white/[0.05] hover:bg-white/[0.10] border border-white/[0.08] transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleHire}
               disabled={!canAfford}
-              className={`flex items-center gap-1.5 px-5 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
                 canAfford
-                  ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg hover:shadow-[0_0_15px_rgba(168,85,247,0.4)]'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  ? 'apple-btn-primary'
+                  : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.05]'
               }`}
             >
-              <Plus className="w-4 h-4" />
-              <span>Hire Agent (${roleDef.hireCost})</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>Deploy (${roleDef.hireCost.toLocaleString()})</span>
             </button>
           </div>
         </div>
@@ -175,3 +186,4 @@ export const HireAgentModal: React.FC<HireAgentModalProps> = ({ isOpen, onClose 
     </div>
   );
 };
+

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { FOUNDER_POST_TEMPLATES } from '../../data/trends';
 import { TrendingUp, Flame, Share2, Send, Radio, Zap, PauseCircle } from 'lucide-react';
+import { soundEngine } from '../../audio/soundEffects';
 
 export const GrowthScreen: React.FC = () => {
   const {
@@ -34,11 +35,13 @@ export const GrowthScreen: React.FC = () => {
 
   const handlePostTemplate = () => {
     if (focus < 1) return;
+    soundEngine.playClick();
     postManual(activeTrendId || undefined, selectedTemplate.content);
   };
 
   const handlePostCustom = () => {
     if (focus < 1 || !customTweet.trim()) return;
+    soundEngine.playClick();
     postManual(activeTrendId || undefined, customTweet.trim());
     setCustomTweet('');
   };
@@ -46,39 +49,45 @@ export const GrowthScreen: React.FC = () => {
   return (
     <div className="space-y-6 text-left">
       {/* Growth Funnel Header */}
-      <div className="bg-[#111422] border border-[#20263c] rounded-xl p-5">
+      <div className="apple-card rounded-2xl p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-pink-400" />
-              <h2 className="text-lg font-black tracking-tight text-white">
-                DISTRIBUTION &amp; GROWTH CHANNELS
-              </h2>
-              <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-pink-950 text-pink-300 border border-pink-800">
-                {Math.floor(attention).toLocaleString()} ATTENTION
-              </span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#bf5af2]/15 text-[#bf5af2] flex items-center justify-center">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-base font-semibold text-white tracking-tight">
+                    Distribution &amp; Growth Channels
+                  </h1>
+                  <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-white/[0.06] text-white/80 border border-white/[0.08] tabular-nums">
+                    {Math.floor(attention).toLocaleString()} Attention
+                  </span>
+                </div>
+                <p className="text-xs text-white/50 mt-0.5">
+                  Attention decays continuously. Scale automated distribution channels and deploy Growth Agents to sustain inbound leads.
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Attention decays continuously. Scale automated distribution channels and deploy Growth Agents to generate consistent outbound inbound velocity.
-            </p>
           </div>
 
           <div className="flex items-center gap-6 text-right">
             <div>
-              <span className="text-xs font-mono text-slate-400">Total Velocity:</span>
-              <div className="text-base font-black font-mono text-emerald-400">
-                +{totalAttGainPerSec}/sec
+              <span className="text-[11px] font-sans text-white/40 block">Total Inflow</span>
+              <div className="text-sm font-semibold font-mono text-white tabular-nums mt-0.5">
+                +{totalAttGainPerSec}/s
               </div>
             </div>
             <div>
-              <span className="text-xs font-mono text-slate-400">Leads in Funnel:</span>
-              <div className="text-base font-black font-mono text-amber-300">
+              <span className="text-[11px] font-sans text-white/40 block">Leads in Pipeline</span>
+              <div className="text-sm font-semibold font-mono text-white tabular-nums mt-0.5">
                 {Math.floor(leads)} Leads
               </div>
             </div>
             <div>
-              <span className="text-xs font-mono text-slate-400">Hype Multiplier:</span>
-              <div className="text-base font-black font-mono text-pink-400 glow-purple">
+              <span className="text-[11px] font-sans text-white/40 block">Hype Multiplier</span>
+              <div className="text-sm font-semibold font-mono text-[#ff9f0a] tabular-nums mt-0.5">
                 {(1 + (hype / 100) * 0.5).toFixed(2)}x
               </div>
             </div>
@@ -89,73 +98,73 @@ export const GrowthScreen: React.FC = () => {
       {/* Automated Distribution Channels / Growth Campaigns */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Radio className="w-4 h-4 text-emerald-400" />
-            Automated Acquisition Channels &amp; Campaigns
-          </h3>
-          <span className="text-xs font-mono text-slate-500">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-white/70 flex items-center gap-2">
+            <Radio className="w-3.5 h-3.5 text-[#bf5af2]" />
+            <span>Automated Acquisition Channels</span>
+          </h2>
+          <span className="text-[11px] font-mono text-white/40">
             Monthly Recurring Marketing OPEX
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           {(growthCampaigns || []).map((camp) => {
             const isUnlocked = camp.isUnlocked || mrr >= camp.requiredMrr;
 
             return (
               <div
                 key={camp.id}
-                className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
+                className={`p-4 rounded-2xl border flex flex-col justify-between transition-all ${
                   camp.isActive
-                    ? 'bg-[#151d2c] border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
+                    ? 'bg-[#0a84ff]/10 border-[#0a84ff]/30 shadow-xs'
                     : isUnlocked
-                    ? 'bg-[#141726] border-slate-800 hover:border-slate-700'
-                    : 'bg-slate-900/40 border-slate-800/50 opacity-60'
+                    ? 'apple-card hover:border-white/[0.14]'
+                    : 'apple-card opacity-50'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 uppercase font-bold border border-slate-700">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-white/70 border border-white/[0.08] capitalize">
                       {camp.category}
                     </span>
-                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border font-medium ${
                       camp.isActive
-                        ? 'bg-emerald-950 text-emerald-300 border-emerald-800 animate-pulse'
+                        ? 'bg-[#30d158]/15 text-[#30d158] border-[#30d158]/30'
                         : isUnlocked
-                        ? 'bg-slate-800 text-slate-400 border-slate-700'
-                        : 'bg-rose-950/60 text-rose-400 border-rose-900'
+                        ? 'bg-white/[0.06] text-white/60 border-white/[0.08]'
+                        : 'bg-[#ff453a]/10 text-[#ff453a] border-[#ff453a]/20'
                     }`}>
-                      {camp.isActive ? 'RUNNING' : isUnlocked ? 'READY' : `LOCKED ($${camp.requiredMrr >= 1000 ? `${camp.requiredMrr/1000}k` : camp.requiredMrr} MRR)`}
+                      {camp.isActive ? 'Active' : isUnlocked ? 'Ready' : `Locked ($${camp.requiredMrr >= 1000 ? `${camp.requiredMrr/1000}k` : camp.requiredMrr} MRR)`}
                     </span>
                   </div>
 
-                  <h4 className="font-bold text-white text-sm leading-tight mb-1">
+                  <h3 className="font-semibold text-white text-xs tracking-tight leading-snug mb-1">
                     {camp.name}
-                  </h4>
-                  <p className="text-xs text-slate-400 mb-3 leading-relaxed">
+                  </h3>
+                  <p className="text-[11px] text-white/50 mb-3 leading-relaxed">
                     {camp.description}
                   </p>
                 </div>
 
-                <div className="space-y-2 pt-2 border-t border-slate-800/80">
+                <div className="space-y-2 pt-2.5 border-t border-white/[0.06]">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-slate-500">Output:</span>
-                    <span className="font-bold text-pink-400">+{camp.attentionPerSecond} Att/s</span>
+                    <span className="text-white/40">Inflow:</span>
+                    <span className="font-semibold text-[#30d158] tabular-nums">+{camp.attentionPerSecond} Att/s</span>
                   </div>
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-slate-500">OPEX Cost:</span>
-                    <span className="font-bold text-rose-400">${camp.monthlyCost}/mo</span>
+                    <span className="text-white/40">OPEX:</span>
+                    <span className="font-semibold text-white/80 tabular-nums">${camp.monthlyCost}/mo</span>
                   </div>
 
                   <button
-                    onClick={() => toggleGrowthCampaign(camp.id)}
+                    onClick={() => { soundEngine.playClick(); toggleGrowthCampaign(camp.id); }}
                     disabled={!isUnlocked}
-                    className={`w-full py-1.5 px-3 rounded-lg font-bold text-xs mt-2 transition-all flex items-center justify-center gap-1.5 ${
+                    className={`w-full py-1.5 px-3 rounded-xl font-medium text-xs mt-2 transition-all flex items-center justify-center gap-1.5 ${
                       !isUnlocked
-                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                        ? 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.05]'
                         : camp.isActive
-                        ? 'bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 shadow-sm'
-                        : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md'
+                        ? 'bg-[#ff453a]/15 hover:bg-[#ff453a]/25 text-[#ff453a] border border-[#ff453a]/25'
+                        : 'apple-btn-secondary'
                     }`}
                   >
                     {camp.isActive ? (
@@ -165,8 +174,8 @@ export const GrowthScreen: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <Zap className="w-3.5 h-3.5" />
-                        <span>{isUnlocked ? `Launch ($${camp.monthlyCost}/mo)` : `Locked ($${camp.requiredMrr.toLocaleString()} MRR)`}</span>
+                        <Zap className="w-3.5 h-3.5 text-[#ff9f0a]" />
+                        <span>{isUnlocked ? `Launch ($${camp.monthlyCost}/mo)` : `Locked`}</span>
                       </>
                     )}
                   </button>
@@ -182,51 +191,51 @@ export const GrowthScreen: React.FC = () => {
         {/* Trends Hijacking Board */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-              <Flame className="w-4 h-4 text-pink-400" />
-              Active Cultural Trends &amp; Amplification
-            </h3>
-            <span className="text-xs text-slate-500 font-mono">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-white/70 flex items-center gap-2">
+              <Flame className="w-3.5 h-3.5 text-[#ff9f0a]" />
+              <span>Active Cultural Trends</span>
+            </h2>
+            <span className="text-[11px] text-white/40">
               Click trend to hijack traffic
             </span>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {trends.map((trend) => {
               const isActive = activeTrendId === trend.id;
 
               return (
                 <div
                   key={trend.id}
-                  onClick={() => setActiveTrend(trend.id)}
-                  className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                  onClick={() => { soundEngine.playClick(); setActiveTrend(trend.id); }}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                     isActive
-                      ? 'bg-[#1a1c30] border-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.2)]'
-                      : 'bg-[#141726] border-slate-800 hover:border-slate-700'
+                      ? 'bg-[#0a84ff]/10 border-[#0a84ff] ring-1 ring-[#0a84ff]/30 shadow-xs'
+                      : 'apple-card hover:border-white/[0.14]'
                   }`}
                 >
                   <div className="flex-1 pr-3">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono font-bold text-white">
+                      <span className="text-xs font-semibold text-white">
                         #{trend.name}
                       </span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-400">
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-white/[0.06] text-white/60">
                         {trend.category}
                       </span>
                       {isActive && (
-                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-pink-950 text-pink-300 border border-pink-700 font-bold animate-pulse">
-                          ACTIVE TARGET
+                        <span className="text-[10px] px-2 py-0.2 rounded-full bg-[#0a84ff]/15 text-[#0a84ff] border border-[#0a84ff]/30 font-medium">
+                          Active Target
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-snug">
+                    <p className="text-[11px] text-white/50 leading-snug">
                       {trend.description}
                     </p>
                   </div>
 
-                  <div className="text-right pl-3 border-l border-slate-800">
-                    <span className="text-[10px] font-mono text-slate-400 block">Viral Boost</span>
-                    <span className="text-xs font-mono font-bold text-pink-400">
+                  <div className="text-right pl-3 border-l border-white/[0.06]">
+                    <span className="text-[10px] text-white/40 block">Viral Multiplier</span>
+                    <span className="text-xs font-mono font-semibold text-[#ff9f0a] tabular-nums">
                       {trend.viralMultiplier}x
                     </span>
                   </div>
@@ -237,31 +246,31 @@ export const GrowthScreen: React.FC = () => {
         </div>
 
         {/* Founder Thought Leadership Generator */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Share2 className="w-4 h-4 text-purple-400" />
-            Founder Thought Leadership Studio
-          </h3>
+        <div className="space-y-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-white/70 flex items-center gap-2">
+            <Share2 className="w-3.5 h-3.5 text-[#bf5af2]" />
+            <span>Founder Content Studio</span>
+          </h2>
 
-          <div className="bg-[#141726] border border-[#21263c] rounded-xl p-4 space-y-4">
+          <div className="apple-card rounded-2xl p-4 space-y-4">
             {/* Archetype Selector */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">
-                Select Content Hook Template:
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-white/80">
+                Content Hook Template:
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {FOUNDER_POST_TEMPLATES.map((tmpl) => (
                   <button
                     key={tmpl.id}
-                    onClick={() => setSelectedTemplateId(tmpl.id)}
-                    className={`p-2 rounded-lg text-left text-xs border transition-all ${
+                    onClick={() => { soundEngine.playClick(); setSelectedTemplateId(tmpl.id); }}
+                    className={`p-2.5 rounded-xl text-left text-xs border transition-all ${
                       selectedTemplateId === tmpl.id
-                        ? 'bg-purple-600/20 border-purple-500 text-purple-200'
-                        : 'bg-[#181c2e] border-slate-800 text-slate-400 hover:text-slate-200'
+                        ? 'bg-[#0a84ff]/15 border-[#0a84ff] text-white'
+                        : 'apple-inset text-white/60 hover:text-white hover:border-white/[0.12]'
                     }`}
                   >
-                    <div className="font-bold truncate">{tmpl.hook}</div>
-                    <div className="text-[10px] font-mono text-slate-500 mt-0.5">
+                    <div className="font-semibold truncate">{tmpl.hook}</div>
+                    <div className="text-[10px] font-mono text-white/40 mt-0.5 tabular-nums">
                       +{tmpl.baseAttention} Base Att
                     </div>
                   </button>
@@ -270,15 +279,15 @@ export const GrowthScreen: React.FC = () => {
             </div>
 
             {/* Content Preview Box */}
-            <div className="bg-[#0f111c] border border-slate-800 rounded-lg p-3">
+            <div className="apple-inset rounded-xl p-3">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold font-mono">
-                  1
+                <div className="w-5 h-5 rounded-full bg-[#0a84ff] flex items-center justify-center text-white text-[10px] font-bold">
+                  F
                 </div>
-                <span className="text-xs font-bold text-white">You (Founder)</span>
-                <span className="text-[10px] text-slate-500">@solo_unicorn</span>
+                <span className="text-xs font-semibold text-white">Founder</span>
+                <span className="text-[10px] text-white/40 font-mono">@solo_unicorn</span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-sans">
+              <p className="text-xs text-white/80 leading-relaxed">
                 {selectedTemplate.content}
               </p>
             </div>
@@ -287,41 +296,41 @@ export const GrowthScreen: React.FC = () => {
             <button
               onClick={handlePostTemplate}
               disabled={focus < 1}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-xs tracking-wide transition-all ${
+              className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl font-medium text-xs tracking-tight transition-all ${
                 focus >= 1
-                  ? 'bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white shadow-lg'
-                  : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  ? 'apple-btn-primary'
+                  : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.05]'
               }`}
             >
-              <Send className="w-4 h-4" />
-              <span>Publish Post (1 Focus &rarr; Target #{activeTrend.name})</span>
+              <Send className="w-3.5 h-3.5" />
+              <span>Publish Thread (1 Focus &rarr; #{activeTrend.name})</span>
             </button>
 
             {/* Custom Tweet Write-in Box */}
-            <div className="pt-3 border-t border-slate-800/80 space-y-2">
-              <label className="text-xs font-bold text-slate-400">
-                Or Write Custom Manifesto (Max 280 chars):
+            <div className="pt-3 border-t border-white/[0.06] space-y-2">
+              <label className="text-xs font-medium text-white/70">
+                Or Write Custom Post (Max 280 chars):
               </label>
               <textarea
                 value={customTweet}
                 onChange={(e) => setCustomTweet(e.target.value.slice(0, 280))}
-                placeholder="Drop an unhinged startup take..."
-                className="w-full bg-[#0e101a] border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-purple-500 h-20 resize-none font-mono"
+                placeholder="Drop a sharp startup manifesto..."
+                className="w-full bg-black/40 border border-white/[0.08] focus:border-[#0a84ff] rounded-xl p-2.5 text-xs text-white placeholder-white/40 focus:outline-none h-20 resize-none font-sans"
               />
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-slate-500">
+                <span className="text-[10px] font-mono text-white/40 tabular-nums">
                   {customTweet.length}/280 chars
                 </span>
                 <button
                   onClick={handlePostCustom}
                   disabled={focus < 1 || !customTweet.trim()}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-xl text-xs font-medium transition-all ${
                     focus >= 1 && customTweet.trim()
-                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md'
-                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                      ? 'apple-btn-secondary'
+                      : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.05]'
                   }`}
                 >
-                  Send Tweet (1 Focus)
+                  Send Post (1 Focus)
                 </button>
               </div>
             </div>
