@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { COMPUTE_TIERS } from '../../data/vcOffers';
-import { DollarSign, Cpu, Handshake, CheckCircle2 } from 'lucide-react';
+import { DollarSign, Cpu, Handshake, CheckCircle2, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 export const FinanceScreen: React.FC = () => {
   const {
@@ -9,6 +9,7 @@ export const FinanceScreen: React.FC = () => {
     arr,
     cash,
     valuation,
+    lastValuation,
     valuationMultiple,
     founderOwnership,
     totalCapitalRaised,
@@ -18,16 +19,36 @@ export const FinanceScreen: React.FC = () => {
     upgradeComputeTier,
     trust,
     productLevel,
-    agents
+    agents,
+    growthCampaigns,
+    computeUsed,
+    computeCapacity
   } = useGameStore();
 
   const currentTier = COMPUTE_TIERS.find(t => t.id === currentComputeTierId) || COMPUTE_TIERS[0];
-  const monthlyBurn = currentTier.monthlyCost;
-  const runwayMonths = monthlyBurn > 0 ? (cash / monthlyBurn).toFixed(1) : 'Infinite';
+  const monthlyComputeCost = currentTier.monthlyCost;
+  
+  const activeCampaigns = (growthCampaigns || []).filter(c => c.isActive);
+  const monthlyCampaignsCost = activeCampaigns.reduce((acc, c) => acc + c.monthlyCost, 0);
 
+  const totalMonthlyBurn = monthlyComputeCost + monthlyCampaignsCost;
+  const netMonthlyCashflow = mrr - totalMonthlyBurn;
+  const isProfitable = netMonthlyCashflow >= 0;
+
+  const runwayMonths = !isProfitable && totalMonthlyBurn > mrr
+    ? (cash / (totalMonthlyBurn - mrr)).toFixed(1)
+    : 'Infinite';
+
+  const grossMargin = mrr > 0
+    ? Math.max(0, Math.min(100, ((mrr - monthlyComputeCost) / mrr) * 100))
+    : 100;
+
+  const organicValuation = Math.round(arr * valuationMultiple);
   const hasManager = agents.some(a => a.role === 'MANAGER');
   const hasExec = agents.some(a => a.role === 'EXECUTIVE');
   const hasCEO = agents.some(a => a.role === 'CEO');
+
+  const latestAcceptedOffer = [...vcOffers].reverse().find(o => o.isAccepted);
 
   return (
     <div className="space-y-6 text-left">
@@ -38,20 +59,20 @@ export const FinanceScreen: React.FC = () => {
             <div className="flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-emerald-400" />
               <h2 className="text-lg font-black tracking-tight text-white">
-                FINANCIALS & VALUATION
+                FINANCIALS & VALUATION BENCHMARK
               </h2>
               <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800">
                 ${mrr.toLocaleString()} MRR
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Valuation is derived from ARR multiplied by a multiple driven by autonomous scale, hype, and low tech debt.
+              Valuation is anchored to your closed VC priced rounds (Post-Money Valuation) or driven higher organically by ARR &times; Multiple.
             </p>
           </div>
 
           <div className="flex items-center gap-6 text-right">
             <div>
-              <span className="text-xs font-mono text-slate-400">Company Valuation:</span>
+              <span className="text-xs font-mono text-slate-400">Post-Money Valuation:</span>
               <div className="text-xl font-black font-mono text-purple-300 glow-purple">
                 ${valuation >= 1000000 ? `${(valuation / 1000000).toFixed(2)}M` : valuation.toLocaleString()}
               </div>
@@ -65,34 +86,114 @@ export const FinanceScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Valuation Formula Breakdown */}
-        <div className="mt-4 pt-4 border-t border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
-          <div className="bg-[#171b2d] p-2.5 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px]">Annual Run Rate (ARR)</span>
-            <span className="text-sm font-bold text-white">${arr.toLocaleString()}</span>
+        {/* Valuation Logic Breakdown Box */}
+        <div className="mt-4 pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
+          <div className="bg-[#171b2d] p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 block text-[10px] uppercase tracking-wider">Latest Priced Round Floor</span>
+            <div className="flex items-baseline gap-1.5 mt-1">
+              <span className="text-base font-bold text-purple-300">
+                ${(lastValuation || 0) >= 1000000 ? `${((lastValuation || 0) / 1000000).toFixed(1)}M` : (lastValuation || 0).toLocaleString()}
+              </span>
+              <span className="text-[10px] text-slate-500">
+                {latestAcceptedOffer ? `(${latestAcceptedOffer.roundStage})` : '(Pre-Funding)'}
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1 font-sans">
+              Post-money valuation agreed upon in your signed term sheet.
+            </p>
           </div>
-          <div className="bg-[#171b2d] p-2.5 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px]">Valuation Multiple</span>
-            <div className="flex items-center gap-1">
-              <span className="text-sm font-bold text-purple-300">{valuationMultiple.toFixed(2)}x</span>
-              {agents.length === 0 ? (
-                <span className="text-[9px] px-1 py-0.2 rounded bg-rose-950 text-rose-400 border border-rose-800" title="Key-person risk penalty">
-                  MANUAL RISK
-                </span>
-              ) : (
-                <span className="text-[9px] px-1 py-0.2 rounded bg-purple-950 text-purple-300 border border-purple-800">
-                  {agents.length} AGENTS
-                </span>
-              )}
+
+          <div className="bg-[#171b2d] p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 block text-[10px] uppercase tracking-wider">Organic Multiple Valuation</span>
+            <div className="flex items-baseline gap-1.5 mt-1">
+              <span className="text-base font-bold text-white">
+                ${organicValuation >= 1000000 ? `${(organicValuation / 1000000).toFixed(2)}M` : organicValuation.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-purple-400">
+                (${arr.toLocaleString()} ARR &times; {valuationMultiple.toFixed(1)}x)
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1 font-sans">
+              Scales higher when revenue multiple surpasses priced round benchmark.
+            </p>
+          </div>
+
+          <div className="bg-[#171b2d] p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 block text-[10px] uppercase tracking-wider">Total Capital Injected</span>
+            <div className="flex items-baseline gap-1.5 mt-1">
+              <span className="text-base font-bold text-emerald-400">
+                ${totalCapitalRaised.toLocaleString()}
+              </span>
+              <span className="text-[10px] text-slate-500">
+                (${Math.floor(cash).toLocaleString()} in bank)
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1 font-sans">
+              Cumulative non-debt venture equity capital raised to date.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* P&L / Income Statement & Cashflow Card */}
+      <div className="bg-[#121524] border border-[#20273e] rounded-xl p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-cyan-400" />
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+              Live SaaS Income Statement (P&amp;L) &amp; Runway
+            </h3>
+          </div>
+          <span className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+            isProfitable
+              ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+              : runwayMonths === 'Infinite' || Number(runwayMonths) > 12
+              ? 'bg-blue-950 text-blue-300 border-blue-800'
+              : Number(runwayMonths) > 6
+              ? 'bg-amber-950 text-amber-300 border-amber-800'
+              : 'bg-rose-950 text-rose-300 border-rose-800 animate-pulse'
+          }`}>
+            {isProfitable ? 'CASHFLOW POSITIVE' : `${runwayMonths} MONTHS RUNWAY`}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs font-mono">
+          <div className="bg-[#171b2e] p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 block text-[10px]">Monthly Revenue (MRR)</span>
+            <div className="flex items-center gap-1 text-emerald-400 font-bold text-sm mt-0.5">
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              <span>+${mrr.toLocaleString()}/mo</span>
             </div>
           </div>
-          <div className="bg-[#171b2d] p-2.5 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px]">Total Capital Raised</span>
-            <span className="text-sm font-bold text-emerald-400">${totalCapitalRaised.toLocaleString()}</span>
+
+          <div className="bg-[#171b2e] p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 block text-[10px]">Compute Cloud OPEX</span>
+            <div className="flex items-center gap-1 text-rose-400 font-bold text-sm mt-0.5">
+              <ArrowDownRight className="w-3.5 h-3.5" />
+              <span>-${monthlyComputeCost.toLocaleString()}/mo</span>
+            </div>
           </div>
-          <div className="bg-[#171b2d] p-2.5 rounded-lg border border-slate-800">
-            <span className="text-slate-400 block text-[10px]">Runway</span>
-            <span className="text-sm font-bold text-cyan-300">{runwayMonths} Months</span>
+
+          <div className="bg-[#171b2e] p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 block text-[10px]">Marketing Campaigns OPEX</span>
+            <div className="flex items-center gap-1 text-pink-400 font-bold text-sm mt-0.5">
+              <ArrowDownRight className="w-3.5 h-3.5" />
+              <span>-${monthlyCampaignsCost.toLocaleString()}/mo</span>
+            </div>
+          </div>
+
+          <div className="bg-[#171b2e] p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 block text-[10px]">Net Monthly Cashflow</span>
+            <div className={`flex items-center gap-1 font-bold text-sm mt-0.5 ${netMonthlyCashflow >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <span>{netMonthlyCashflow >= 0 ? `+$${netMonthlyCashflow.toLocaleString()}/mo` : `-$${Math.abs(netMonthlyCashflow).toLocaleString()}/mo`}</span>
+            </div>
+          </div>
+
+          <div className="bg-[#171b2e] p-3 rounded-lg border border-slate-800">
+            <span className="text-slate-400 block text-[10px]">Gross Margin</span>
+            <div className="text-cyan-300 font-bold text-sm mt-0.5">
+              {grossMargin.toFixed(1)}%
+            </div>
           </div>
         </div>
       </div>
@@ -153,7 +254,7 @@ export const FinanceScreen: React.FC = () => {
                   </p>
 
                   <div className="flex items-center justify-between text-xs font-mono text-slate-300 pt-2 border-t border-slate-800">
-                    <span>Valuation: ${(offer.valuation / 1000000).toFixed(1)}M</span>
+                    <span className="font-bold text-purple-300">Valuation: ${(offer.valuation / 1000000).toFixed(1)}M</span>
                     <span>Dilution: {offer.dilutionPercent}%</span>
                   </div>
 
@@ -215,7 +316,7 @@ export const FinanceScreen: React.FC = () => {
                   <div className="mt-3">
                     {offer.isAccepted ? (
                       <div className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-emerald-950/60 text-emerald-300 border border-emerald-800/60 text-xs font-mono font-bold">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> ROUND CLOSED
+                        <CheckCircle2 className="w-3.5 h-3.5" /> ROUND CLOSED (${(offer.valuation / 1000000).toFixed(1)}M BENCHMARK)
                       </div>
                     ) : (
                       <button
@@ -228,7 +329,7 @@ export const FinanceScreen: React.FC = () => {
                         }`}
                       >
                         {offer.isAvailable
-                          ? `Accept Term Sheet (+${offer.hypeBoost}% Hype)`
+                          ? `Sign Term Sheet (${(offer.valuation / 1000000).toFixed(1)}M Post-Money)`
                           : `Prerequisites Incomplete`}
                       </button>
                     )}
@@ -241,10 +342,15 @@ export const FinanceScreen: React.FC = () => {
 
         {/* Compute Infrastructure Tiers */}
         <div className="space-y-3">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-cyan-400" />
-            Compute Infrastructure Tiers
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-cyan-400" />
+              Compute Infrastructure Tiers
+            </h3>
+            <span className="text-xs font-mono font-bold text-cyan-300">
+              Load: {computeUsed.toFixed(1)} / {computeCapacity} CU
+            </span>
+          </div>
 
           <div className="space-y-3">
             {COMPUTE_TIERS.map((tier) => {
@@ -270,7 +376,7 @@ export const FinanceScreen: React.FC = () => {
 
                   <div className="flex items-center justify-between text-xs font-mono text-slate-400 pt-2 border-t border-slate-800">
                     <span>Monthly OPEX: ${tier.monthlyCost}/mo</span>
-                    <span>Setup: ${tier.setupCost}</span>
+                    <span>Setup: ${tier.setupCost.toLocaleString()}</span>
                   </div>
 
                   <div className="mt-3">
@@ -284,7 +390,7 @@ export const FinanceScreen: React.FC = () => {
                         disabled={!canAfford}
                         className={`w-full py-1.5 px-3 rounded-lg font-bold text-xs transition-all ${
                           canAfford
-                            ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                            ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-md'
                             : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                         }`}
                       >
@@ -301,3 +407,4 @@ export const FinanceScreen: React.FC = () => {
     </div>
   );
 };
+

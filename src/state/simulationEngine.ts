@@ -140,7 +140,8 @@ function simulateInactiveCompany(company: CompanyState, dt: number, treasuryYiel
     else if (a.role === 'CEO') leadershipBoost += 8.0 * a.level;
   });
   const multiple = Math.max(1.5, Math.min(35.0, 4.0 + workforceMultipleBoost + leadershipBoost + (company.hype / 100) * 10 - (newTechDebt / 100) * 10));
-  const newValuation = Math.round(newArr * multiple);
+  const organicValuation = Math.round(newArr * multiple);
+  const newValuation = Math.max(company.lastValuation || 0, organicValuation);
 
   // Check L5 Conglomerate Dividend
   const autonomy = calcAutonomyInfo({ agents: company.agents, valuation: newValuation });
@@ -175,6 +176,7 @@ function simulateInactiveCompany(company: CompanyState, dt: number, treasuryYiel
     mrr: newMrr,
     arr: newArr,
     valuation: newValuation,
+    lastValuation: company.lastValuation || 0,
     valuationMultiple: Number(multiple.toFixed(2)),
     buildPoints: newBP,
     productLevel: newLevel,
@@ -313,13 +315,26 @@ export function runSimulationTick(deltaSeconds: number) {
   const completedFeaturesArpuBoost = updatedRoadmap
     .filter(f => f.isCompleted)
     .reduce((acc, f) => acc + (f.effects.arpuBoost || 0), 0);
-  const currentArpu = (store.baseArpu || 25) + completedFeaturesArpuBoost + dynamicArpuBoost;
 
   // 5. Growth Output & Attention Decay
+  const activeTrend = store.trends.find(t => t.id === store.activeTrendId);
+  const trendMultiplier = activeTrend ? activeTrend.viralMultiplier * (1 + activeTrend.strength / 200) : 1.0;
+
   let attentionProduced = 0;
   const growthAgents = store.agents.filter(a => a.role === 'GROWTH');
   growthAgents.forEach(a => {
-    attentionProduced += a.outputPerSec * totalGrowthMult * dt;
+    attentionProduced += a.outputPerSec * totalGrowthMult * trendMultiplier * dt;
+  });
+
+  // Active Growth Campaigns
+  let campaignCostPerSec = 0;
+  const updatedCampaigns = (store.growthCampaigns || []).map(c => {
+    const isUnlocked = c.isUnlocked || (store.mrr >= c.requiredMrr);
+    if (c.isActive) {
+      attentionProduced += c.attentionPerSecond * trendMultiplier * dt;
+      campaignCostPerSec += c.monthlyCost / (30 * 86400);
+    }
+    return { ...c, isUnlocked };
   });
 
   // Feature virality boosts
@@ -368,6 +383,44 @@ export function runSimulationTick(deltaSeconds: number) {
   const churnedCustomers = newCustomers * churnPerSec * dt;
   newCustomers = Math.max(0, newCustomers - churnedCustomers);
 
+  const integerCustomers = Math.floor(newCustomers);
+
+  // Update Customer Segments & Dynamic Blended ARPU
+  const hasEnterpriseFeature = updatedRoadmap.some(f => f.id === 'feat_sso_saml' && f.isCompleted);
+  const isProUnlocked = integerCustomers >= 20;
+  const isEntUnlocked = integerCustomers >= 100 || hasEnterpriseFeature;
+
+  let entCount = 0;
+  let proCount = 0;
+  let smbCount = integerCustomers;
+
+  if (isEntUnlocked) {
+    entCount = Math.floor(integerCustomers * 0.10);
+    proCount = Math.floor(integerCustomers * 0.30);
+    smbCount = Math.max(0, integerCustomers - proCount - entCount);
+  } else if (isProUnlocked) {
+    proCount = Math.floor(integerCustomers * 0.30);
+    smbCount = Math.max(0, integerCustomers - proCount);
+  }
+
+  const baseArpu = store.baseArpu || 25;
+  const smbArpu = baseArpu;
+  const proArpu = Math.round(baseArpu * 3);
+  const entArpu = Math.round(baseArpu * 15);
+
+  const updatedSegments = (store.customerSegments || []).map(seg => {
+    if (seg.id === 'smb') return { ...seg, count: smbCount, arpu: smbArpu, unlocked: true };
+    if (seg.id === 'pro') return { ...seg, count: proCount, arpu: proArpu, unlocked: isProUnlocked };
+    if (seg.id === 'enterprise') return { ...seg, count: entCount, arpu: entArpu, unlocked: isEntUnlocked };
+    return seg;
+  });
+
+  const totalCust = Math.max(1, integerCustomers);
+  const weightedArpu = integerCustomers > 0 
+    ? Math.round((smbCount * smbArpu + proCount * proArpu + entCount * entArpu) / totalCust)
+    : baseArpu;
+  const currentArpu = weightedArpu + completedFeaturesArpuBoost + dynamicArpuBoost;
+
   // 7. Support Ticket Generation & Resolution
   const lowDebtRate = 1 / (125 * 60);
   const highDebtRate = 1 / (25 * 60);
@@ -398,12 +451,12 @@ export function runSimulationTick(deltaSeconds: number) {
   const newHype = Math.max(0, Math.min(100, store.hype + dynamicHypeBoost));
 
   // 8. Financials (Cash, MRR, ARR, Valuation)
-  const integerCustomers = Math.floor(newCustomers);
   const newMrr = Math.round(newCustomers * currentArpu);
   const newArr = newMrr * 12;
 
   const revenuePerSec = newMrr / (30 * 86400);
-  const netCashChange = (revenuePerSec - computeCostPerSec) * dt;
+  const totalExpensesPerSec = computeCostPerSec + campaignCostPerSec;
+  const netCashChange = (revenuePerSec - totalExpensesPerSec) * dt;
   const newCash = Math.max(0, store.cash + netCashChange);
 
   // Valuation Multiple Formula
@@ -435,7 +488,8 @@ export function runSimulationTick(deltaSeconds: number) {
   
   const rawMultiple = 4.0 + workforceMultipleBoost + leadershipBoost + hypeBonus + trustBonus + growthBonus - debtPenalty;
   const multiple = Math.max(1.5, Math.min(35.0, rawMultiple));
-  const newValuation = Math.round(newArr * multiple);
+  const organicValuation = Math.round(newArr * multiple);
+  const newValuation = Math.max(store.lastValuation || 0, organicValuation);
 
   // Update VC offers availability
   const hasManager = store.agents.some(a => a.role === 'MANAGER');
@@ -464,21 +518,6 @@ export function runSimulationTick(deltaSeconds: number) {
       ...offer,
       isAvailable: meetsMrr && meetsTrust && meetsAgents && meetsProduct && meetsManager && meetsExec && meetsCEO && meetsCompute
     };
-  });
-
-  // Update Customer Segments
-  const hasEnterpriseFeature = updatedRoadmap.some(f => f.id === 'feat_sso_saml' && f.isCompleted);
-  const updatedSegments = store.customerSegments.map(seg => {
-    if (seg.id === 'smb') {
-      return { ...seg, count: Math.floor(newCustomers * 0.7) };
-    } else if (seg.id === 'pro') {
-      const isUnlocked = newCustomers >= 20;
-      return { ...seg, unlocked: isUnlocked, count: isUnlocked ? Math.floor(newCustomers * 0.25) : 0 };
-    } else if (seg.id === 'enterprise') {
-      const isUnlocked = newCustomers >= 100 || hasEnterpriseFeature;
-      return { ...seg, unlocked: isUnlocked, count: isUnlocked ? Math.floor(newCustomers * 0.05) : 0 };
-    }
-    return seg;
   });
 
   // 9. Milestone Check
@@ -597,6 +636,7 @@ export function runSimulationTick(deltaSeconds: number) {
     mrr: newMrr,
     arr: newArr,
     valuation: newValuation,
+    lastValuation: store.lastValuation || 0,
     valuationMultiple: Number(multiple.toFixed(2)),
     founderOwnership: store.founderOwnership,
     totalCapitalRaised: store.totalCapitalRaised,
@@ -624,6 +664,7 @@ export function runSimulationTick(deltaSeconds: number) {
     architectureUpgrades: store.architectureUpgrades,
     trends: store.trends,
     activeTrendId: store.activeTrendId,
+    growthCampaigns: updatedCampaigns,
     customerSegments: updatedSegments,
     vcOffers: updatedVcOffers,
     activeEvents,
@@ -679,7 +720,9 @@ export function runSimulationTick(deltaSeconds: number) {
     cash: Number(newCash.toFixed(2)),
     valuationMultiple: Number(multiple.toFixed(2)),
     valuation: newValuation,
+    lastValuation: store.lastValuation || 0,
     stage: currentStage,
+    growthCampaigns: updatedCampaigns,
     vcOffers: updatedVcOffers,
     customerSegments: updatedSegments,
     unlockedMilestones: Array.from(currentUnlocked),

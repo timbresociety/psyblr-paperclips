@@ -21,13 +21,14 @@ export interface FounderPostTemplate {
 export interface GrowthCampaign {
   id: string;
   name: string;
-  cost: number;
-  durationSeconds: number;
+  category: string;
+  monthlyCost: number; // in Cash/mo OPEX
   attentionPerSecond: number;
   hypeBoost: number;
   trustModifier: number;
+  requiredMrr: number;
   isUnlocked: boolean;
   isActive: boolean;
-  timeRemainingSeconds: number;
   description: string;
 }
+

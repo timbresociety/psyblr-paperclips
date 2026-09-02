@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../../state/gameStore';
 import { FOUNDER_POST_TEMPLATES } from '../../data/trends';
-import { TrendingUp, Flame, Share2, Send } from 'lucide-react';
+import { TrendingUp, Flame, Share2, Send, Radio, Zap, PauseCircle } from 'lucide-react';
 
 export const GrowthScreen: React.FC = () => {
   const {
     attention,
     leads,
     hype,
+    mrr,
     trends,
     activeTrendId,
     setActiveTrend,
+    growthCampaigns,
+    toggleGrowthCampaign,
     postManual,
-    focus
+    focus,
+    agents
   } = useGameStore();
 
   const [customTweet, setCustomTweet] = useState('');
@@ -20,6 +24,13 @@ export const GrowthScreen: React.FC = () => {
 
   const activeTrend = trends.find(t => t.id === activeTrendId) || trends[0];
   const selectedTemplate = FOUNDER_POST_TEMPLATES.find(t => t.id === selectedTemplateId) || FOUNDER_POST_TEMPLATES[0];
+
+  const growthAgents = agents.filter(a => a.role === 'GROWTH');
+  const agentAttentionPerSec = Math.round(growthAgents.reduce((acc, a) => acc + a.outputPerSec, 0) * (activeTrend ? activeTrend.viralMultiplier : 1));
+
+  const activeCampaigns = (growthCampaigns || []).filter(c => c.isActive);
+  const campaignsAttentionPerSec = activeCampaigns.reduce((acc, c) => acc + c.attentionPerSecond, 0);
+  const totalAttGainPerSec = agentAttentionPerSec + campaignsAttentionPerSec;
 
   const handlePostTemplate = () => {
     if (focus < 1) return;
@@ -36,23 +47,29 @@ export const GrowthScreen: React.FC = () => {
     <div className="space-y-6 text-left">
       {/* Growth Funnel Header */}
       <div className="bg-[#111422] border border-[#20263c] rounded-xl p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-pink-400" />
               <h2 className="text-lg font-black tracking-tight text-white">
-                DISTRIBUTION & VIRALITY
+                DISTRIBUTION &amp; GROWTH CHANNELS
               </h2>
               <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-pink-950 text-pink-300 border border-pink-800">
-                {Math.floor(attention)} ATTENTION
+                {Math.floor(attention).toLocaleString()} ATTENTION
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Attention decays continuously. Growth Agents provide 24/7 automated campaigns; manual founder posts suffer audience saturation at scale.
+              Attention decays continuously. Scale automated distribution channels and deploy Growth Agents to generate consistent outbound inbound velocity.
             </p>
           </div>
 
           <div className="flex items-center gap-6 text-right">
+            <div>
+              <span className="text-xs font-mono text-slate-400">Total Velocity:</span>
+              <div className="text-base font-black font-mono text-emerald-400">
+                +{totalAttGainPerSec}/sec
+              </div>
+            </div>
             <div>
               <span className="text-xs font-mono text-slate-400">Leads in Funnel:</span>
               <div className="text-base font-black font-mono text-amber-300">
@@ -69,6 +86,97 @@ export const GrowthScreen: React.FC = () => {
         </div>
       </div>
 
+      {/* Automated Distribution Channels / Growth Campaigns */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <Radio className="w-4 h-4 text-emerald-400" />
+            Automated Acquisition Channels &amp; Campaigns
+          </h3>
+          <span className="text-xs font-mono text-slate-500">
+            Monthly Recurring Marketing OPEX
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {(growthCampaigns || []).map((camp) => {
+            const isUnlocked = camp.isUnlocked || mrr >= camp.requiredMrr;
+
+            return (
+              <div
+                key={camp.id}
+                className={`p-4 rounded-xl border flex flex-col justify-between transition-all ${
+                  camp.isActive
+                    ? 'bg-[#151d2c] border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.15)]'
+                    : isUnlocked
+                    ? 'bg-[#141726] border-slate-800 hover:border-slate-700'
+                    : 'bg-slate-900/40 border-slate-800/50 opacity-60'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 uppercase font-bold border border-slate-700">
+                      {camp.category}
+                    </span>
+                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${
+                      camp.isActive
+                        ? 'bg-emerald-950 text-emerald-300 border-emerald-800 animate-pulse'
+                        : isUnlocked
+                        ? 'bg-slate-800 text-slate-400 border-slate-700'
+                        : 'bg-rose-950/60 text-rose-400 border-rose-900'
+                    }`}>
+                      {camp.isActive ? 'RUNNING' : isUnlocked ? 'READY' : `LOCKED ($${camp.requiredMrr >= 1000 ? `${camp.requiredMrr/1000}k` : camp.requiredMrr} MRR)`}
+                    </span>
+                  </div>
+
+                  <h4 className="font-bold text-white text-sm leading-tight mb-1">
+                    {camp.name}
+                  </h4>
+                  <p className="text-xs text-slate-400 mb-3 leading-relaxed">
+                    {camp.description}
+                  </p>
+                </div>
+
+                <div className="space-y-2 pt-2 border-t border-slate-800/80">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-slate-500">Output:</span>
+                    <span className="font-bold text-pink-400">+{camp.attentionPerSecond} Att/s</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-slate-500">OPEX Cost:</span>
+                    <span className="font-bold text-rose-400">${camp.monthlyCost}/mo</span>
+                  </div>
+
+                  <button
+                    onClick={() => toggleGrowthCampaign(camp.id)}
+                    disabled={!isUnlocked}
+                    className={`w-full py-1.5 px-3 rounded-lg font-bold text-xs mt-2 transition-all flex items-center justify-center gap-1.5 ${
+                      !isUnlocked
+                        ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                        : camp.isActive
+                        ? 'bg-rose-950 hover:bg-rose-900 text-rose-300 border border-rose-800 shadow-sm'
+                        : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md'
+                    }`}
+                  >
+                    {camp.isActive ? (
+                      <>
+                        <PauseCircle className="w-3.5 h-3.5" />
+                        <span>Pause Channel</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3.5 h-3.5" />
+                        <span>{isUnlocked ? `Launch ($${camp.monthlyCost}/mo)` : `Locked ($${camp.requiredMrr.toLocaleString()} MRR)`}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* 2-Column Grid: Real-Time Trends & Founder Post Maker */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Trends Hijacking Board */}
@@ -76,10 +184,10 @@ export const GrowthScreen: React.FC = () => {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
               <Flame className="w-4 h-4 text-pink-400" />
-              Active Cultural Trends
+              Active Cultural Trends &amp; Amplification
             </h3>
             <span className="text-xs text-slate-500 font-mono">
-              Click trend to target content
+              Click trend to hijack traffic
             </span>
           </div>
 
@@ -107,7 +215,7 @@ export const GrowthScreen: React.FC = () => {
                       </span>
                       {isActive && (
                         <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-pink-950 text-pink-300 border border-pink-700 font-bold animate-pulse">
-                          TARGETED
+                          ACTIVE TARGET
                         </span>
                       )}
                     </div>
@@ -209,7 +317,7 @@ export const GrowthScreen: React.FC = () => {
                   disabled={focus < 1 || !customTweet.trim()}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
                     focus >= 1 && customTweet.trim()
-                      ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-md'
                       : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                   }`}
                 >
@@ -223,3 +331,4 @@ export const GrowthScreen: React.FC = () => {
     </div>
   );
 };
+

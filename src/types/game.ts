@@ -1,6 +1,6 @@
 import type { AgentInstance, AgentRoleType } from './agents';
 import type { ProductFeature, ArchitectureUpgrade } from './product';
-import type { Trend } from './growth';
+import type { Trend, GrowthCampaign } from './growth';
 import type { VCTermSheet } from './finance';
 import type { GameEvent } from './events';
 
@@ -53,7 +53,7 @@ export interface StartupIdea {
 export interface ActivityLog {
   id: string;
   text: string;
-  category: 'founder' | 'agent' | 'customer' | 'product' | 'finance' | 'incident' | 'system';
+  category: 'founder' | 'agent' | 'customer' | 'product' | 'growth' | 'finance' | 'incident' | 'system';
   timestamp: number;
   type: 'info' | 'success' | 'warning' | 'error' | 'milestone';
 }
@@ -104,6 +104,7 @@ export interface CompanyState {
   mrr: number;
   arr: number;
   valuation: number;
+  lastValuation?: number; // Priced VC round benchmark floor
   valuationMultiple: number;
   founderOwnership: number;
   totalCapitalRaised: number;
@@ -135,6 +136,7 @@ export interface CompanyState {
   architectureUpgrades: ArchitectureUpgrade[];
   trends: Trend[];
   activeTrendId: string | null;
+  growthCampaigns?: GrowthCampaign[];
   customerSegments: CustomerSegment[];
   vcOffers: VCTermSheet[];
   activeEvents: GameEvent[];

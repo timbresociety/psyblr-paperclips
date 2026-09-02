@@ -132,12 +132,14 @@ export function checkAndProcessOfflineProgress() {
 
   const updatedActiveCustomers = store.customers + customersGained;
   const updatedActiveMrr = updatedActiveCustomers * store.arpu;
+  const updatedActiveValuation = Math.max(store.lastValuation || 0, Math.round(updatedActiveMrr * 12 * store.valuationMultiple));
 
   useGameStore.setState({
     cash: store.cash + activeRevenueEarned,
     customers: updatedActiveCustomers,
     mrr: updatedActiveMrr,
     arr: updatedActiveMrr * 12,
+    valuation: updatedActiveValuation,
     tickets: Math.max(0, store.tickets + ticketsGenerated - ticketsResolved),
     companies: updatedCompanies.length > 0 ? updatedCompanies : store.companies,
     conglomerateTreasury: (store.conglomerateTreasury || 0) + offlineDividendsEarned,

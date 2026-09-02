@@ -1,4 +1,4 @@
-import type { Trend, FounderPostTemplate } from '../types/growth';
+import type { Trend, FounderPostTemplate, GrowthCampaign } from '../types/growth';
 
 export const INITIAL_TRENDS: Trend[] = [
   {
@@ -185,3 +185,59 @@ export const FOUNDER_POST_TEMPLATES: FounderPostTemplate[] = [
     content: '4:30 AM: Ice bath. 4:45 AM: Espresso. 5:00 AM: Dispatched 14 feature prompts to our engineering cluster. 5:15 AM: $12k in new ARR.'
   }
 ];
+
+export const INITIAL_GROWTH_CAMPAIGNS: GrowthCampaign[] = [
+  {
+    id: 'camp_hackernews',
+    name: 'Show HN & Reddit Launch Blitz',
+    category: 'Viral Launch',
+    monthlyCost: 250,
+    attentionPerSecond: 25,
+    hypeBoost: 8,
+    trustModifier: 2,
+    requiredMrr: 0,
+    isUnlocked: true,
+    isActive: false,
+    description: 'Post high-energy Show HN thread with snappy interactive demo video. Captures early adopter tech leads.'
+  },
+  {
+    id: 'camp_seo_farm',
+    name: 'Autonomous Programmatic SEO Farm',
+    category: 'Inbound Engine',
+    monthlyCost: 800,
+    attentionPerSecond: 65,
+    hypeBoost: 5,
+    trustModifier: 1,
+    requiredMrr: 2500,
+    isUnlocked: false,
+    isActive: false,
+    description: 'Deploys 5,000 synthetic comparison landing pages capturing bottom-of-funnel search intent.'
+  },
+  {
+    id: 'camp_influencers',
+    name: 'AI Influencer & Creator Sponsorships',
+    category: 'Creator Media',
+    monthlyCost: 2500,
+    attentionPerSecond: 180,
+    hypeBoost: 16,
+    trustModifier: -1,
+    requiredMrr: 10000,
+    isUnlocked: false,
+    isActive: false,
+    description: 'Sponsors top AI YouTubers and X thought leaders to showcase autonomous workflows to 500k subscribers.'
+  },
+  {
+    id: 'camp_cold_outbound',
+    name: 'Agentic Outbound Cold Email Engine',
+    category: 'B2B Outbound',
+    monthlyCost: 6500,
+    attentionPerSecond: 380,
+    hypeBoost: 10,
+    trustModifier: -2,
+    requiredMrr: 50000,
+    isUnlocked: false,
+    isActive: false,
+    description: 'Autonomous agents scrape lead signals and personalize 25,000 hyper-targeted outbound pitches per week.'
+  }
+];
+

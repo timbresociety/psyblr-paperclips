@@ -126,6 +126,35 @@ export const ProductScreen: React.FC = () => {
                     <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                       {feat.description}
                     </p>
+
+                    {/* Effect Badges */}
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {feat.effects.arpuBoost && (
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-800/80">
+                          +${feat.effects.arpuBoost}/mo ARPU
+                        </span>
+                      )}
+                      {feat.effects.conversionBoost && (
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-950/80 text-blue-300 border border-blue-800/80">
+                          +{Math.round(feat.effects.conversionBoost * 100)}% Conv
+                        </span>
+                      )}
+                      {feat.effects.retentionBoost && (
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/80">
+                          +{Math.round(feat.effects.retentionBoost * 100)}% Retention
+                        </span>
+                      )}
+                      {feat.effects.viralityBoost && (
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-pink-950/80 text-pink-300 border border-pink-800/80">
+                          +{Math.round(feat.effects.viralityBoost * 100)}% Virality
+                        </span>
+                      )}
+                      {feat.id === 'feat_sso_saml' && (
+                        <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-800/80">
+                          🏢 UNLOCKS ENTERPRISE
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-slate-800/80">

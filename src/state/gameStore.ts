@@ -3,12 +3,12 @@ import { persist } from 'zustand/middleware';
 import type { GameStage, ScreenTab, StartupIdea, ActivityLog, CustomerSegment, OfflineRecapData, HoldingCompanyStats, AutonomyInfo, CompanyState } from '../types/game';
 import type { AgentInstance, AgentRoleType, AgentTraitType } from '../types/agents';
 import type { ProductFeature, ArchitectureUpgrade } from '../types/product';
-import type { Trend } from '../types/growth';
+import type { Trend, GrowthCampaign } from '../types/growth';
 import type { VCTermSheet } from '../types/finance';
 import type { GameEvent } from '../types/events';
 import type { MilestoneDef } from '../data/milestones';
 import { INITIAL_PRODUCT_FEATURES, ARCHITECTURE_UPGRADES } from '../data/productFeatures';
-import { INITIAL_TRENDS } from '../data/trends';
+import { INITIAL_TRENDS, INITIAL_GROWTH_CAMPAIGNS } from '../data/trends';
 import { INITIAL_VC_OFFERS, COMPUTE_TIERS } from '../data/vcOffers';
 import { AGENT_ROLES, AGENT_NAMES, AGENT_QUOTES } from '../data/agentRoles';
 import { AGENT_TRAITS, getRandomTrait } from '../data/agentTraits';
@@ -37,6 +37,7 @@ export interface GameState {
   mrr: number;
   arr: number;
   valuation: number;
+  lastValuation?: number; // Priced VC round benchmark floor
   valuationMultiple: number;
   founderOwnership: number;
   totalCapitalRaised: number;
@@ -68,6 +69,7 @@ export interface GameState {
   architectureUpgrades: ArchitectureUpgrade[];
   trends: Trend[];
   activeTrendId: string | null;
+  growthCampaigns: GrowthCampaign[];
   customerSegments: CustomerSegment[];
   vcOffers: VCTermSheet[];
   activeEvents: GameEvent[];
@@ -115,6 +117,7 @@ export interface GameState {
 
   // Growth & Trends
   setActiveTrend: (trendId: string | null) => void;
+  toggleGrowthCampaign: (campaignId: string) => void;
 
   // Finance & VC
   upgradeComputeTier: (tierId: string) => boolean;
@@ -225,6 +228,7 @@ export function createCompanyInstance(idea: StartupIdea, initialCash = 2000, com
     mrr: 0,
     arr: 0,
     valuation: 0,
+    lastValuation: 0,
     valuationMultiple: 4.0,
     founderOwnership: 100,
     totalCapitalRaised: 0,
@@ -254,6 +258,7 @@ export function createCompanyInstance(idea: StartupIdea, initialCash = 2000, com
     architectureUpgrades: ARCHITECTURE_UPGRADES.map(a => ({ ...a, level: 0, isUnlocked: a.id === 'arch_cicd' })),
     trends: INITIAL_TRENDS,
     activeTrendId: 'trend_agents',
+    growthCampaigns: INITIAL_GROWTH_CAMPAIGNS.map(c => ({ ...c })),
     customerSegments: [
       { id: 'smb', name: 'Solo / SMB', count: 0, arpu: idea.arpu, churnRate: 5.0, unlocked: true },
       { id: 'pro', name: 'Growth / Pro Teams', count: 0, arpu: Math.round(idea.arpu * 3), churnRate: 3.0, unlocked: false },
@@ -293,6 +298,7 @@ export function extractActiveCompanyState(state: GameState): CompanyState | null
     mrr: state.mrr,
     arr: state.arr,
     valuation: state.valuation,
+    lastValuation: state.lastValuation || 0,
     valuationMultiple: state.valuationMultiple,
     founderOwnership: state.founderOwnership,
     totalCapitalRaised: state.totalCapitalRaised,
@@ -322,6 +328,7 @@ export function extractActiveCompanyState(state: GameState): CompanyState | null
     architectureUpgrades: state.architectureUpgrades,
     trends: state.trends,
     activeTrendId: state.activeTrendId,
+    growthCampaigns: state.growthCampaigns || INITIAL_GROWTH_CAMPAIGNS.map(c => ({ ...c })),
     customerSegments: state.customerSegments,
     vcOffers: state.vcOffers,
     activeEvents: state.activeEvents,
@@ -343,6 +350,7 @@ export function applyCompanyToActiveState(company: CompanyState): Partial<GameSt
     mrr: company.mrr,
     arr: company.arr,
     valuation: company.valuation,
+    lastValuation: company.lastValuation || 0,
     valuationMultiple: company.valuationMultiple,
     founderOwnership: company.founderOwnership,
     totalCapitalRaised: company.totalCapitalRaised,
@@ -369,6 +377,7 @@ export function applyCompanyToActiveState(company: CompanyState): Partial<GameSt
     architectureUpgrades: company.architectureUpgrades,
     trends: company.trends,
     activeTrendId: company.activeTrendId,
+    growthCampaigns: company.growthCampaigns || INITIAL_GROWTH_CAMPAIGNS.map(c => ({ ...c })),
     customerSegments: company.customerSegments,
     vcOffers: company.vcOffers,
     activeEvents: company.activeEvents,
@@ -407,6 +416,7 @@ export const getInitialState = () => ({
   mrr: 0,
   arr: 0,
   valuation: 0,
+  lastValuation: 0,
   valuationMultiple: 4.0,
   founderOwnership: 100,
   totalCapitalRaised: 0,
@@ -436,6 +446,7 @@ export const getInitialState = () => ({
   architectureUpgrades: ARCHITECTURE_UPGRADES.map(a => ({ ...a, level: 0, isUnlocked: a.id === 'arch_cicd' })),
   trends: INITIAL_TRENDS,
   activeTrendId: 'trend_agents',
+  growthCampaigns: INITIAL_GROWTH_CAMPAIGNS.map(c => ({ ...c })),
   customerSegments: [
     { id: 'smb', name: 'Solo / SMB', count: 0, arpu: 25, churnRate: 5.0, unlocked: true },
     { id: 'pro', name: 'Growth / Pro Teams', count: 0, arpu: 79, churnRate: 3.0, unlocked: false },
@@ -471,6 +482,7 @@ export const getInitialState = () => ({
   isUnicornModalOpen: false,
   hasSeenUnicorn: false
 });
+
 
 export const useGameStore = create<GameState>()(
   persist(
@@ -725,7 +737,7 @@ export const useGameStore = create<GameState>()(
         const newArpu = state.arpu + arpuBoostTotal;
         const newMrr = Math.round(state.customers * newArpu);
         const newArr = newMrr * 12;
-        const newValuation = Math.round(newArr * state.valuationMultiple);
+        const newValuation = Math.max(state.lastValuation || 0, Math.round(newArr * state.valuationMultiple));
 
         const quote = FOUNDER_VIBE_LOGS[Math.floor(Math.random() * FOUNDER_VIBE_LOGS.length)];
 
@@ -829,7 +841,7 @@ export const useGameStore = create<GameState>()(
         const updatedCustomers = state.customers + newCustomers;
         const newMrr = Math.round(updatedCustomers * state.arpu);
         const newArr = newMrr * 12;
-        const newValuation = Math.round(newArr * state.valuationMultiple);
+        const newValuation = Math.max(state.lastValuation || 0, Math.round(newArr * state.valuationMultiple));
 
         set({
           focus: state.focus - 1,
@@ -1054,6 +1066,26 @@ export const useGameStore = create<GameState>()(
 
       setActiveTrend: (trendId: string | null) => set({ activeTrendId: trendId }),
 
+      toggleGrowthCampaign: (campaignId: string) => {
+        const state = get();
+        const camp = (state.growthCampaigns || []).find(c => c.id === campaignId);
+        if (!camp) return;
+
+        if (!camp.isUnlocked && state.mrr < camp.requiredMrr) {
+          get().addLog(`Campaign requires $${camp.requiredMrr.toLocaleString()} MRR to unlock.`, 'growth', 'warning');
+          return;
+        }
+
+        const nextActive = !camp.isActive;
+        const updated = (state.growthCampaigns || []).map(c => 
+          c.id === campaignId ? { ...c, isActive: nextActive, isUnlocked: true } : c
+        );
+
+        soundEngine.playDeploy();
+        set({ growthCampaigns: updated });
+        get().addLog(`${nextActive ? '🚀 Launched' : '⏸️ Paused'} Growth Channel: "${camp.name}" ($${camp.monthlyCost}/mo).`, 'growth', 'info');
+      },
+
       upgradeComputeTier: (tierId: string) => {
         const state = get();
         const tier = COMPUTE_TIERS.find(t => t.id === tierId);
@@ -1115,6 +1147,8 @@ export const useGameStore = create<GameState>()(
         const newCash = state.cash + offer.raiseAmount;
         const newTotalRaised = state.totalCapitalRaised + offer.raiseAmount;
         const newHype = Math.min(100, state.hype + offer.hypeBoost);
+        const newLastValuation = Math.max(state.lastValuation || 0, offer.valuation);
+        const newValuation = Math.max(state.valuation, offer.valuation);
 
         const updatedOffers = state.vcOffers.map(o => 
           o.id === offerId ? { ...o, isAccepted: true, isAvailable: false } : o
@@ -1125,6 +1159,8 @@ export const useGameStore = create<GameState>()(
           founderOwnership: newOwnership,
           totalCapitalRaised: newTotalRaised,
           hype: newHype,
+          lastValuation: newLastValuation,
+          valuation: newValuation,
           vcOffers: updatedOffers
         });
 
@@ -1155,7 +1191,7 @@ export const useGameStore = create<GameState>()(
         const newOwnership = Math.max(0.1, Math.min(100, state.founderOwnership + (eff.ownershipDelta || 0)));
         const newMrr = Math.round(newCustomers * state.arpu);
         const newArr = newMrr * 12;
-        const newValuation = Math.round(newArr * state.valuationMultiple);
+        const newValuation = Math.max(state.lastValuation || 0, Math.round(newArr * state.valuationMultiple));
 
         const updatedActive = state.activeEvents.filter(e => e.id !== eventId);
         const resolvedEvent: GameEvent = {
@@ -1256,6 +1292,7 @@ export const useGameStore = create<GameState>()(
         mrr: state.mrr,
         arr: state.arr,
         valuation: state.valuation,
+        lastValuation: state.lastValuation,
         valuationMultiple: state.valuationMultiple,
         founderOwnership: state.founderOwnership,
         totalCapitalRaised: state.totalCapitalRaised,
@@ -1280,6 +1317,9 @@ export const useGameStore = create<GameState>()(
         activeRoadmapId: state.activeRoadmapId,
         completedFeatures: state.completedFeatures,
         architectureUpgrades: state.architectureUpgrades,
+        trends: state.trends,
+        activeTrendId: state.activeTrendId,
+        growthCampaigns: state.growthCampaigns,
         customerSegments: state.customerSegments,
         vcOffers: state.vcOffers,
         eventHistory: state.eventHistory,
