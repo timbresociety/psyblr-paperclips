@@ -283,39 +283,40 @@ export const TECH_DEBT_REFACTORS: TechDebtRefactorTask[] = [
 
 export const ARCHITECTURE_UPGRADES: ArchitectureUpgrade[] = [
   {
-    id: 'arch_ci_cd',
+    id: 'arch_cicd',
     name: 'Automated CI/CD Pipeline',
     description: 'Pre-flight linting and automated preview environments prevent broken builds.',
     cost: 500,
     level: 0,
     maxLevel: 5,
-    effectDescription: '+10% QA efficiency, reduces debt accumulation by 15%',
+    effectDescription: '-15% Tech Debt accumulation per level',
     debtCapReduction: 5,
     reliabilityBoost: 10,
     isUnlocked: false
   },
   {
-    id: 'arch_caching_layer',
+    id: 'arch_caching',
     name: 'Redis In-Memory Cache Cluster',
-    description: 'Absorbs 80% of database load and accelerates API latency.',
+    description: 'Absorbs database load and accelerates API latency for agent swarms.',
     cost: 1500,
     level: 0,
     maxLevel: 5,
-    effectDescription: '+20% compute capacity efficiency, cuts ticket generation rate',
+    effectDescription: '-10% Swarm Compute load per level',
     debtCapReduction: 8,
     reliabilityBoost: 15,
     isUnlocked: false
   },
   {
-    id: 'arch_chaos_engineering',
+    id: 'arch_chaos',
     name: 'Automated Chaos Testing Suite',
-    description: 'Simulates server crashes in production so agents learn resilience.',
+    description: 'Simulates server crashes in production so agents write resilient code.',
     cost: 5000,
     level: 0,
     maxLevel: 5,
-    effectDescription: '+25% Trust resilience during outages',
+    effectDescription: '-15% Support Tickets & customer churn per level',
     debtCapReduction: 12,
     reliabilityBoost: 25,
     isUnlocked: false
   }
 ];
+

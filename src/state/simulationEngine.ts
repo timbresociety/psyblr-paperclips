@@ -1,11 +1,14 @@
 import { useGameStore, calcBuildTarget, calcAutonomyInfo } from './gameStore';
-import { getRandomEvent, isEventEligible, getTemplateKey, EVENTS_POOL } from '../data/eventsPool';
+import { getRandomEvent, getTemplateKey } from '../data/eventsPool';
 import { MILESTONES } from '../data/milestones';
 import { soundEngine } from '../audio/soundEffects';
-import { COMPUTE_TIERS } from '../data/vcOffers';
+import { COMPUTE_TIERS, INITIAL_VC_OFFERS } from '../data/vcOffers';
+import { calcCurrentEra, getEraConfig } from '../data/eras';
 import type { CompanyState } from '../types/game';
 import type { AgentInstance, AgentExecutionTrace } from '../types/agents';
 import { AI_MODELS } from '../types/agents';
+import { AGENT_ROLES } from '../data/agentRoles';
+
 
 let lastEventCheckTime = Date.now();
 let eventIntervalSeconds = 90;
@@ -126,6 +129,8 @@ function generateTraceForAgent(agent: AgentInstance, techDebt: number): AgentExe
   };
 }
 
+export const SECONDS_PER_GAME_MONTH = 12; // 12 real seconds = 1 monthly billing cycle in game time
+
 function simulateInactiveCompany(company: CompanyState, dt: number, treasuryYield: { dividend: number }): CompanyState {
   const agentCount = company.agents.length;
   if (agentCount === 0) {
@@ -160,12 +165,14 @@ function simulateInactiveCompany(company: CompanyState, dt: number, treasuryYiel
   const totalGrowthMult = growthDeptMult * companyCeoMult;
   const totalOpsMult = opsDeptMult * companyCeoMult;
 
-  // 2. Engineering & Roadmap
+  // 2. Engineering & Roadmap (with tech debt velocity drag)
   let bpProduced = 0;
   const engAgents = company.agents.filter(a => a.role === 'ENGINEERING');
   engAgents.forEach(a => {
     bpProduced += a.outputPerSec * totalProdMult * dt;
   });
+  const debtVelocityMultiplier = Math.max(0.20, 1 - (company.techDebt / 100) * 0.70);
+  bpProduced *= debtVelocityMultiplier;
 
   const qaAgents = company.agents.filter(a => a.role === 'QA');
   let debtReduced = 0;
@@ -210,11 +217,9 @@ function simulateInactiveCompany(company: CompanyState, dt: number, treasuryYiel
   growthAgents.forEach(a => {
     attentionProduced += a.outputPerSec * totalGrowthMult * dt;
   });
+  const newAttention = Math.max(0, (company.attention + attentionProduced) * (1 - 0.02 * dt));
+  let newLeads = Math.max(0, company.leads + (newAttention / 250) * dt);
 
-  const decayFraction = (0.05 + 0.005 * (company.attention / 1000)) * dt;
-  const decayedAttention = Math.max(0, company.attention * (1 - decayFraction) + attentionProduced);
-  const leadsGenerated = (attentionProduced / 100) * 3;
-  let newLeads = company.leads + leadsGenerated;
 
   // 4. Sales & Customers
   let leadsProcessed = 0;
@@ -226,13 +231,14 @@ function simulateInactiveCompany(company: CompanyState, dt: number, treasuryYiel
   const actualLeadsProcessed = Math.min(newLeads, leadsProcessed);
   newLeads = Math.max(0, newLeads - actualLeadsProcessed);
 
+
   const baseConversion = 0.08 * (1 + (newLevel - 1) * 0.05) * (company.trust / 50);
   const conversionRate = Math.min(0.85, Math.max(0.01, baseConversion));
   const expectedNewCustomers = actualLeadsProcessed * conversionRate;
   let newCustomers = company.customers + expectedNewCustomers;
 
   // Churn
-  const churnPerSec = 0.04 / (30 * 86400);
+  const churnPerSec = 0.04 / SECONDS_PER_GAME_MONTH;
   newCustomers = Math.max(0, newCustomers - newCustomers * churnPerSec * dt);
 
   // 5. Support Tickets
@@ -247,7 +253,7 @@ function simulateInactiveCompany(company: CompanyState, dt: number, treasuryYiel
   // 6. Financials & Autonomy
   const newMrr = Math.round(newCustomers * currentArpu);
   const newArr = newMrr * 12;
-  const revenuePerSec = newMrr / (30 * 86400);
+  const revenuePerSec = newMrr / SECONDS_PER_GAME_MONTH;
 
   // Multiple
   let workforceMultipleBoost = agentCount < 5 ? 0.5 : (agentCount < 15 ? 2.0 : (agentCount < 30 ? 4.5 : 7.5));
@@ -300,8 +306,9 @@ function simulateInactiveCompany(company: CompanyState, dt: number, treasuryYiel
     productLevel: newLevel,
     buildPointsTarget: newTarget,
     techDebt: Number(newTechDebt.toFixed(2)),
-    attention: Number(decayedAttention.toFixed(1)),
+    attention: Number(newAttention.toFixed(1)),
     leads: Number(newLeads.toFixed(1)),
+
     tickets: Number(newTickets.toFixed(2)),
     roadmapFeatures: updatedRoadmap
   };
@@ -313,9 +320,44 @@ export function runSimulationTick(deltaSeconds: number) {
 
   const speed = store.gameSpeed || 1;
   const dt = deltaSeconds * speed;
+  const now = Date.now();
 
-  // 1. Focus Regeneration (+0.5 focus / sec)
-  const newFocus = Math.min(store.maxFocus, store.focus + 0.5 * dt);
+  // 0. Active Unattended Inbox Alert Penalties
+  let unattendedTrustDrainPerSec = 0;
+  let unattendedChurnMultiplier = 1.0;
+  let unattendedCashDrainPerSec = 0;
+  let unattendedCancellationsPerSec = 0;
+  let unattendedPenaltiesActive = false;
+
+  (store.activeEvents || []).forEach(evt => {
+    const ageSec = (now - evt.timestamp) / 1000;
+    const gracePeriod = evt.gracePeriodSeconds || 15;
+    if (ageSec > gracePeriod) {
+      unattendedPenaltiesActive = true;
+      const overdueSec = ageSec - gracePeriod;
+      // Escalation multiplier: starts at 1.0x, ramps up to 2.5x if ignored for 60+ seconds
+      const escalationMult = Math.min(2.5, 1 + (overdueSec / 45));
+
+      const severity = evt.severity || 1;
+      if (severity === 1) {
+        unattendedTrustDrainPerSec += 0.20 * escalationMult;
+        unattendedChurnMultiplier *= (1 + 0.20 * escalationMult);
+      } else if (severity === 2) {
+        unattendedTrustDrainPerSec += 0.50 * escalationMult;
+        unattendedChurnMultiplier *= (1 + 0.50 * escalationMult);
+        unattendedCashDrainPerSec += Math.max(35, (store.cash || 0) * 0.00012) * escalationMult;
+      } else if (severity === 3) {
+        unattendedTrustDrainPerSec += 1.25 * escalationMult;
+        unattendedChurnMultiplier *= (1 + 1.25 * escalationMult);
+        unattendedCashDrainPerSec += Math.max(150, (store.cash || 0) * 0.00035) * escalationMult;
+        unattendedCancellationsPerSec += 0.8 * escalationMult;
+      }
+    }
+  });
+
+  // 1. Focus Regeneration (+0.5 focus / sec, 2x if espresso upgrade owned)
+  const focusMultiplier = store.earlyUpgrades?.includes('upg_espresso') ? 2.0 : 1.0;
+  const newFocus = Math.min(store.maxFocus, store.focus + 0.5 * focusMultiplier * dt);
 
   // 2. Compute Calculations & Architecture Modifiers
   let rawComputeUsed = 0;
@@ -331,21 +373,44 @@ export function runSimulationTick(deltaSeconds: number) {
   });
 
   // Redis Caching Architecture Upgrade reduces compute usage
-  const cachingArch = store.architectureUpgrades.find(u => u.id === 'arch_caching');
+  const cachingArch = store.architectureUpgrades.find(u => u.id === 'arch_caching' || u.id === 'arch_caching_layer');
   const cachingEfficiency = cachingArch ? (1 - 0.10 * cachingArch.level) : 1.0;
 
   const computeUsed = Number((rawComputeUsed * Math.max(0.15, opsEfficiency * cachingEfficiency)).toFixed(1));
 
-  // Throttling
+  // Compute Overload & Hallucination Metrics
+  const overloadRatio = (store.computeCapacity > 0 && computeUsed > store.computeCapacity)
+    ? Number((computeUsed / store.computeCapacity).toFixed(2))
+    : 1.0;
+  const isComputeOverloaded = overloadRatio > 1.0;
+  const computeExcess = isComputeOverloaded ? overloadRatio - 1.0 : 0;
+
+  // Throttling: Throttled by compute overload
   let computeThrottle = 1.0;
-  if (computeUsed > store.computeCapacity && store.computeCapacity > 0) {
-    computeThrottle = Math.max(0.1, store.computeCapacity / computeUsed);
+  if (isComputeOverloaded) {
+    computeThrottle = Math.max(0.1, 1 / overloadRatio);
   }
 
-  // Monthly compute cost burn (converted to per second)
+  // Monthly compute cost burn (converted to per second using game month)
   const currentTier = COMPUTE_TIERS.find(t => t.id === store.currentComputeTierId);
   const monthlyComputeCost = currentTier ? currentTier.monthlyCost : 0;
-  const computeCostPerSec = monthlyComputeCost / (30 * 86400);
+  const computeCostPerSec = monthlyComputeCost / SECONDS_PER_GAME_MONTH;
+
+  // Real Agent OPEX & Token Burn per month
+  let totalAgentOpexMonthly = 0;
+  store.agents.forEach(a => {
+    const roleDef = AGENT_ROLES[a.role];
+    const baseOpex = roleDef ? roleDef.monthlyOpex : 300;
+    const modelDef = AI_MODELS[a.model] || AI_MODELS.CLAUDE_3_7_SONNET;
+    const tokenMult = Math.max(0.5, (modelDef.costPerMillionTokens || 1.0) / 1.0);
+    const levelMult = Math.pow(1.2, a.level - 1);
+    totalAgentOpexMonthly += baseOpex * tokenMult * levelMult;
+  });
+  const agentOpexPerSec = totalAgentOpexMonthly / SECONDS_PER_GAME_MONTH;
+
+  // Insolvency Check: When cash runs dry and expenses exceed revenue!
+  const isInsolvent = store.cash <= 0;
+  const insolvencyThrottle = isInsolvent ? 0.05 : 1.0;
 
   // 3. Agent Department Multipliers (Managers, Executives, CEO)
   let prodDeptMult = 1.0;
@@ -367,22 +432,35 @@ export function runSimulationTick(deltaSeconds: number) {
     }
   });
 
-  const totalProdMult = prodDeptMult * companyCeoMult * computeThrottle;
-  const totalGrowthMult = growthDeptMult * companyCeoMult * computeThrottle;
-  const totalOpsMult = opsDeptMult * companyCeoMult * computeThrottle;
+  const totalProdMult = prodDeptMult * companyCeoMult * computeThrottle * insolvencyThrottle;
+  const totalGrowthMult = growthDeptMult * companyCeoMult * computeThrottle * insolvencyThrottle;
+  const totalOpsMult = opsDeptMult * companyCeoMult * computeThrottle * insolvencyThrottle;
 
   // 4. Engineering Output, Build Points & Roadmap
   let bpProduced = 0;
   let rawDebtGenerated = 0;
+  const allRoadmapComplete = (store.roadmapFeatures || []).length > 0 && store.roadmapFeatures.every(f => f.isCompleted);
   const engAgents = store.agents.filter(a => a.role === 'ENGINEERING');
+
   engAgents.forEach(a => {
     bpProduced += a.outputPerSec * totalProdMult * dt;
-    rawDebtGenerated += 0.08 * a.level * dt;
+    // When all features are shipped, engineers don't generate dirty new code; they maintain & refactor
+    if (!allRoadmapComplete) {
+      // Overloaded compute causes hallucinated code commits (+tech debt)!
+      rawDebtGenerated += (0.08 * a.level + 0.35 * computeExcess) * dt;
+    }
   });
 
+
+  // Tech Debt Drag: High debt significantly slows engineering velocity!
+  // At 0% debt = 100% velocity. At 70% debt = 51% velocity. At 95% debt = 33% velocity.
+  const debtVelocityMultiplier = Math.max(0.20, 1 - (store.techDebt / 100) * 0.70);
+  bpProduced *= debtVelocityMultiplier;
+
   // CI/CD Architecture Upgrade reduces tech debt accumulation
-  const cicdArch = store.architectureUpgrades.find(u => u.id === 'arch_cicd');
+  const cicdArch = store.architectureUpgrades.find(u => u.id === 'arch_cicd' || u.id === 'arch_ci_cd');
   const cicdDebtDiscount = cicdArch ? (1 - 0.15 * cicdArch.level) : 1.0;
+
   const debtGenerated = rawDebtGenerated * Math.max(0.2, cicdDebtDiscount);
 
   // QA Agents reducing debt
@@ -392,7 +470,18 @@ export function runSimulationTick(deltaSeconds: number) {
     debtReduced += a.outputPerSec * totalProdMult * dt;
   });
 
+  // If Tech Debt is high (>50%), engineering swarm automatically allocates cycles to refactor & stabilize
+  if (store.techDebt > 50 && engAgents.length > 0) {
+    debtReduced += engAgents.length * 0.35 * dt;
+  }
+
+  // When all roadmap features are complete, engineers actively crush tech debt to 0!
+  if (allRoadmapComplete && engAgents.length > 0) {
+    debtReduced += engAgents.length * 1.5 * dt;
+  }
+
   const newTechDebt = Math.max(0, Math.min(100, store.techDebt + debtGenerated - debtReduced));
+
 
   let newBP = store.buildPoints + bpProduced;
   let newLevel = store.productLevel;
@@ -404,15 +493,26 @@ export function runSimulationTick(deltaSeconds: number) {
     newTarget = calcBuildTarget(newLevel);
   }
 
-  // Active Roadmap Feature progress
+  // Active Roadmap Feature progress & Autonomous Sprint Dispatch
   let updatedRoadmap = [...store.roadmapFeatures];
   let dynamicArpuBoost = 0;
   let dynamicTrustBoost = 0;
   let dynamicHypeBoost = 0;
 
-  if (store.activeRoadmapId && bpProduced > 0) {
+  // Auto-Roadmap Dispatch: If no active feature, or current active is completed,
+  // automatically dispatch engineering swarm to the next incomplete feature!
+  let nextActiveRoadmapId = store.activeRoadmapId;
+  const currentActive = updatedRoadmap.find(f => f.id === nextActiveRoadmapId);
+  if (!nextActiveRoadmapId || (currentActive && currentActive.isCompleted)) {
+    const nextPending = updatedRoadmap.find(f => !f.isCompleted);
+    if (nextPending) {
+      nextActiveRoadmapId = nextPending.id;
+    }
+  }
+
+  if (nextActiveRoadmapId && bpProduced > 0) {
     updatedRoadmap = updatedRoadmap.map(feat => {
-      if (feat.id === store.activeRoadmapId && !feat.isCompleted) {
+      if (feat.id === nextActiveRoadmapId && !feat.isCompleted) {
         const nextDone = feat.buildPointsCompleted + bpProduced;
         if (nextDone >= feat.buildPointsRequired) {
           // Feature Complete!
@@ -427,7 +527,18 @@ export function runSimulationTick(deltaSeconds: number) {
       }
       return feat;
     });
+
+    // Auto advance to next feature upon completion
+    const justCompleted = updatedRoadmap.find(f => f.id === nextActiveRoadmapId && f.isCompleted);
+    if (justCompleted) {
+      const nextPending = updatedRoadmap.find(f => !f.isCompleted);
+      nextActiveRoadmapId = nextPending ? nextPending.id : null;
+      if (nextPending) {
+        useGameStore.getState().addLog(`📋 Engineering swarm auto-dispatched to next sprint: "${nextPending.name}"`, 'product', 'info');
+      }
+    }
   }
+
 
   // Recalculate dynamic ARPU from baseArpu + all completed features
   const completedFeaturesArpuBoost = updatedRoadmap
@@ -450,7 +561,7 @@ export function runSimulationTick(deltaSeconds: number) {
     const isUnlocked = c.isUnlocked || (store.mrr >= c.requiredMrr);
     if (c.isActive) {
       attentionProduced += c.attentionPerSecond * trendMultiplier * dt;
-      campaignCostPerSec += c.monthlyCost / (30 * 86400);
+      campaignCostPerSec += c.monthlyCost / SECONDS_PER_GAME_MONTH;
     }
     return { ...c, isUnlocked };
   });
@@ -489,17 +600,19 @@ export function runSimulationTick(deltaSeconds: number) {
   const expectedNewCustomers = actualLeadsProcessed * conversionRate;
   let newCustomers = store.customers + expectedNewCustomers;
 
-  // Churn Calculation
+  // Churn Calculation: Tech Debt, Trust penalty, and Unattended Alert Drag!
+  // At 20% debt = 1.2x. At 50% debt = 2.2x. At 75% debt = 3.8x. At 90% debt = 5.0x churn!
   let baseMonthlyChurn = 0.05;
   updatedRoadmap.filter(f => f.isCompleted).forEach(f => {
     if (f.effects.retentionBoost) baseMonthlyChurn = Math.max(0.01, baseMonthlyChurn * (1 - f.effects.retentionBoost));
   });
 
-  const trustPenalty = store.trust < 30 ? 3.0 : (store.trust < 50 ? 1.8 : (store.trust > 80 ? 0.6 : 1.0));
-  const debtChurnMultiplier = 1 + (newTechDebt / 100) * 0.5;
-  const churnPerSec = (baseMonthlyChurn * trustPenalty * debtChurnMultiplier) / (30 * 86400);
+  const trustPenalty = store.trust < 30 ? 3.5 : (store.trust < 50 ? 2.0 : (store.trust > 80 ? 0.6 : 1.0));
+  const debtChurnMultiplier = 1 + Math.pow(newTechDebt / 40, 2);
+  const churnPerSec = (baseMonthlyChurn * trustPenalty * debtChurnMultiplier * unattendedChurnMultiplier) / SECONDS_PER_GAME_MONTH;
   const churnedCustomers = newCustomers * churnPerSec * dt;
-  newCustomers = Math.max(0, newCustomers - churnedCustomers);
+  const directCancellations = unattendedCancellationsPerSec * dt;
+  newCustomers = Math.max(0, newCustomers - churnedCustomers - directCancellations);
 
   const integerCustomers = Math.floor(newCustomers);
 
@@ -544,10 +657,12 @@ export function runSimulationTick(deltaSeconds: number) {
   const highDebtRate = 1 / (25 * 60);
   const ticketRatePerCustSec = lowDebtRate + (newTechDebt / 100) * (highDebtRate - lowDebtRate);
 
-  const chaosArch = store.architectureUpgrades.find(u => u.id === 'arch_chaos');
+  const chaosArch = store.architectureUpgrades.find(u => u.id === 'arch_chaos' || u.id === 'arch_chaos_engineering');
   const chaosDiscount = chaosArch ? (1 - 0.15 * chaosArch.level) : 1.0;
 
-  const ticketsGenerated = newCustomers * ticketRatePerCustSec * Math.max(0.2, chaosDiscount) * dt;
+  // Overloaded compute causes hallucinated answers & customer complaints (+tickets)!
+  const overloadTicketRate = computeExcess * 0.003;
+  const ticketsGenerated = newCustomers * (ticketRatePerCustSec + overloadTicketRate) * Math.max(0.2, chaosDiscount) * dt;
 
   let ticketsResolved = 0;
   const supportAgents = store.agents.filter(a => a.role === 'SUPPORT');
@@ -565,6 +680,9 @@ export function runSimulationTick(deltaSeconds: number) {
   } else if (newTickets === 0 && store.customers > 0) {
     trustDelta += 0.02 * dt;
   }
+  // Penalties from unattended inbox alerts and compute overload!
+  trustDelta -= (unattendedTrustDrainPerSec + (0.12 * computeExcess)) * dt;
+
   const newTrust = Math.max(0, Math.min(100, store.trust + trustDelta + dynamicTrustBoost));
   const newHype = Math.max(0, Math.min(100, store.hype + dynamicHypeBoost));
 
@@ -572,10 +690,18 @@ export function runSimulationTick(deltaSeconds: number) {
   const newMrr = Math.round(newCustomers * currentArpu);
   const newArr = newMrr * 12;
 
-  const revenuePerSec = newMrr / (30 * 86400);
-  const totalExpensesPerSec = computeCostPerSec + campaignCostPerSec;
-  const netCashChange = (revenuePerSec - totalExpensesPerSec) * dt;
+  // Game Month: Real cash deposited every second based on MRR
+  const revenuePerSec = newMrr / SECONDS_PER_GAME_MONTH;
+  const totalExpensesPerSec = computeCostPerSec + campaignCostPerSec + agentOpexPerSec + unattendedCashDrainPerSec;
+  const netCashFlowPerSec = revenuePerSec - totalExpensesPerSec;
+  const netCashChange = netCashFlowPerSec * dt;
   const newCash = Math.max(0, store.cash + netCashChange);
+
+  // Net ARR Delta per second (can be negative if churn > sales!)
+  const netCustomerDeltaPerSec = (expectedNewCustomers - churnedCustomers - directCancellations) / (dt || 1);
+  const netArrDeltaPerSec = Math.round(netCustomerDeltaPerSec * currentArpu * 12);
+
+
 
   // Valuation Multiple Formula
   let workforceMultipleBoost = 0;
@@ -615,8 +741,30 @@ export function runSimulationTick(deltaSeconds: number) {
   const hasCEO = store.agents.some(a => a.role === 'CEO');
   const currentComputeTierId = store.currentComputeTierId;
 
-  const updatedVcOffers = store.vcOffers.map(offer => {
-    if (offer.isAccepted) return offer;
+  const rawOffers = (store.vcOffers && store.vcOffers.length >= INITIAL_VC_OFFERS.length)
+    ? store.vcOffers
+    : INITIAL_VC_OFFERS.map(def => {
+        const existing = store.vcOffers?.find(o => o.id === def.id);
+        return existing ? { ...def, ...existing, maxArr: def.maxArr } : def;
+      });
+
+  const updatedVcOffers = rawOffers.map(offer => {
+    const def = INITIAL_VC_OFFERS.find(o => o.id === offer.id);
+    const maxArr = offer.maxArr || def?.maxArr;
+
+    if (offer.isAccepted) return { ...offer, maxArr };
+
+    // Check if company has outgrown this round!
+    const isOutgrown = maxArr ? newArr > maxArr : false;
+    if (isOutgrown) {
+      return {
+        ...offer,
+        maxArr,
+        isAvailable: false,
+        isExpired: true
+      };
+    }
+
     const meetsMrr = newMrr >= offer.requiredMrr;
     const meetsTrust = newTrust >= offer.requiredTrust;
     const meetsAgents = !offer.requiredAgents || store.agents.length >= offer.requiredAgents;
@@ -634,6 +782,7 @@ export function runSimulationTick(deltaSeconds: number) {
 
     return {
       ...offer,
+      isExpired: false,
       isAvailable: meetsMrr && meetsTrust && meetsAgents && meetsProduct && meetsManager && meetsExec && meetsCEO && meetsCompute
     };
   });
@@ -653,18 +802,29 @@ export function runSimulationTick(deltaSeconds: number) {
       });
       if (isSatisfied) {
         currentUnlocked.add(ms.id);
-        nextMilestoneCelebration = ms;
-        soundEngine.playMilestone();
+
+        // Suppress intrusive modal pop-up if the company has already far outgrown this milestone!
+        const isOutgrownMilestone = 
+          (ms.id === 'ms_mrr_100' && newArr > 20000) ||
+          (ms.id === 'ms_mrr_1k' && newArr > 200000) ||
+          (ms.id === 'ms_mrr_10k' && newArr > 2000000) ||
+          (ms.id === 'ms_first_coworker' && newArr > 500000);
+
+        if (!isOutgrownMilestone) {
+          nextMilestoneCelebration = ms;
+          soundEngine.playMilestone();
+        }
         useGameStore.getState().addLog(`🏆 MILESTONE UNLOCKED: ${ms.bannerTitle}! ${ms.rewardFlavor}`, 'system', 'milestone');
       }
     }
   });
 
-  // Check Unicorn Condition & Stage Updates
+
+  // Check $1B ARR Victory Condition & Stage Updates
   let isUnicorn = store.isUnicornModalOpen;
   let currentStage = store.stage;
 
-  if (newValuation >= 1000000000) {
+  if (newArr >= 1000000000) {
     if (!store.hasSeenUnicorn) {
       isUnicorn = true;
       soundEngine.playUnicornVictory();
@@ -682,6 +842,51 @@ export function runSimulationTick(deltaSeconds: number) {
     } else {
       currentStage = 'MANUAL_FOUNDER';
     }
+  }
+
+  // Progressive Eras Update (1 to 10)
+  const calculatedEra = calcCurrentEra({
+    arr: newArr,
+    mvpShipped: store.mvpShipped,
+    agentsCount: store.agents.length
+  });
+
+  const prevEra = store.currentEra || 1;
+  let newCurrentEra = prevEra;
+  let newActiveEraUnlock = store.activeEraUnlock;
+  let isEraProgressionBlocked = false;
+  let eraProgressionBlockReason = '';
+
+  if (calculatedEra > prevEra) {
+    // Check if operational crisis blocks progression
+    if (unattendedPenaltiesActive) {
+      isEraProgressionBlocked = true;
+      eraProgressionBlockReason = 'Unattended emergency in Executive Inbox';
+    } else if (isInsolvent) {
+      isEraProgressionBlocked = true;
+      eraProgressionBlockReason = 'Company is insolvent ($0 Cash)';
+    } else if (newTrust < 30) {
+      isEraProgressionBlocked = true;
+      eraProgressionBlockReason = `Trust collapsed (${newTrust.toFixed(0)}% < 30%)`;
+    } else if (newTechDebt > 60) {
+      isEraProgressionBlocked = true;
+      eraProgressionBlockReason = `Critical Tech Debt (${newTechDebt.toFixed(0)}% > 60%)`;
+    }
+
+    if (!isEraProgressionBlocked) {
+      newCurrentEra = calculatedEra;
+      const eraConfig = getEraConfig(calculatedEra);
+      newActiveEraUnlock = {
+        era: calculatedEra,
+        name: eraConfig.name,
+        description: eraConfig.description,
+        unlockedItem: eraConfig.hint
+      };
+      soundEngine.playCelebration();
+      useGameStore.getState().addLog(`🌟 UNLOCKED ${eraConfig.name.toUpperCase()}! ${eraConfig.description}`, 'system', 'milestone');
+    }
+  } else {
+    newCurrentEra = Math.max(prevEra, calculatedEra);
   }
 
   // 10. Random Event Trigger Check
@@ -703,16 +908,22 @@ export function runSimulationTick(deltaSeconds: number) {
     archetype: store.company?.archetype
   };
 
+  // Only filter out active events if they are vastly outgrown by stage!
+  // NEVER filter out active events because MRR/customers dipped during a crisis!
   let activeEvents = store.activeEvents.filter(e => {
     const templateKey = getTemplateKey(e);
-    const template = EVENTS_POOL.find(p => p.id === templateKey);
-    if (template && !isEventEligible(template, evalContext)) {
+    if (templateKey.startsWith('evt_s1_') && (newArr > 250000 || store.agents.length >= 3)) {
+      return false;
+    }
+    if (templateKey.startsWith('evt_s2_') && newArr > 10000000) {
+      return false;
+    }
+    if (templateKey.startsWith('evt_s3_') && newArr > 100000000) {
       return false;
     }
     return true;
   });
 
-  const now = Date.now();
   if (now - lastEventCheckTime > eventIntervalSeconds * 1000 && activeEvents.length < 3) {
     lastEventCheckTime = now;
     if (newMrr > 100000) eventIntervalSeconds = 45;
@@ -774,10 +985,23 @@ export function runSimulationTick(deltaSeconds: number) {
     computeUsed,
     computeCapacity: store.computeCapacity,
     currentComputeTierId: store.currentComputeTierId,
+
+    agentOpexPerSec: Number(agentOpexPerSec.toFixed(2)),
+    netArrDeltaPerSec,
+    netCashFlowPerSec: Number(netCashFlowPerSec.toFixed(2)),
+    isComputeOverloaded,
+    computeOverloadRatio: overloadRatio,
+    unattendedPenaltiesActive,
+    unattendedTrustDrainPerSec: Number(unattendedTrustDrainPerSec.toFixed(2)),
+    unattendedChurnMultiplier: Number(unattendedChurnMultiplier.toFixed(2)),
+    unattendedCashDrainPerSec: Number(unattendedCashDrainPerSec.toFixed(2)),
+    isInsolvent,
+
     agents: store.agents,
     unlockedAgentRoles: store.unlockedAgentRoles,
     roadmapFeatures: updatedRoadmap,
-    activeRoadmapId: store.activeRoadmapId,
+    activeRoadmapId: nextActiveRoadmapId,
+
     completedFeatures: store.completedFeatures,
     architectureUpgrades: store.architectureUpgrades,
     trends: store.trends,
@@ -842,6 +1066,8 @@ export function runSimulationTick(deltaSeconds: number) {
     buildPointsTarget: newTarget,
     techDebt: Number(newTechDebt.toFixed(2)),
     roadmapFeatures: updatedRoadmap,
+    activeRoadmapId: nextActiveRoadmapId,
+
     arpu: currentArpu,
     attention: Number(decayedAttention.toFixed(1)),
     leads: Number(newLeads.toFixed(1)),
@@ -870,6 +1096,24 @@ export function runSimulationTick(deltaSeconds: number) {
     totalPlayTimeSeconds: store.totalPlayTimeSeconds + dt,
     lastTickTime: now,
     tokenBurnPerHour: Number(hourlyTokenCost.toFixed(2)),
-    agentTraces: updatedTraces
+    agentTraces: updatedTraces,
+    currentEra: newCurrentEra,
+    activeEraUnlock: newActiveEraUnlock,
+
+    // Roguelike Tension & Active Consequence Telemetry
+    agentOpexPerSec: Number(agentOpexPerSec.toFixed(2)),
+    netArrDeltaPerSec,
+    netCashFlowPerSec: Number(netCashFlowPerSec.toFixed(2)),
+    isComputeOverloaded,
+    computeOverloadRatio: overloadRatio,
+    unattendedPenaltiesActive,
+    unattendedTrustDrainPerSec: Number(unattendedTrustDrainPerSec.toFixed(2)),
+    unattendedChurnMultiplier: Number(unattendedChurnMultiplier.toFixed(2)),
+    unattendedCashDrainPerSec: Number(unattendedCashDrainPerSec.toFixed(2)),
+    isInsolvent,
+    isEraProgressionBlocked,
+    eraProgressionBlockReason
   });
+
+
 }

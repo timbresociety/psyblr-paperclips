@@ -39,7 +39,10 @@ export const HeaderKPIBar: React.FC = () => {
     soundEnabled,
     gameSpeed,
     toggleSound,
-    setGameSpeed
+    setGameSpeed,
+    netArrDeltaPerSec,
+    netCashFlowPerSec,
+    isInsolvent
   } = useGameStore();
 
   const [isResetOpen, setIsResetOpen] = useState(false);
@@ -116,16 +119,24 @@ export const HeaderKPIBar: React.FC = () => {
             {/* MRR & ARR */}
             <div className="text-right">
               <div className="text-[10px] uppercase tracking-wider text-white/40 font-sans">MRR / ARR</div>
-              <div className="text-xs sm:text-sm font-semibold text-[#30d158] tabular-nums">
+              <div className={`text-xs sm:text-sm font-semibold tabular-nums ${netArrDeltaPerSec < 0 ? 'text-[#ff453a]' : 'text-[#30d158]'}`}>
                 ${mrr.toLocaleString()} <span className="text-[11px] text-white/40 font-normal">(${(arr / 1000).toFixed(1)}k)</span>
+                {netArrDeltaPerSec < 0 && <span className="text-[10px] text-[#ff453a] ml-1">(-${Math.abs(netArrDeltaPerSec)}/s 🔻)</span>}
               </div>
             </div>
 
             {/* Cash */}
             <div className="text-right">
               <div className="text-[10px] uppercase tracking-wider text-white/40 font-sans">Cash Treasury</div>
-              <div className="text-xs sm:text-sm font-semibold text-white/90 tabular-nums">
+              <div className={`text-xs sm:text-sm font-semibold tabular-nums ${isInsolvent ? 'text-[#ff453a] animate-pulse' : 'text-white/90'}`}>
                 ${Math.floor(cash).toLocaleString()}
+                {isInsolvent ? (
+                  <span className="text-[10px] text-[#ff453a] ml-1 font-bold">[INSOLVENT]</span>
+                ) : netCashFlowPerSec !== 0 ? (
+                  <span className={`text-[10px] font-mono ml-1 ${netCashFlowPerSec < 0 ? 'text-[#ff453a]' : 'text-[#30d158]/80'}`}>
+                    ({netCashFlowPerSec < 0 ? `-$${Math.abs(Math.round(netCashFlowPerSec))}/s` : `+$${Math.round(netCashFlowPerSec)}/s`})
+                  </span>
+                ) : null}
               </div>
             </div>
 

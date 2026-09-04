@@ -14,6 +14,7 @@ export const INITIAL_VC_OFFERS: VCTermSheet[] = [
     investorThesis: '"One-person startups with recursive agent loops are the fastest-growing asset class in human history."',
     requiredMrr: 500,
     requiredTrust: 50,
+    maxArr: 300000,
     requiredAgents: 2,
     requiredProductLevel: 2,
     isAvailable: false,
@@ -32,6 +33,7 @@ export const INITIAL_VC_OFFERS: VCTermSheet[] = [
     investorThesis: '"We don\'t invest in teams anymore. We invest in 1 hyper-focused founder and their 6+ autonomous agent cluster."',
     requiredMrr: 5000,
     requiredTrust: 55,
+    maxArr: 2500000,
     requiredAgents: 6,
     requiredProductLevel: 4,
     requiredComputeTierId: 'comp_startup',
@@ -51,6 +53,7 @@ export const INITIAL_VC_OFFERS: VCTermSheet[] = [
     investorThesis: '"Their unit economics are ridiculous. Zero health insurance line-items on the entire balance sheet."',
     requiredMrr: 50000,
     requiredTrust: 60,
+    maxArr: 15000000,
     requiredAgents: 15,
     requiredProductLevel: 7,
     requiresManager: true,
@@ -71,6 +74,7 @@ export const INITIAL_VC_OFFERS: VCTermSheet[] = [
     investorThesis: '"Agentic autonomous SaaS is eating the enterprise. 98% gross margins are structurally unstoppable."',
     requiredMrr: 250000,
     requiredTrust: 65,
+    maxArr: 60000000,
     requiredAgents: 30,
     requiredProductLevel: 10,
     requiresExecutive: true,
@@ -91,14 +95,33 @@ export const INITIAL_VC_OFFERS: VCTermSheet[] = [
     investorThesis: '"We wrote the $120M check in 14 minutes over WhatsApp based entirely on their GitHub commit velocity."',
     requiredMrr: 1000000,
     requiredTrust: 70,
+    maxArr: 250000000,
     requiredAgents: 50,
     requiredProductLevel: 15,
     requiresCEO: true,
     requiredComputeTierId: 'comp_datacenter',
     isAvailable: false,
     isAccepted: false
+  },
+  {
+    id: 'vc_sovereign',
+    roundStage: 'GROWTH_SOVEREIGN',
+    firmName: 'Mubadala & Sovereign Wealth Consortium',
+    partnerName: 'Khalid Al-Mansoor',
+    partnerTitle: 'Chief Investment Officer',
+    raiseAmount: 500000000,
+    valuation: 10000000000,
+    dilutionPercent: 5.0,
+    hypeBoost: 50,
+    investorThesis: '"A 1-person software empire generating hundreds of millions in ARR with autonomous AI governance is the future of capitalism."',
+    requiredMrr: 15000000,
+    requiredTrust: 80,
+    requiresCEO: true,
+    isAvailable: false,
+    isAccepted: false
   }
 ];
+
 
 export const COMPUTE_TIERS = [
   {

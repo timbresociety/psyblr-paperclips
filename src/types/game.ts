@@ -129,6 +129,21 @@ export interface CompanyState {
   computeCapacity: number;
   currentComputeTierId: string;
 
+  // Active Roguelike Consequence & Burn Telemetry
+  agentOpexPerSec: number;
+  netArrDeltaPerSec: number;
+  netCashFlowPerSec: number;
+  isComputeOverloaded: boolean;
+  computeOverloadRatio: number;
+  unattendedPenaltiesActive: boolean;
+  unattendedTrustDrainPerSec: number;
+  unattendedChurnMultiplier: number;
+  unattendedCashDrainPerSec: number;
+  isInsolvent: boolean;
+  isEraProgressionBlocked?: boolean;
+  eraProgressionBlockReason?: string;
+
+
   // Systems
   agents: AgentInstance[];
   unlockedAgentRoles: AgentRoleType[];

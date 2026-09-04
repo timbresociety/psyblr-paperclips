@@ -13,13 +13,22 @@ interface HireAgentModalProps {
 }
 
 export const HireAgentModal: React.FC<HireAgentModalProps> = ({ isOpen, onClose, defaultRole }) => {
-  const { cash, unlockedAgentRoles, hireAgent } = useGameStore();
+  const { cash, unlockedAgentRoles, hireAgent, agents } = useGameStore();
 
   const [selectedRole, setSelectedRole] = useState<AgentRoleType>(defaultRole || 'ENGINEERING');
   const [candidateTrait, setCandidateTrait] = useState<AgentTraitType>(getRandomTrait());
   const [candidateName, setCandidateName] = useState<string>(AGENT_NAMES[0]);
 
+  React.useEffect(() => {
+    if (defaultRole) {
+      setSelectedRole(defaultRole);
+    } else if (agents.length >= 8 && !agents.some(a => a.role === 'MANAGER') && unlockedAgentRoles.includes('MANAGER')) {
+      setSelectedRole('MANAGER');
+    }
+  }, [defaultRole, isOpen, agents.length, unlockedAgentRoles]);
+
   if (!isOpen) return null;
+
 
   const roleDef = AGENT_ROLES[selectedRole];
   const traitDef = AGENT_TRAITS[candidateTrait];
@@ -76,29 +85,48 @@ export const HireAgentModal: React.FC<HireAgentModalProps> = ({ isOpen, onClose,
               const def = AGENT_ROLES[role];
               const isUnlocked = unlockedAgentRoles.includes(role);
               const isSelected = selectedRole === role;
+              const hasManager = agents.some(a => a.role === 'MANAGER');
+              const hasSales = agents.some(a => a.role === 'SALES');
+              const isRecommended = (role === 'MANAGER' && agents.length >= 8 && !hasManager) || (role === 'SALES' && agents.length >= 1 && !hasSales);
 
               return (
                 <button
                   key={role}
                   disabled={!isUnlocked}
                   onClick={() => { soundEngine.playClick(); setSelectedRole(role); }}
-                  className={`p-2.5 rounded-xl text-left border transition-all ${
+                  className={`p-2.5 rounded-xl text-left border transition-all relative ${
                     isSelected
                       ? 'bg-[#0a84ff] text-white shadow-xs font-medium border-transparent'
+                      : isRecommended
+                      ? 'apple-inset text-white/90 border-[#ff453a]/40 hover:border-[#ff453a]/60 ring-1 ring-[#ff453a]/20'
                       : isUnlocked
                       ? 'apple-inset text-white/80 hover:border-white/[0.15]'
                       : 'bg-white/[0.02] border-white/[0.04] text-white/30 cursor-not-allowed'
                   }`}
                 >
-                  <div className="text-xs font-semibold truncate">{def.title.split(' ')[0]}</div>
-                  <div className={`text-[10px] font-mono mt-0.5 tabular-nums ${isSelected ? 'text-white/80' : 'text-white/50'}`}>
-                    {isUnlocked ? `$${def.hireCost.toLocaleString()}` : 'Locked'}
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-semibold truncate">{def.title.split(' ')[0]}</div>
+                    {isRecommended && !isSelected && (
+                      <span className="relative flex h-2 w-2 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff453a] opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff453a]" />
+                      </span>
+                    )}
+                  </div>
+                  <div className={`text-[10px] font-mono mt-0.5 tabular-nums flex items-center justify-between ${isSelected ? 'text-white/80' : 'text-white/50'}`}>
+                    <span>{isUnlocked ? `$${def.hireCost.toLocaleString()}` : 'Locked'}</span>
+                    {isRecommended && (
+                      <span className={`text-[9px] font-bold uppercase tracking-wider ${isSelected ? 'text-white' : 'text-[#ff453a]'}`}>
+                        REC
+                      </span>
+                    )}
                   </div>
                 </button>
               );
             })}
           </div>
         </div>
+
 
         {/* Candidate Preview Card */}
         <div className="apple-card rounded-2xl p-4 mb-5 space-y-3">

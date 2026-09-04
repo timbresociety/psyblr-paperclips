@@ -2232,12 +2232,114 @@ export const EVENTS_POOL: GameEvent[] = [
         flavorOutcome: 'Signed 3-year multi-million enterprise hosting agreement.'
       }
     ]
+  },
+  {
+    id: 'evt_s5_antitrust_probe',
+    title: 'DOJ & FTC ANTITRUST INQUIRY: MONOPOLISTIC AUTONOMY',
+    body: 'Federal antitrust regulators have issued a civil investigative demand. They allege {COMPANY_NAME}\'s 1-person software empire controls 84% of autonomous workflow automation.',
+    category: 'Executive',
+    severity: 3,
+    source: 'Federal Trade Commission Legal Notice',
+    timestamp: 0,
+    isResolved: false,
+    triggerCondition: {
+      minMrr: 10000000 // $120M+ ARR
+    },
+    choices: [
+      {
+        id: 'c1',
+        label: 'Open-source core protocol & form open agent governance consortium',
+        summary: 'Neutralize regulatory threat and cement industry trust (+15 Trust, -5 Hype, -$5,000,000 Cash)',
+        effects: { trustDelta: 15, hypeDelta: -5, cashDelta: -5000000 },
+        flavorOutcome: 'Regulators dropped the antitrust investigation. The open standard is now the global default.'
+      },
+      {
+        id: 'c2',
+        label: 'Retain premier DC litigators and challenge regulators in court',
+        summary: 'Aggressive defiance electrifies tech media (+25 Hype, -8 Trust, -$20,000,000 Cash)',
+        effects: { hypeDelta: 25, trustDelta: -8, cashDelta: -20000000 },
+        flavorOutcome: 'The legal battle made the front page of every financial newspaper. Enterprise buyers cheered.'
+      }
+    ]
+  },
+  {
+    id: 'evt_s5_smr_nuclear_deal',
+    title: 'SMR NUCLEAR POWER PURCHASE AGREEMENT',
+    body: 'Your autonomous GPU datacenter clusters are consuming 320 megawatts. The regional energy grid demands you secure dedicated sovereign clean energy generation.',
+    category: 'Infrastructure',
+    severity: 2,
+
+    source: 'Regional Energy Reliability Council',
+    timestamp: 0,
+    isResolved: false,
+    triggerCondition: {
+      minMrr: 15000000 // $180M+ ARR
+    },
+    choices: [
+      {
+        id: 'c1',
+        label: 'Fund 10-year Small Modular Reactor (SMR) nuclear co-location',
+        summary: 'Unlimited clean energy & zero compute throttling (-$50,000,000 Cash, +10 Trust, +15 Hype)',
+        effects: { cashDelta: -50000000, trustDelta: 10, hypeDelta: 15 },
+        flavorOutcome: 'SMR nuclear reactor broke ground adjacent to your compute cluster. Carbon-free 99.999% uptime guaranteed.'
+      },
+      {
+        id: 'c2',
+        label: 'Implement dynamic compute throttling during peak utility hours',
+        summary: 'Save treasury cash but slow down background agent reasoning (-$0 Cash, +5 Tech Debt, -5 Trust)',
+        effects: { techDebtDelta: 5, trustDelta: -5 },
+        flavorOutcome: 'Agents throttle back during hot summer afternoons. Local grid operators thanked you.'
+      }
+    ]
+  },
+  {
+    id: 'evt_s5_short_seller_attack',
+    title: 'ACTIVIST HEDGE FUND PUBLISHES BOMBSHELL SHORT REPORT',
+    body: 'A prominent short seller published a 110-page dossier: "Ghost Empire: Why 1 Human Cannot Possibly Oversee Hundreds of Millions in Autonomous Software ARR."',
+    category: 'Executive',
+    severity: 3,
+    source: 'Bloomberg Terminal Breaking Wire',
+    timestamp: 0,
+    isResolved: false,
+    triggerCondition: {
+      minMrr: 25000000 // $300M+ ARR
+    },
+    choices: [
+      {
+        id: 'c1',
+        label: 'Stream live multi-agent execution traces & publish KPMG audit',
+        summary: 'Complete transparency crushes the short thesis (+30 Trust, +20 Hype)',
+        effects: { trustDelta: 30, hypeDelta: 20 },
+        flavorOutcome: 'The live stream had 400,000 concurrent viewers. Short sellers rushed to cover at massive losses.'
+      },
+      {
+        id: 'c2',
+        label: 'Authorize $100M corporate treasury buyback to trigger short squeeze',
+        summary: 'Aggressive capital deployment fuels valuation multiple (-$100,000,000 Cash, +40 Hype)',
+        effects: { cashDelta: -100000000, hypeDelta: 40 },
+        flavorOutcome: 'Stock surged 45% in after-hours trading. The activist hedge fund liquidating their fund.'
+      }
+    ]
   }
 ];
 
 export function isEventEligible(event: GameEvent, ctx: EventEvaluationContext): boolean {
+  // Stage 1 Solo Founder events must NEVER fire if ARR > $150k or agents > 2
+  if (event.id.startsWith('evt_s1_') && (ctx.arr > 150000 || ctx.agents.length > 2)) {
+    return false;
+  }
+  // Stage 2 early product events must NEVER fire if ARR > $3M
+  if (event.id.startsWith('evt_s2_') && ctx.arr > 3000000) {
+    return false;
+  }
+  // Stage 3 scale events must NEVER fire if ARR > $50M
+  if (event.id.startsWith('evt_s3_') && ctx.arr > 50000000) {
+    return false;
+  }
+
   const cond = event.triggerCondition;
   if (!cond) return true;
+
 
   const agentCount = ctx.agents.length;
   const activeRoles = new Set(ctx.agents.map(a => a.role));

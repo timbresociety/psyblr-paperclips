@@ -124,6 +124,7 @@ export interface AgentRoleDefinition {
   baseOutputValue: number; // e.g., 2.0 BP/s, 40 Att/s, 0.25 Leads/s, 0.15 Tickets/s, 0.05 Debt/s, 15% Ops
   baseComputeCost: number; // in CU
   hireCost: number; // in Cash
+  monthlyOpex: number; // Ongoing cloud token & model API burn in Cash/mo
   unlockRequirement: string;
   unlockedByDefault: boolean;
   description: string;
@@ -160,6 +161,7 @@ export interface AgentInstance {
   currentTask: string;
   outputPerSec: number;
   computeCost: number;
+  monthlyCost?: number; // active ongoing burn
   reliability: number; // 0 to 100%
   quote: string;
   hiredAt: number;
@@ -167,6 +169,7 @@ export interface AgentInstance {
   assignedManagerId?: string;
   isExecutive?: boolean;
   isCEO?: boolean;
+
 
   // Advanced AI Orchestration specs
   model: AgentModelType;

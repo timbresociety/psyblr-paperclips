@@ -68,6 +68,13 @@ export interface EventTriggerCondition {
   archetypeRequired?: StartupArchetype;
 }
 
+export interface EventUnattendedPenalty {
+  trustDrainPerSec?: number;
+  churnMultiplier?: number;
+  cashDrainPerSec?: number;
+  cancellationsPerSec?: number;
+}
+
 export interface GameEvent {
   id: string;
   templateId?: string;
@@ -81,7 +88,10 @@ export interface GameEvent {
   isResolved: boolean;
   resolvedChoiceId?: string;
   triggerCondition?: EventTriggerCondition;
+  penaltyPerSec?: EventUnattendedPenalty;
+  gracePeriodSeconds?: number;
 }
+
 
 export interface MilestoneDefinition {
   id: string;

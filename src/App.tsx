@@ -22,6 +22,7 @@ import { MilestoneCelebration } from './components/milestones/MilestoneCelebrati
 import { OfflineRecapModal } from './components/milestones/OfflineRecapModal';
 import { UnicornVictoryModal } from './components/milestones/UnicornVictoryModal';
 import { soundEngine } from './audio/soundEffects';
+import { getEraConfig } from './data/eras';
 
 export const App: React.FC = () => {
   const {
@@ -31,7 +32,8 @@ export const App: React.FC = () => {
     postManual,
     sellManual,
     supportManual,
-    stage
+    stage,
+    currentEra
   } = useGameStore();
 
   const [isCommandOpen, setIsCommandOpen] = useState(false);
@@ -73,7 +75,7 @@ export const App: React.FC = () => {
 
       if (isInput) return;
 
-      // 1-0 Numerical Tab Switchers
+      // 1-0 Numerical Tab Switchers (Only switch if tab is unlocked in current era)
       const tabMap: Record<string, ScreenTab> = {
         '1': 'command',
         '2': 'swarm',
@@ -87,28 +89,34 @@ export const App: React.FC = () => {
         '0': 'holding'
       };
 
+      const eraConfig = getEraConfig(currentEra || 1);
+
       if (tabMap[e.key]) {
-        if (e.key === '0' && stage !== 'HOLDING_COMPANY') return;
+        const targetTab = tabMap[e.key];
+        const isInboxAllowed = targetTab === 'inbox' && (eraConfig.unlockedTabs.includes('inbox') || (useGameStore.getState().activeEvents?.length || 0) > 0);
+        if (!eraConfig.unlockedTabs.includes(targetTab) && !isInboxAllowed) return;
+        if (targetTab === 'holding' && stage !== 'HOLDING_COMPANY') return;
         e.preventDefault();
         soundEngine.playClick();
-        setActiveTab(tabMap[e.key]);
+        setActiveTab(targetTab);
         return;
       }
 
-      // Hotkeys for Founder Manual Actions
+
+      // Hotkeys for Founder Manual Actions (Gated by Era)
       if (e.key === 'c' || e.key === 'C') {
         e.preventDefault();
         soundEngine.playDeploy();
         vibeCodeManual();
-      } else if (e.key === 'p' || e.key === 'P') {
+      } else if ((e.key === 'p' || e.key === 'P') && (currentEra || 1) >= 2) {
         e.preventDefault();
         soundEngine.playClick();
         postManual();
-      } else if (e.key === 's' || e.key === 'S') {
+      } else if ((e.key === 's' || e.key === 'S') && (currentEra || 1) >= 2) {
         e.preventDefault();
         soundEngine.playCash();
         sellManual();
-      } else if (e.key === 't' || e.key === 'T') {
+      } else if ((e.key === 't' || e.key === 'T') && (currentEra || 1) >= 3) {
         e.preventDefault();
         soundEngine.playTicketResolved();
         supportManual();
@@ -117,7 +125,8 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [setActiveTab, vibeCodeManual, postManual, sellManual, supportManual, stage]);
+  }, [setActiveTab, vibeCodeManual, postManual, sellManual, supportManual, stage, currentEra]);
+
 
   return (
     <MacConsoleShell>

@@ -149,7 +149,69 @@
   animation: apple-subtle-pulse 2.2s ease-in-out infinite;
 }
 
+/* Floating Click Feedback Particles */
+@keyframes floatUpFade {
+  0% {
+    opacity: 1;
+    transform: translateY(0px) scale(0.9);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-12px) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-48px) scale(0.95);
+  }
+}
+
+.animate-float-up {
+  animation: floatUpFade 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Gleb Tactile Hero Button */
+.gleb-hero-btn {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), #141416;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 1px 0 0 rgba(255, 255, 255, 0.15) inset,
+    0 8px 24px -4px rgba(0, 0, 0, 0.6),
+    0 2px 6px 0 rgba(0, 0, 0, 0.4);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gleb-hero-btn:hover:not(:disabled) {
+  border-color: rgba(10, 132, 255, 0.6);
+  box-shadow: 
+    0 1px 0 0 rgba(255, 255, 255, 0.25) inset,
+    0 12px 32px -4px rgba(10, 132, 255, 0.25),
+    0 4px 12px 0 rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+.gleb-hero-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+  box-shadow: 
+    0 1px 0 0 rgba(0, 0, 0, 0.2) inset,
+    0 4px 12px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* Yolomode-Inspired Level Pip Glow */
+@keyframes pipGlowPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(10, 132, 255, 0.6), 0 0 2px rgba(10, 132, 255, 0.9);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(10, 132, 255, 0.9), 0 0 4px rgba(10, 132, 255, 1);
+  }
+}
+
+.pip-active {
+  animation: pipGlowPulse 2s infinite ease-in-out;
+}
+
 /* Smooth Interactive Click Feedback */
 button:active:not(:disabled) {
   transform: scale(0.985);
 }
+

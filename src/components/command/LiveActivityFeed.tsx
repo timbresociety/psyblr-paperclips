@@ -6,13 +6,16 @@ import {
   Sparkles,
   User,
   Bot,
-  Search
+  Search,
+  ArrowRight
 } from 'lucide-react';
+import { soundEngine } from '../../audio/soundEffects';
 
 type FilterCategory = 'all' | 'founder' | 'agent' | 'sales' | 'incident' | 'milestone';
 
 export const LiveActivityFeed: React.FC = () => {
-  const { activityLogs } = useGameStore();
+  const { activityLogs, setActiveTab } = useGameStore();
+
   const [filter, setFilter] = useState<FilterCategory>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -145,10 +148,25 @@ export const LiveActivityFeed: React.FC = () => {
               <p className="flex-1 leading-snug break-words text-[12px] text-white/90">
                 {log.text}
               </p>
-              <span className="text-[10px] text-white/40 whitespace-nowrap pt-0.5 font-mono tabular-nums">
-                {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </span>
+              <div className="flex items-center gap-2 shrink-0 pt-0.5">
+                {(log.category === 'incident' || log.text.includes('(Check Inbox)')) && (
+                  <button
+                    onClick={() => {
+                      soundEngine.playClick();
+                      setActiveTab('inbox');
+                    }}
+                    className="px-2 py-0.5 rounded-lg bg-[#ff453a] hover:bg-[#e0382e] text-white text-[11px] font-semibold flex items-center gap-1 transition-all shadow-xs"
+                  >
+                    <span>Check Inbox</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                )}
+                <span className="text-[10px] text-white/40 whitespace-nowrap font-mono tabular-nums">
+                  {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
+              </div>
             </div>
+
           ))
         )}
       </div>

@@ -325,19 +325,21 @@ export const FinanceScreen: React.FC = () => {
                       <div className="flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-[#30d158]/15 text-[#30d158] border border-[#30d158]/30 text-xs font-mono font-medium">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Round Closed (${(offer.valuation / 1000000).toFixed(1)}M Benchmark)
                       </div>
+                    ) : offer.isExpired ? (
+                      <div className="flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.03] text-white/40 border border-white/[0.06] text-xs font-mono">
+                        Round Outgrown (Company ARR exceeds stage limit)
+                      </div>
                     ) : (
                       <button
                         onClick={() => { soundEngine.playCash(); acceptVcOffer(offer.id); }}
                         disabled={!offer.isAvailable}
-                        className={`w-full py-2 px-3 rounded-xl font-medium text-xs transition-all ${
+                        className={`w-full py-2 px-3 rounded-xl text-xs font-medium transition-all ${
                           offer.isAvailable
-                            ? 'apple-btn-primary'
+                            ? 'apple-btn-primary shadow-sm'
                             : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.05]'
                         }`}
                       >
-                        {offer.isAvailable
-                          ? `Sign Term Sheet (${(offer.valuation / 1000000).toFixed(1)}M Post-Money)`
-                          : `Prerequisites Incomplete`}
+                        {offer.isAvailable ? `Sign Term Sheet (Raise $${(offer.raiseAmount / 1000000).toFixed(1)}M)` : 'Requirements Not Met'}
                       </button>
                     )}
                   </div>

@@ -9,6 +9,7 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     baseOutputValue: 2.0,
     baseComputeCost: 1.0,
     hireCost: 150,
+    monthlyOpex: 450,
     unlockRequirement: 'None',
     unlockedByDefault: true,
     description: 'Writes code furiously without running tests. Generates product features and technical debt.',
@@ -23,6 +24,7 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     baseOutputValue: 40.0,
     baseComputeCost: 0.8,
     hireCost: 100,
+    monthlyOpex: 180,
     unlockRequirement: 'None',
     unlockedByDefault: true,
     description: 'Spams X threads, LinkedIn carousel memes, and SEO content to generate viral attention.',
@@ -37,6 +39,7 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     baseOutputValue: 0.25,
     baseComputeCost: 1.2,
     hireCost: 200,
+    monthlyOpex: 350,
     unlockRequirement: 'Reach 10 Customers',
     unlockedByDefault: false,
     description: 'Sends hyper-personalized cold DMs and auto-pitches leads to close new paying customers.',
@@ -51,6 +54,7 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     baseOutputValue: 0.15,
     baseComputeCost: 0.6,
     hireCost: 80,
+    monthlyOpex: 120,
     unlockRequirement: 'Reach 15 Customers',
     unlockedByDefault: false,
     description: 'Replies to customer support tickets with high empathy and frequent hallucinations.',
@@ -65,6 +69,7 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     baseOutputValue: 0.05,
     baseComputeCost: 1.0,
     hireCost: 250,
+    monthlyOpex: 280,
     unlockRequirement: 'Reach Tech Debt > 20',
     unlockedByDefault: false,
     description: 'Silently fixes spaghetti code, regression bugs, and unhandled promise rejections.',
@@ -79,6 +84,7 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     baseOutputValue: 0.15,
     baseComputeCost: 1.5,
     hireCost: 400,
+    monthlyOpex: 500,
     unlockRequirement: 'Hire 4+ Agents',
     unlockedByDefault: false,
     description: 'Optimizes token caching, cluster load-balancing, and cancels unused SaaS subscriptions.',
@@ -93,6 +99,7 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     baseOutputValue: 0.25,
     baseComputeCost: 2.0,
     hireCost: 1000,
+    monthlyOpex: 1500,
     unlockRequirement: 'Reach Stage 3 (8+ Agents)',
     unlockedByDefault: false,
     description: 'Schedules 1:1s with worker agents and optimizes prompt context windows.',
@@ -107,6 +114,7 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     baseOutputValue: 0.50,
     baseComputeCost: 4.0,
     hireCost: 5000,
+    monthlyOpex: 4500,
     unlockRequirement: 'Reach Stage 4 (30+ Agents)',
     unlockedByDefault: false,
     description: 'Executive agent (CTO, CMO, CRO, COO, CFO) delivering cross-departmental synergy.',
@@ -121,6 +129,7 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     baseOutputValue: 1.0,
     baseComputeCost: 10.0,
     hireCost: 50000,
+    monthlyOpex: 15000,
     unlockRequirement: 'Reach $1M ARR ($83.3k MRR)',
     unlockedByDefault: false,
     description: 'Runs all company operations. The human founder is now purely an ornamental board member.',
@@ -128,6 +137,7 @@ export const AGENT_ROLES: Record<AgentRoleType, AgentRoleDefinition> = {
     defaultTools: ['github', 'email', 'stripe', 'browser', 'postiz', 'supabase']
   }
 };
+
 
 export const AGENT_NAMES = [
   'CLAWD', 'NEXUS', 'VIBE-01', 'PROMPTIUS', 'AUTONOMA',

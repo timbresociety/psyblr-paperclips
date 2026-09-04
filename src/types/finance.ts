@@ -1,4 +1,4 @@
-export type FundingRoundStage = 'PRE_SEED' | 'SEED' | 'SERIES_A' | 'SERIES_B' | 'SERIES_C' | 'UNICORN_DEAL';
+export type FundingRoundStage = 'PRE_SEED' | 'SEED' | 'SERIES_A' | 'SERIES_B' | 'SERIES_C' | 'UNICORN_DEAL' | 'GROWTH_SOVEREIGN';
 
 export interface VCTermSheet {
   id: string;
@@ -13,6 +13,8 @@ export interface VCTermSheet {
   investorThesis: string;
   requiredMrr: number;
   requiredTrust: number;
+  maxArr?: number; // Revenue ceiling after which the round is outgrown/obsolete
+  isExpired?: boolean;
   requiredAgents?: number;
   requiredProductLevel?: number;
   requiredComputeTierId?: string;
@@ -23,6 +25,7 @@ export interface VCTermSheet {
   isAccepted: boolean;
   expiresInSeconds?: number;
 }
+
 
 export interface ComputeTier {
   id: string;

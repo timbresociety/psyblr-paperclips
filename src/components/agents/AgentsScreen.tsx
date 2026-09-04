@@ -6,9 +6,14 @@ import { HireAgentModal } from './HireAgentModal';
 import { Bot, Plus, Network, LayoutGrid } from 'lucide-react';
 
 export const AgentsScreen: React.FC = () => {
-  const { agents } = useGameStore();
+  const { agents, unlockedAgentRoles } = useGameStore();
   const [viewMode, setViewMode] = useState<'roster' | 'org'>('roster');
   const [isHireOpen, setIsHireOpen] = useState(false);
+
+  const hasManager = agents.some(a => a.role === 'MANAGER');
+  const needsManager = agents.length >= 8 && !hasManager && unlockedAgentRoles.includes('MANAGER');
+  const needsSales = agents.length >= 1 && !agents.some(a => a.role === 'SALES') && unlockedAgentRoles.includes('SALES');
+  const hasAttention = needsManager || needsSales;
 
   return (
     <div className="space-y-5 text-left">
@@ -18,6 +23,7 @@ export const AgentsScreen: React.FC = () => {
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-[#ff9f0a]/15 text-[#ff9f0a] flex items-center justify-center">
               <Bot className="w-4 h-4" />
+
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -65,13 +71,20 @@ export const AgentsScreen: React.FC = () => {
           {/* Hire Agent CTA */}
           <button
             onClick={() => setIsHireOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl apple-btn-primary text-xs font-medium tracking-tight shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl apple-btn-primary text-xs font-medium tracking-tight shadow-sm relative"
           >
+            {hasAttention && (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ff453a] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ff453a]" />
+              </span>
+            )}
             <Plus className="w-3.5 h-3.5" />
             <span>Deploy Agent</span>
           </button>
         </div>
       </div>
+
 
       {/* Main Content: Roster Grid vs Org Chart */}
       {viewMode === 'org' ? (

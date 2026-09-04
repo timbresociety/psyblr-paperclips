@@ -13,6 +13,7 @@ import { INITIAL_VC_OFFERS, COMPUTE_TIERS } from '../data/vcOffers';
 import { AGENT_ROLES, AGENT_NAMES, AGENT_QUOTES } from '../data/agentRoles';
 import { AGENT_TRAITS, getRandomTrait } from '../data/agentTraits';
 import { soundEngine } from '../audio/soundEffects';
+import { EARLY_GARAGE_UPGRADES } from '../data/eras';
 
 export interface GameState {
   // Conglomerate & Portfolio Multi-Company State
@@ -60,7 +61,22 @@ export interface GameState {
   computeCapacity: number;
   currentComputeTierId: string;
 
+  // Active Roguelike Consequence & Burn Telemetry
+  agentOpexPerSec: number;
+  netArrDeltaPerSec: number;
+  netCashFlowPerSec: number;
+  isComputeOverloaded: boolean;
+  computeOverloadRatio: number;
+  unattendedPenaltiesActive: boolean;
+  unattendedTrustDrainPerSec: number;
+  unattendedChurnMultiplier: number;
+  unattendedCashDrainPerSec: number;
+  isInsolvent: boolean;
+  isEraProgressionBlocked: boolean;
+  eraProgressionBlockReason: string;
+
   // Systems
+
   agents: AgentInstance[];
   unlockedAgentRoles: AgentRoleType[];
   roadmapFeatures: ProductFeature[];
@@ -90,6 +106,16 @@ export interface GameState {
   selectedCanvasAgentId: string | null;
   agentTraces: AgentExecutionTrace[];
   tokenBurnPerHour: number;
+
+  // Progressive Eras & Early Garage
+  currentEra: number;
+  mvpShipped: boolean;
+  earlyUpgrades: string[];
+  activeEraUnlock: { era: number; name: string; description: string; unlockedItem?: string } | null;
+  shipMvp: () => void;
+  purchaseEarlyUpgrade: (id: string) => boolean;
+  closeEraUnlockBanner: () => void;
+  triggerEraUnlock: (era: number, name: string, description: string, unlockedItem?: string) => void;
 
   // Actions
   initCompany: (idea: StartupIdea) => void;
@@ -123,6 +149,7 @@ export interface GameState {
   // Product Roadmap & Tech Debt
   setActiveRoadmap: (featureId: string) => void;
   executeTechDebtRefactor: (debtReduced: number, bpCost: number, cashCost: number, name: string) => boolean;
+  quickRefactorManual: () => void;
   upgradeArchitecture: (archId: string) => boolean;
 
   // Growth & Trends
@@ -260,7 +287,21 @@ export function createCompanyInstance(idea: StartupIdea, initialCash = 2000, com
     computeCapacity: 5,
     currentComputeTierId: 'comp_free',
 
+    agentOpexPerSec: 0,
+    netArrDeltaPerSec: 0,
+    netCashFlowPerSec: 0,
+    isComputeOverloaded: false,
+    computeOverloadRatio: 1.0,
+    unattendedPenaltiesActive: false,
+    unattendedTrustDrainPerSec: 0,
+    unattendedChurnMultiplier: 1.0,
+    unattendedCashDrainPerSec: 0,
+    isInsolvent: false,
+    isEraProgressionBlocked: false,
+    eraProgressionBlockReason: '',
+
     agents: [],
+
     unlockedAgentRoles: ['ENGINEERING', 'GROWTH'],
     roadmapFeatures: INITIAL_PRODUCT_FEATURES.map(f => ({ ...f, buildPointsCompleted: 0, isCompleted: false })),
     activeRoadmapId: 'feat_dark_mode',
@@ -330,7 +371,21 @@ export function extractActiveCompanyState(state: GameState): CompanyState | null
     computeCapacity: state.computeCapacity,
     currentComputeTierId: state.currentComputeTierId,
 
+    agentOpexPerSec: state.agentOpexPerSec || 0,
+    netArrDeltaPerSec: state.netArrDeltaPerSec || 0,
+    netCashFlowPerSec: state.netCashFlowPerSec || 0,
+    isComputeOverloaded: state.isComputeOverloaded || false,
+    computeOverloadRatio: state.computeOverloadRatio || 1.0,
+    unattendedPenaltiesActive: state.unattendedPenaltiesActive || false,
+    unattendedTrustDrainPerSec: state.unattendedTrustDrainPerSec || 0,
+    unattendedChurnMultiplier: state.unattendedChurnMultiplier || 1.0,
+    unattendedCashDrainPerSec: state.unattendedCashDrainPerSec || 0,
+    isInsolvent: state.isInsolvent || false,
+    isEraProgressionBlocked: state.isEraProgressionBlocked || false,
+    eraProgressionBlockReason: state.eraProgressionBlockReason || '',
+
     agents: state.agents,
+
     unlockedAgentRoles: state.unlockedAgentRoles,
     roadmapFeatures: state.roadmapFeatures,
     activeRoadmapId: state.activeRoadmapId,
@@ -448,7 +503,21 @@ export const getInitialState = () => ({
   computeCapacity: 5,
   currentComputeTierId: 'comp_free',
 
+  agentOpexPerSec: 0,
+  netArrDeltaPerSec: 0,
+  netCashFlowPerSec: 0,
+  isComputeOverloaded: false,
+  computeOverloadRatio: 1.0,
+  unattendedPenaltiesActive: false,
+  unattendedTrustDrainPerSec: 0,
+  unattendedChurnMultiplier: 1.0,
+  unattendedCashDrainPerSec: 0,
+  isInsolvent: false,
+  isEraProgressionBlocked: false,
+  eraProgressionBlockReason: '',
+
   agents: [] as AgentInstance[],
+
   unlockedAgentRoles: ['ENGINEERING', 'GROWTH'] as AgentRoleType[],
   roadmapFeatures: INITIAL_PRODUCT_FEATURES.map(f => ({ ...f, buildPointsCompleted: 0, isCompleted: false })),
   activeRoadmapId: 'feat_dark_mode',
@@ -494,14 +563,27 @@ export const getInitialState = () => ({
 
   selectedCanvasAgentId: null,
   agentTraces: [],
-  tokenBurnPerHour: 0
+  tokenBurnPerHour: 0,
+
+  currentEra: 1,
+  mvpShipped: false,
+  earlyUpgrades: [] as string[],
+  activeEraUnlock: null
 });
 
+// Hard purge legacy save states across client browsers on version upgrade
+try {
+  if (typeof window !== 'undefined' && localStorage.getItem('zero-employees-build-version') !== 'v4.0.0-era1-clean') {
+    localStorage.clear();
+    localStorage.setItem('zero-employees-build-version', 'v4.0.0-era1-clean');
+  }
+} catch {}
 
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
       ...getInitialState(),
+
 
       initCompany: (idea: StartupIdea) => {
         const fresh = getInitialState();
@@ -704,14 +786,85 @@ export const useGameStore = create<GameState>()(
         return true;
       },
 
+      shipMvp: () => {
+        const state = get();
+        if (state.mvpShipped) return;
+        soundEngine.playCelebration();
+
+        const startingCust = 1;
+        const baseArpu = state.baseArpu || 25;
+        const newMrr = startingCust * baseArpu;
+        const newArr = newMrr * 12;
+
+        set({
+          mvpShipped: true,
+          currentEra: 2,
+          customers: startingCust,
+          mrr: newMrr,
+          arr: newArr,
+          cash: state.cash + 25,
+          activeEraUnlock: {
+            era: 2,
+            name: 'Era 2: First Customers',
+            description: 'Your MVP is live! Credit cards are charging and MRR ticker is running.',
+            unlockedItem: 'MRR & Customer counters, "Pitch Lead" and "Post Content" actions'
+          }
+        });
+
+        get().addLog('🚀 MVP DEPLOYED TO PRODUCTION! Acquired first paying customer ($25 MRR). Era 2 unlocked!', 'system', 'milestone');
+      },
+
+      purchaseEarlyUpgrade: (upgradeId: string) => {
+        const state = get();
+        if (state.earlyUpgrades.includes(upgradeId)) return false;
+        const upg = EARLY_GARAGE_UPGRADES.find(u => u.id === upgradeId);
+        if (!upg) return false;
+        if (state.cash < upg.cost) return false;
+
+        soundEngine.playCash();
+        const updatedUpgrades = [...state.earlyUpgrades, upgradeId];
+
+        if (upgradeId === 'upg_deploy_stripe') {
+          get().shipMvp();
+          return true;
+        }
+
+        set({
+          cash: state.cash - upg.cost,
+          earlyUpgrades: updatedUpgrades
+        });
+
+        get().addLog(`⚡ Acquired Gear: "${upg.name}" (${upg.benefitText})`, 'product', 'info');
+        return true;
+      },
+
+      closeEraUnlockBanner: () => {
+        set({ activeEraUnlock: null });
+      },
+
+      triggerEraUnlock: (era: number, name: string, description: string, unlockedItem?: string) => {
+        set({
+          activeEraUnlock: { era, name, description, unlockedItem }
+        });
+      },
+
       vibeCodeManual: () => {
         const state = get();
         if (state.focus < 1) return;
 
         soundEngine.playClick();
-        const bpAdded = state.productLevel >= 4 ? 10 : 15;
+        let baseBp = state.productLevel >= 4 ? 10 : 15;
+        if (state.earlyUpgrades.includes('upg_mech_keyboard')) {
+          baseBp = Math.round(baseBp * 1.5);
+        }
+        if (state.earlyUpgrades.includes('upg_cursor_pro')) {
+          baseBp += 15;
+        }
+        const eraScale = Math.max(1, Math.pow(1.5, (state.currentEra || 1) - 1));
+        const bpAdded = Math.round(baseBp * eraScale);
         const newBP = state.buildPoints + bpAdded;
         const newDebt = Math.min(100, state.techDebt + 2.0);
+
 
         let updatedFeatures = [...state.roadmapFeatures];
         let newlyCompletedFeatureName = '';
@@ -800,10 +953,12 @@ export const useGameStore = create<GameState>()(
         const hypeBonus = 1 + (state.hype / 100) * 0.5;
         const saturationFactor = 1 + (state.attention / 300) + (state.customers / 20);
         const baseAtt = (150 * multiplier * hypeBonus) / saturationFactor;
-        const attAdded = Math.max(12, Math.round(baseAtt));
+        const eraScale = Math.max(1, Math.pow(1.5, (state.currentEra || 1) - 1));
+        const attAdded = Math.max(12, Math.round(baseAtt * eraScale));
         const directLeadsGenerated = Math.max(1, Math.floor(attAdded / 80));
 
         set({
+
           focus: state.focus - 1,
           attention: state.attention + attAdded,
           leads: state.leads + directLeadsGenerated,
@@ -820,23 +975,25 @@ export const useGameStore = create<GameState>()(
       sellManual: () => {
         const state = get();
         if (state.focus < 1) return;
-        if (state.leads < 1 && state.attention < 50) {
-          get().addLog('No leads in pipeline! Publish content or hire Growth Agents to generate Attention and Leads.', 'founder', 'warning');
-          return;
-        }
 
         soundEngine.playClick();
         let currentLeads = state.leads;
         let currentAttention = state.attention;
+        let isColdOutbound = false;
 
         if (currentLeads < 1 && currentAttention >= 50) {
           const leadsFromAtt = Math.floor(currentAttention / 50);
           currentLeads += leadsFromAtt;
           currentAttention = currentAttention % 50;
+        } else if (currentLeads < 1) {
+          // Cold Outbound Outreach: Founder sends cold DMs to generate an immediate prospect
+          isColdOutbound = true;
+          currentLeads = 1;
         }
 
         const leadsToProcess = 1;
         currentLeads = Math.max(0, currentLeads - leadsToProcess);
+
 
         const scaleFriction = 1 + (state.customers / 12);
         const baseRate = 0.25 / scaleFriction;
@@ -856,9 +1013,11 @@ export const useGameStore = create<GameState>()(
         const newMrr = Math.round(updatedCustomers * state.arpu);
         const newArr = newMrr * 12;
         const newValuation = Math.max(state.lastValuation || 0, Math.round(newArr * state.valuationMultiple));
+        const cashAdded = newCustomers > 0 ? state.arpu : 0;
 
         set({
           focus: state.focus - 1,
+          cash: state.cash + cashAdded,
           leads: currentLeads,
           attention: currentAttention,
           customers: updatedCustomers,
@@ -869,14 +1028,18 @@ export const useGameStore = create<GameState>()(
 
         if (newCustomers > 0) {
           soundEngine.playCash();
-          get().addLog(`Founder closed 1 new customer! Total: ${updatedCustomers} ($${newMrr.toLocaleString()} MRR)`, 'founder', 'success');
+          const method = isColdOutbound ? 'cold outreach' : 'pipeline pitch';
+          get().addLog(`Founder closed 1 new customer via ${method}! Total: ${updatedCustomers} ($${newMrr.toLocaleString()} MRR)`, 'founder', 'success');
         } else {
-          if (state.customers >= 15) {
+          if (isColdOutbound) {
+            get().addLog(`Founder sent personalized cold outreach to 1 prospect. Pipeline lead generated.`, 'founder', 'info');
+          } else if (state.customers >= 15) {
             get().addLog(`Prospect rejected founder pitch: Requested SOC2 compliance and a dedicated account executive. Hire Sales Agents to close at scale.`, 'founder', 'warning');
           } else {
             get().addLog(`Founder pitched 1 lead. Prospect asked for more case studies and pricing discount.`, 'founder', 'info');
           }
         }
+
       },
 
       supportManual: () => {
@@ -888,9 +1051,11 @@ export const useGameStore = create<GameState>()(
         }
 
         soundEngine.playTicketResolved();
-        const resolved = Math.min(2, state.tickets);
+        const eraScale = Math.max(1, Math.pow(1.5, (state.currentEra || 1) - 1));
+        const resolved = Math.min(Math.round(2 * eraScale), state.tickets);
         const newTickets = Math.max(0, state.tickets - resolved);
         const newTrust = Math.min(100, state.trust + 0.5);
+
 
         set({
           focus: state.focus - 1,
@@ -1077,12 +1242,11 @@ export const useGameStore = create<GameState>()(
 
       executeTechDebtRefactor: (debtReduced: number, bpCost: number, cashCost: number, name: string) => {
         const state = get();
-        if (state.cash < cashCost) {
-          get().addLog(`Insufficient cash for ${name} (Requires $${cashCost}).`, 'product', 'warning');
-          return false;
-        }
-        if (state.buildPoints < bpCost) {
-          get().addLog(`Insufficient Build Points for ${name} (Requires ${bpCost} BP).`, 'product', 'warning');
+        const hasCash = state.cash >= cashCost;
+        const hasBP = state.buildPoints >= bpCost;
+
+        if (!hasCash && !hasBP) {
+          get().addLog(`Insufficient resources for ${name}: Requires either $${cashCost} Cash OR ${bpCost} BP.`, 'product', 'warning');
           return false;
         }
 
@@ -1090,16 +1254,39 @@ export const useGameStore = create<GameState>()(
         const newDebt = Math.max(0, state.techDebt - debtReduced);
         const newTrust = Math.min(100, state.trust + 2);
 
+        // Prefer deducting cash if affordable, otherwise deduct BP
+        const deductCash = hasCash ? cashCost : 0;
+        const deductBP = !hasCash && hasBP ? bpCost : 0;
+
         set({
-          cash: state.cash - cashCost,
-          buildPoints: state.buildPoints - bpCost,
+          cash: state.cash - deductCash,
+          buildPoints: state.buildPoints - deductBP,
           techDebt: newDebt,
           trust: newTrust
         });
 
-        get().addLog(`🧹 Refactoring complete: ${name}. Tech Debt reduced by -${debtReduced}%.`, 'product', 'success');
+        get().addLog(`🧹 Refactoring complete: ${name}. Tech Debt reduced by -${debtReduced}%!`, 'product', 'success');
         return true;
       },
+
+      quickRefactorManual: () => {
+        const state = get();
+        if (state.focus < 1) return;
+        if (state.techDebt <= 0) {
+          get().addLog('Tech debt is already 0%! Codebase is immaculate.', 'product', 'info');
+          return;
+        }
+
+        soundEngine.playTicketResolved();
+        const newDebt = Math.max(0, state.techDebt - 8);
+        set({
+          focus: state.focus - 1,
+          techDebt: newDebt,
+          trust: Math.min(100, state.trust + 1)
+        });
+        get().addLog(`🧹 Founder hotfix applied: -8% Tech Debt (Remaining: ${newDebt.toFixed(0)}%). Velocity restored!`, 'product', 'success');
+      },
+
 
       upgradeArchitecture: (archId: string) => {
         const state = get();
@@ -1332,15 +1519,20 @@ export const useGameStore = create<GameState>()(
           useGameStore.persist.clearStorage();
         } catch {}
         try {
-          localStorage.removeItem('zero-employees-game-store');
           localStorage.clear();
+          localStorage.setItem('zero-employees-build-version', 'v4.0.0-era1-clean');
         } catch {}
         set(getInitialState());
       }
     }),
     {
-      name: 'zero-employees-game-store',
+      name: 'zero-employees-game-store-v4',
+      version: 4,
+      migrate: () => {
+        return getInitialState();
+      },
       partialize: (state) => ({
+
         activeCompanyId: state.activeCompanyId,
         companies: state.companies,
         conglomerateTreasury: state.conglomerateTreasury,
@@ -1385,12 +1577,18 @@ export const useGameStore = create<GameState>()(
         growthCampaigns: state.growthCampaigns,
         customerSegments: state.customerSegments,
         vcOffers: state.vcOffers,
+        activeEvents: state.activeEvents,
         eventHistory: state.eventHistory,
         unlockedMilestones: state.unlockedMilestones,
         holdingPortfolio: state.holdingPortfolio,
         hasSeenUnicorn: state.hasSeenUnicorn,
         totalPlayTimeSeconds: state.totalPlayTimeSeconds,
-        lastTickTime: state.lastTickTime
+        lastTickTime: state.lastTickTime,
+        currentEra: state.currentEra,
+        mvpShipped: state.mvpShipped,
+        earlyUpgrades: state.earlyUpgrades,
+        isEraProgressionBlocked: state.isEraProgressionBlocked,
+        eraProgressionBlockReason: state.eraProgressionBlockReason
       }),
       onRehydrateStorage: () => (state) => {
         if (!state) return;
@@ -1402,7 +1600,18 @@ export const useGameStore = create<GameState>()(
             state.activeCompanyId = snapshot.id;
           }
         }
+        // Merge vcOffers with INITIAL_VC_OFFERS to ensure new fields like maxArr are always present
+        if (state.vcOffers) {
+          state.vcOffers = INITIAL_VC_OFFERS.map(def => {
+            const existing = state.vcOffers.find(o => o.id === def.id);
+            return existing ? { ...def, ...existing, maxArr: def.maxArr } : def;
+          });
+        }
       }
     }
   )
 );
+
+if (typeof window !== 'undefined') {
+  (window as any).useGameStore = useGameStore;
+}

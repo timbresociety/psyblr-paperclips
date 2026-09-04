@@ -4,7 +4,15 @@ import { Inbox, CheckCircle2, ArrowRight, History, AlertTriangle } from 'lucide-
 import { soundEngine } from '../../audio/soundEffects';
 
 export const InboxScreen: React.FC = () => {
-  const { activeEvents, eventHistory, resolveEvent } = useGameStore();
+  const {
+    activeEvents,
+    eventHistory,
+    resolveEvent,
+    unattendedPenaltiesActive,
+    unattendedTrustDrainPerSec,
+    unattendedChurnMultiplier,
+    unattendedCashDrainPerSec
+  } = useGameStore();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -84,6 +92,40 @@ export const InboxScreen: React.FC = () => {
         </div>
       </div>
 
+      {/* Critical Active Penalty Threat Banner */}
+      {unattendedPenaltiesActive && (
+        <div className="p-4 rounded-2xl bg-[#ff453a]/15 border border-[#ff453a]/40 text-[#ff453a] space-y-2.5 shadow-lg animate-in fade-in duration-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-[#ff453a] animate-bounce" />
+              <span className="text-xs font-bold uppercase tracking-wider text-white">
+                Unattended Alerts Are Actively Penalizing Your Startup!
+              </span>
+            </div>
+            <span className="text-[10px] font-mono font-bold bg-[#ff453a] text-white px-2 py-0.5 rounded-full tracking-wider">
+              RESOLVE NOW
+            </span>
+          </div>
+          <p className="text-[11px] text-white/70">
+            Unresolved incidents left past the 15-second grace window erode corporate trust, accelerate customer cancellations, and bleed treasury cash.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs font-mono pt-2 border-t border-[#ff453a]/25">
+            <div className="bg-black/30 px-3 py-1.5 rounded-lg border border-white/[0.06]">
+              <span className="text-white/50 text-[10px] block font-sans">Trust Drain:</span>
+              <strong className="text-[#ff453a] text-xs">-{unattendedTrustDrainPerSec}% / sec</strong>
+            </div>
+            <div className="bg-black/30 px-3 py-1.5 rounded-lg border border-white/[0.06]">
+              <span className="text-white/50 text-[10px] block font-sans">Churn Acceleration:</span>
+              <strong className="text-[#ff453a] text-xs">+{Math.round((unattendedChurnMultiplier - 1) * 100)}% Customer Churn</strong>
+            </div>
+            <div className="bg-black/30 px-3 py-1.5 rounded-lg border border-white/[0.06]">
+              <span className="text-white/50 text-[10px] block font-sans">Capital Drag:</span>
+              <strong className="text-[#ff453a] text-xs">-${Math.round(unattendedCashDrainPerSec).toLocaleString()} / sec</strong>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Decision History View */}
       {showHistory && (
         <div className="apple-card rounded-2xl p-4 space-y-3">
@@ -135,6 +177,8 @@ export const InboxScreen: React.FC = () => {
           ) : (
             activeEvents.map((evt) => {
               const isSelected = (selectedEvent?.id === evt.id);
+              const ageSec = Math.floor((Date.now() - (evt.timestamp || Date.now())) / 1000);
+              const isOverdue = ageSec > 15;
 
               return (
                 <div
@@ -143,6 +187,8 @@ export const InboxScreen: React.FC = () => {
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer ${
                     isSelected
                       ? 'apple-card border-[#0a84ff] ring-1 ring-[#0a84ff]/30 shadow-xs'
+                      : isOverdue
+                      ? 'apple-card border-[#ff453a]/40 bg-[#ff453a]/5 hover:border-[#ff453a]/60'
                       : 'apple-card hover:border-white/[0.14]'
                   }`}
                 >
@@ -150,8 +196,8 @@ export const InboxScreen: React.FC = () => {
                     <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border font-medium ${getCategoryBadgeClass(evt.category)}`}>
                       {evt.category}
                     </span>
-                    <span className="text-[10px] text-white/40 font-mono">
-                      {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <span className={`text-[10px] font-mono ${isOverdue ? 'text-[#ff453a] font-bold' : 'text-white/40'}`}>
+                      {isOverdue ? `${ageSec}s unattended` : `${ageSec}s ago`}
                     </span>
                   </div>
                   <h3 className="font-semibold text-white text-xs truncate">
@@ -160,11 +206,19 @@ export const InboxScreen: React.FC = () => {
                   <p className="text-[11px] text-white/40 truncate mt-0.5">
                     {evt.source}
                   </p>
+
+                  {isOverdue && (
+                    <div className="mt-2 pt-1.5 border-t border-[#ff453a]/20 flex items-center gap-1.5 text-[10px] font-mono text-[#ff453a] font-medium">
+                      <AlertTriangle className="w-3 h-3 shrink-0" />
+                      <span>Draining -{evt.severity === 3 ? '1.0%' : evt.severity === 2 ? '0.4%' : '0.15%'} Trust/s</span>
+                    </div>
+                  )}
                 </div>
               );
             })
           )}
         </div>
+
 
         {/* Selected Event Details & Choice Action Buttons (2 Cols) */}
         <div className="lg:col-span-2">
@@ -192,8 +246,28 @@ export const InboxScreen: React.FC = () => {
                   {selectedEvent.title}
                 </h3>
                 <p className="text-xs text-white/80 leading-relaxed mt-2.5 p-3.5 apple-inset rounded-xl">
-                  {selectedEvent.body}
+                  {selectedEvent.body || (selectedEvent as any).description || 'No detailed incident description provided.'}
                 </p>
+
+                {(() => {
+                  const detailAge = Math.floor((Date.now() - (selectedEvent.timestamp || Date.now())) / 1000);
+                  const isDetailOverdue = detailAge > 15;
+                  if (isDetailOverdue) {
+                    return (
+                      <div className="mt-3 p-3 rounded-xl bg-[#ff453a]/10 border border-[#ff453a]/30 text-xs font-mono text-[#ff453a] flex items-center gap-2.5">
+                        <AlertTriangle className="w-4 h-4 shrink-0 animate-bounce text-[#ff453a]" />
+                        <span>
+                          <strong>ACTIVE PENALTY:</strong> Unattended for <strong>{detailAge} seconds</strong>. Inflicting -{selectedEvent.severity === 3 ? '1.0%' : selectedEvent.severity === 2 ? '0.4%' : '0.15%'} Trust/sec and +{selectedEvent.severity === 3 ? '100%' : selectedEvent.severity === 2 ? '40%' : '15%'} Churn drag until resolved!
+                        </span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="mt-2 text-[11px] font-mono text-white/40 flex items-center gap-1.5">
+                      <span>Grace period: {Math.max(0, 15 - detailAge)}s remaining before trust and churn penalties activate.</span>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Choices */}
@@ -202,6 +276,7 @@ export const InboxScreen: React.FC = () => {
                   <AlertTriangle className="w-3.5 h-3.5 text-[#ff9f0a]" />
                   <span>Choose Strategic Response</span>
                 </span>
+
 
                 <div className="space-y-2.5">
                   {selectedEvent.choices.map((choice) => (
@@ -212,17 +287,18 @@ export const InboxScreen: React.FC = () => {
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-white group-hover:text-white transition-colors">
-                          {choice.label}
+                          {choice.label || (choice as any).text || 'Execute Response'}
                         </span>
                         <ArrowRight className="w-3.5 h-3.5 text-white/40 group-hover:text-white group-hover:translate-x-1 transition-transform" />
                       </div>
                       <p className="text-[11px] text-white/50 mt-1 leading-relaxed">
-                        {choice.summary}
+                        {choice.summary || (choice as any).flavorOutcome || (choice as any).description || ''}
                       </p>
                     </button>
                   ))}
                 </div>
               </div>
+
             </div>
           ) : (
             <div className="h-full flex items-center justify-center p-12 apple-card rounded-2xl text-white/40 text-xs">
