@@ -149,6 +149,10 @@ class SoundEngine {
     } catch {}
   }
 
+  playAlarm() {
+    this.playWarningAlert();
+  }
+
   playMilestone() {
     if (!this.enabled) return;
     try {

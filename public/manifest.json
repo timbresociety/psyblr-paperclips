@@ -1,0 +1,24 @@
+{
+  "name": "One-Person Company — Roguelite",
+  "short_name": "One-Person Co",
+  "description": "Build an autonomous AI company without hiring employees. Race to a $1B valuation.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
