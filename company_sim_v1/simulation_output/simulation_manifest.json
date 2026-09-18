@@ -1,8 +1,0 @@
-{
-  "runs_per_cell": 1000,
-  "summary_rows": 21,
-  "commitment_rows": 35,
-  "history_rows": 9,
-  "valuation_rows": 6,
-  "first_run_rows": 16
-}

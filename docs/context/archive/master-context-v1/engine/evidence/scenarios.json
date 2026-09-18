@@ -1,0 +1,133 @@
+{
+  "status": "constructed reference fixtures, not observed full runs",
+  "valuation": [
+    {
+      "name": "profitable_same_growth",
+      "eligible_arr_cents": 120000000,
+      "scoring_growth": 0.5,
+      "growth_multiple": 8.0,
+      "ongoing_burn_ratio": 0.0,
+      "forecast_shortfall_fraction": 0,
+      "capital_quality_factor": 1,
+      "valuation_cents": 960000000
+    },
+    {
+      "name": "burning_but_funded",
+      "eligible_arr_cents": 120000000,
+      "scoring_growth": 0.5,
+      "growth_multiple": 8.0,
+      "ongoing_burn_ratio": 0.25,
+      "forecast_shortfall_fraction": 0,
+      "capital_quality_factor": 0.9090909090909091,
+      "valuation_cents": 872727272
+    },
+    {
+      "name": "same_business_payment_gap",
+      "eligible_arr_cents": 120000000,
+      "scoring_growth": 0.5,
+      "growth_multiple": 8.0,
+      "ongoing_burn_ratio": 0.25,
+      "forecast_shortfall_fraction": 0.5,
+      "capital_quality_factor": 0.5405405405405405,
+      "valuation_cents": 518918918
+    }
+  ],
+  "work": [
+    {
+      "name": "manual_start",
+      "operations": {
+        "total_coordination_load": 5.8,
+        "ops_capacity_contribution": 4.0,
+        "capacity": 16.0,
+        "strain_ratio": 0.3625,
+        "strain_backlog": 0,
+        "strain_repair_share": 0.25,
+        "instant_overload": 0,
+        "excess_strain": 0.0,
+        "maintenance_output_per_second": 0.0,
+        "allocation_weight_sum": 0.75,
+        "strain_repair_per_second": 0.0,
+        "strain_backlog_next_expected": 0
+      },
+      "demand": {
+        "manual_attempts_per_second": 0.5,
+        "autonomous_attempts_per_second": 0.0,
+        "failure_probability": 0.02,
+        "expected_accepted_output_per_second": 0.49,
+        "upkeep_cents_per_month": 0,
+        "context_rot_next_expected": 0
+      }
+    },
+    {
+      "name": "small_automation",
+      "operations": {
+        "total_coordination_load": 7.48,
+        "ops_capacity_contribution": 4.0,
+        "capacity": 16.0,
+        "strain_ratio": 0.4675,
+        "strain_backlog": 0,
+        "strain_repair_share": 0.25,
+        "instant_overload": 0,
+        "excess_strain": 0.0,
+        "maintenance_output_per_second": 0.0,
+        "allocation_weight_sum": 0.75,
+        "strain_repair_per_second": 0.0,
+        "strain_backlog_next_expected": 0
+      },
+      "demand": {
+        "manual_attempts_per_second": 0,
+        "autonomous_attempts_per_second": 0.8,
+        "failure_probability": 0.02,
+        "expected_accepted_output_per_second": 0.784,
+        "upkeep_cents_per_month": 15000,
+        "context_rot_next_expected": 0.00012800000000000002
+      }
+    },
+    {
+      "name": "overextended_neglected",
+      "operations": {
+        "total_coordination_load": 40.0,
+        "ops_capacity_contribution": 4.0,
+        "capacity": 16.0,
+        "strain_ratio": 2.5,
+        "strain_backlog": 200,
+        "strain_repair_share": 0.25,
+        "instant_overload": 1.5,
+        "excess_strain": 14.0,
+        "maintenance_output_per_second": 0.0,
+        "allocation_weight_sum": 0.75,
+        "strain_repair_per_second": 0.0,
+        "strain_backlog_next_expected": 200.04
+      },
+      "demand": {
+        "manual_attempts_per_second": 0,
+        "autonomous_attempts_per_second": 25.6,
+        "failure_probability": 0.95,
+        "expected_accepted_output_per_second": 0.01839080459770117,
+        "upkeep_cents_per_month": 815000,
+        "context_rot_next_expected": 1
+      }
+    }
+  ],
+  "profit_vs_cash": {
+    "operating_surplus_cents": 200000,
+    "net_cash_burn_cents_month": 200000.0
+  },
+  "luck_rank4": {
+    "outcomes": [
+      0.13948659118389806,
+      1.1309703278129968,
+      0.9490296721870032,
+      1.940513408816102
+    ],
+    "mean": 1.04,
+    "variance": 0.4096,
+    "saturated_batch16_expected_accepted_continuous": 12.354065053483605
+  },
+  "rng_fixture": {
+    "seed": "solounicorn-v1",
+    "stream": "technical:demand",
+    "event_id": "attempt:42",
+    "uniform": 0.15004491614551807
+  }
+}

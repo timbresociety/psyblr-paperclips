@@ -1,0 +1,7 @@
+# Keep the project instruction surface small. The archive is lookup material.
+project_doc_max_bytes = 32768
+
+# Optional free/local browser automation for visible QA when supported by Codex.
+[mcp_servers.playwright]
+command = "npx"
+args = ["-y", "@playwright/mcp@latest"]

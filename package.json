@@ -1,37 +1,28 @@
 {
-  "name": "psyblr-paperclips",
+  "name": "solounicorn",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "oxlint src",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
     "test": "vitest run",
-    "preview": "vite preview"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
-    "framer-motion": "^13.1.1",
-    "lucide-react": "^1.39.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "tailwind-merge": "^3.6.0",
-    "zustand": "^5.0.15"
+    "lucide-react": "^1.16.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/canvas-confetti": "^1.9.0",
-    "@types/node": "^24.13.3",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
-    "@vitejs/plugin-react": "^6.1.0",
-    "oxlint": "^1.79.0",
-    "puppeteer": "^25.9.0",
-    "tailwindcss": "^4.3.3",
-    "typescript": "~6.0.2",
-    "vite": "^8.2.2",
-    "vitest": "^5.0.0"
+    "@types/node": "^22.13.9",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.0",
+    "vitest": "^3.0.7"
   }
 }

@@ -1,0 +1,240 @@
+{
+  "version": "delivery-v1",
+  "status": "agent_authored_plan_not_live_repo_status",
+  "canonical_revision": "1.0-engine-consolidated",
+  "milestone_ids": [
+    "M0",
+    "M1",
+    "M2",
+    "M3",
+    "M4"
+  ],
+  "gate_tasks": {
+    "M0": "M0-T2",
+    "M1": "M1-T3",
+    "M2": "M2-T3",
+    "M3": "M3-T3",
+    "M4": "M4-T2"
+  },
+  "tasks": [
+    {
+      "id": "M0-T1",
+      "milestone": "M0",
+      "outcome": "Adopt master context and audit live checkout",
+      "depends_on": [],
+      "model_tier": "critical",
+      "read": [
+        "00_START_HERE.md",
+        "AGENTS.md",
+        "CONTEXT.md",
+        "TERMINAL_AGENT.md"
+      ],
+      "write_paths": "execution log only",
+      "acceptance": "Record actual repository instructions, commit/dirty state, commands and gap map."
+    },
+    {
+      "id": "M0-T2",
+      "milestone": "M0",
+      "outcome": "Implement shared state/action/effect/save interfaces",
+      "depends_on": [
+        "M0-T1"
+      ],
+      "model_tier": "critical",
+      "read": [
+        "ENGINEERING.md",
+        "BALANCE.md",
+        "engine/state_schema.json",
+        "engine/event_contract.json"
+      ],
+      "write_paths": "engine interfaces and tests",
+      "acceptance": "Versioned contracts reject unknown derived inputs and preserve event IDs, units and phase order."
+    },
+    {
+      "id": "M1-T1",
+      "milestone": "M1",
+      "outcome": "Build deterministic first customer quarter",
+      "depends_on": [
+        "M0-T2"
+      ],
+      "model_tier": "critical",
+      "read": [
+        "BALANCE.md",
+        "ENGINEERING.md",
+        "engine/METRICS.md",
+        "engine/IMPLEMENTATION.md"
+      ],
+      "write_paths": "engine and ledger adapter",
+      "acceptance": "Demand to Product to Monetisation journey, earned/invoiced/collected revenue, exact ARR bridge, continuous clock and mandatory bill failure."
+    },
+    {
+      "id": "M1-T2",
+      "milestone": "M1",
+      "outcome": "Build representative responsive gestures",
+      "depends_on": [
+        "M0-T2"
+      ],
+      "model_tier": "bounded",
+      "read": [
+        "DESIGN.md",
+        "GAME_DESIGN.md",
+        "SCREENS.md",
+        "CONTENT.md",
+        "references/REFERENCE_ATLAS.md"
+      ],
+      "write_paths": "UI/canvas/input modules",
+      "acceptance": "At least Demand and Product gestures plus Finance transaction affordance work on portrait and desktop against semantic actions."
+    },
+    {
+      "id": "M1-T3",
+      "milestone": "M1",
+      "outcome": "Integrate save, progressive HUD and first retention/expansion/ops pressure",
+      "depends_on": [
+        "M1-T1",
+        "M1-T2"
+      ],
+      "model_tier": "critical",
+      "read": [
+        "CONTEXT.md",
+        "SCREENS.md",
+        "ENGINEERING.md",
+        "CONTENT.md"
+      ],
+      "write_paths": "integration and tests",
+      "acceptance": "First player quarter teaches systems progressively, exposes warnings before consequences and reloads without duplicate work."
+    },
+    {
+      "id": "M2-T1",
+      "milestone": "M2",
+      "outcome": "Implement agents and accumulated Operations pressure",
+      "depends_on": [
+        "M1-T3"
+      ],
+      "model_tier": "critical",
+      "read": [
+        "BALANCE.md",
+        "engine/event_contract.json",
+        "ENGINEERING.md"
+      ],
+      "write_paths": "agent/ops resolver",
+      "acceptance": "Founder and agent use same resolver; upkeep, strain backlog, rot, rework and finite Ops allocation create sustainable and overloaded outcomes."
+    },
+    {
+      "id": "M2-T2",
+      "milestone": "M2",
+      "outcome": "Author curated rank and strategy slice",
+      "depends_on": [
+        "M1-T3"
+      ],
+      "model_tier": "bounded",
+      "read": [
+        "data/skill_tree_blueprint.json",
+        "CONTENT.md",
+        "EXAMPLES.md",
+        "GAME_DESIGN.md"
+      ],
+      "write_paths": "content/effect data",
+      "acceptance": "Distinct Craft, Scale, Automate and Luck choices reference registered effects and show costs/downside."
+    },
+    {
+      "id": "M2-T3",
+      "milestone": "M2",
+      "outcome": "Compare first build policies",
+      "depends_on": [
+        "M2-T1",
+        "M2-T2"
+      ],
+      "model_tier": "critical",
+      "read": [
+        "BUILD_PLAN.md",
+        "BALANCE.md",
+        "engine/verify.py"
+      ],
+      "write_paths": "evidence",
+      "acceptance": "Seeded policy comparison measures attention relief, output, cash, strain/rot and failure causes."
+    },
+    {
+      "id": "M3-T1",
+      "milestone": "M3",
+      "outcome": "Add debt, VC mandate, dilution and Finance management",
+      "depends_on": [
+        "M2-T3"
+      ],
+      "model_tier": "critical",
+      "read": [
+        "BALANCE.md",
+        "ENGINEERING.md",
+        "engine/IMPLEMENTATION.md"
+      ],
+      "write_paths": "finance adapter/UI/tests",
+      "acceptance": "Loan schedule and VC-only growth failure reconcile across cash, debt, ownership, save/reload and due order."
+    },
+    {
+      "id": "M3-T2",
+      "milestone": "M3",
+      "outcome": "Implement full run, unlocks and founder history",
+      "depends_on": [
+        "M2-T3"
+      ],
+      "model_tier": "critical",
+      "read": [
+        "CONTEXT.md",
+        "BUILD_PLAN.md",
+        "CONTENT.md",
+        "SCREENS.md"
+      ],
+      "write_paths": "run flow/content",
+      "acceptance": "Variable quarter run, progressive HUD, failure attribution, unicorn continuation and successful-founder relic persistence."
+    },
+    {
+      "id": "M3-T3",
+      "milestone": "M3",
+      "outcome": "Evaluate first and repeat-founder runs separately",
+      "depends_on": [
+        "M3-T1",
+        "M3-T2"
+      ],
+      "model_tier": "critical",
+      "read": [
+        "BALANCE.md",
+        "GAME_DESIGN.md",
+        "engine/METRICS.md"
+      ],
+      "write_paths": "evidence only",
+      "acceptance": "Complete/censored reports include relic loadout, active time, build, failure reason, cash shortfall and no hidden difficulty normalization."
+    },
+    {
+      "id": "M4-T1",
+      "milestone": "M4",
+      "outcome": "Complete responsive PWA, assets, audio and recovery",
+      "depends_on": [
+        "M3-T3"
+      ],
+      "model_tier": "bounded",
+      "read": [
+        "DESIGN.md",
+        "ENGINEERING.md",
+        "references/ASSET_BRIEFS.md"
+      ],
+      "write_paths": "UI/PWA/assets",
+      "acceptance": "Declared device matrix, gestures, reduced motion, accessibility, offline/update recovery and measured performance evidence."
+    },
+    {
+      "id": "M4-T2",
+      "milestone": "M4",
+      "outcome": "Run relic and broad balance evaluation",
+      "depends_on": [
+        "M3-T3"
+      ],
+      "model_tier": "critical",
+      "read": [
+        "BALANCE.md",
+        "CONTENT.md",
+        "data/skill_tree_blueprint.json"
+      ],
+      "write_paths": "evidence/profile only",
+      "acceptance": "Relic stacking/advantage and build families evaluated as separate questions; profile changes versioned with evidence."
+    }
+  ],
+  "routing_rule": "One integration owner owns shared contracts. Split only stable independent outcomes; do not edit one reducer in parallel.",
+  "completion_rule": "A milestone report must separate implementation, arithmetic verification, human playtest, balance validation and owner acceptance."
+}

@@ -1,0 +1,40 @@
+{
+  "review_date": "2026-09-07",
+  "scope": "Primary developer/modding documentation, public source and official product descriptions; no private game formulas inferred as facts.",
+  "sources": [
+    {
+      "title": "Steamodded — Calculate Functions",
+      "url": "https://docs.smods.dev/API%20Documentation/Calculate-Functions/",
+      "evidence": "Saved effect state, named score modifiers and calculation contexts.",
+      "limit": "Modding interface, not a disclosure of all proprietary Balatro engine internals."
+    },
+    {
+      "title": "Shattered Pixel Dungeon — Char.java",
+      "url": "https://github.com/00-Evan/shattered-pixel-dungeon/blob/master/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/actors/Char.java",
+      "retrieved_blob_sha": "4f9db1cb6386504c348921c2071bfc99798c924c",
+      "sha_type": "Git blob, not repository commit",
+      "evidence": "Separate numeric health/capacity/speed and buff/condition state."
+    },
+    {
+      "title": "Shattered Pixel Dungeon — Hunger.java",
+      "url": "https://github.com/00-Evan/shattered-pixel-dungeon/blob/master/core/src/main/java/com/shatteredpixel/shatteredpixeldungeon/actors/buffs/Hunger.java",
+      "retrieved_blob_sha": "2128e8a956f016e710d71bcdcd06d68ac0cba931",
+      "sha_type": "Git blob, not repository commit",
+      "evidence": "Hunger thresholds 300/450; stored level and partialDamage; fractional damage accumulation under the starvation branch, with explicit exceptions and modifiers.",
+      "limit": "Rules paraphrased; no GPL source code copied into this package."
+    },
+    {
+      "title": "Brogue developer documentation and 1.7.5 notes",
+      "url": "https://sites.google.com/site/broguegame/",
+      "evidence": "Distinct scoring/survival/equipment roles; fixed-point numerical portability in version notes.",
+      "limit": "Historical developer documentation; not a numerical specification for every current fork."
+    },
+    {
+      "title": "How Many Dudes — official Steam listing",
+      "url": "https://store.steampowered.com/app/3934270/How_Many_Dudes/",
+      "evidence": "Unit families, relic/trinket interactions and escalating encounters.",
+      "limit": "Public design description, not private numerical engine formulas."
+    }
+  ],
+  "original_design": "SoloUnicorn equations and candidate constants are proposed game-design choices, not copied financial forecasts or experimentally calibrated business facts."
+}

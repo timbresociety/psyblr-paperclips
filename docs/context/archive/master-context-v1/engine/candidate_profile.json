@@ -1,0 +1,262 @@
+{
+  "profile_id": "candidate-2026-09-07.1",
+  "status": "numerically_specified_not_play_balanced",
+  "tick_seconds": 0.1,
+  "ticks_per_month": 600,
+  "months_per_quarter": 3,
+  "score_history_ticks": 1800,
+  "forecast_ticks": 1800,
+  "starting_cash_cents": 150000,
+  "win_valuation_cents": 100000000000,
+  "arr_floor_cents": 1200000,
+  "revenue_floor_cents_per_month": 10000,
+  "growth_knots": [
+    [
+      -1,
+      1
+    ],
+    [
+      -0.5,
+      2
+    ],
+    [
+      0,
+      4
+    ],
+    [
+      0.25,
+      6
+    ],
+    [
+      0.5,
+      8
+    ],
+    [
+      1,
+      12
+    ],
+    [
+      2,
+      18
+    ],
+    [
+      4,
+      26
+    ]
+  ],
+  "burn_weight": 0.4,
+  "shortfall_weight": 1.5,
+  "capital_factor_floor": 0.05,
+  "craft_batch_by_rank": [
+    1,
+    2,
+    4,
+    8,
+    16
+  ],
+  "units_by_scale_rank": [
+    1,
+    2,
+    4,
+    8,
+    16
+  ],
+  "auto_speed_by_rank": [
+    0,
+    0.35,
+    0.8,
+    1.6,
+    3.2
+  ],
+  "auto_upkeep_cents_per_unit_month": [
+    0,
+    3000,
+    7000,
+    18000,
+    50000
+  ],
+  "unit_upkeep_cents_per_month": 1000,
+  "base_company_overhead_cents_per_month": 10000,
+  "queue_slots_per_unit": 12,
+  "strain_speed_coefficient": 0.35,
+  "strain_error_coefficient": 0.08,
+  "rot_error_coefficient": 0.45,
+  "max_error_probability": 0.95,
+  "rework_units_per_failure": 1.5,
+  "rot_per_auto_attempt_base": 0.0008,
+  "rot_per_auto_attempt_rank": 0.0004,
+  "rot_per_configuration_change": 0.025,
+  "rot_recovery_per_maintenance_point": 0.008,
+  "coordination_base_capacity": 12,
+  "coordination_capacity_per_ops_unit": 4,
+  "coordination_pair_load": 0.04,
+  "strain_repair_load_per_maintenance_point": 0.5,
+  "product_capability_gain_per_output": 0.02,
+  "defect_added_per_bad_ship": 0.05,
+  "defect_removed_per_fix_output": 0.02,
+  "incident_added_per_escaped_failure": 0.05,
+  "incident_removed_per_ops_output": 0.02,
+  "luck_mean_per_rank": 0.01,
+  "luck_sd_per_rank": 0.16,
+  "luck_shared_variance_fraction": 0.4,
+  "luck_epoch_ticks": 200,
+  "opportunity_ttl_ticks": 300,
+  "churn_threat_ttl_ticks": 120,
+  "collection_retry_ticks": 120,
+  "collection_grace_ticks": 1200,
+  "collection_attempt_limit": 3,
+  "expansion_maturity_months": 2,
+  "expansion_min_health": 60,
+  "addon_slots_per_customer": 2,
+  "addon_price_fraction": 0.25,
+  "addon_service_cost_fraction": 0.3,
+  "maximum_accepted_price_to_wtp": 2.0,
+  "health_fit_gain": 12,
+  "health_fit_neutral": 0.6,
+  "health_defect_loss": 15,
+  "health_overpricing_loss": 10,
+  "health_care_gain": 8,
+  "health_incident_loss": 5,
+  "base_churn_monthly": 0.01,
+  "churn_health_weight": 0.12,
+  "churn_overpricing_weight": 0.04,
+  "churn_defect_weight": 0.05,
+  "churn_competition_weight": 0.02,
+  "churn_min": 0.005,
+  "churn_max": 0.35,
+  "competition_start": 0.1,
+  "competition_per_quarter": 0.025,
+  "competition_cap": 0.85,
+  "default_loan_apr_bps": 1800,
+  "default_loan_term_months": 6,
+  "debt_capacity_mrr_multiple": 3,
+  "debt_min_mrr_cents": 10000,
+  "default_vc_growth_bps": 5000,
+  "default_vc_absolute_arr_cents": 1200000,
+  "vc_min_arr_cents": 1200000,
+  "vc_offer_pre_money_arr_multiple": 4,
+  "vc_max_raise_fraction_bps": 2500,
+  "upgrade_base_cents": 30000,
+  "upgrade_cost_ratio": 6,
+  "upgrade_deploy_ticks": 50,
+  "forecast_collection_haircut": 0.8,
+  "functions": {
+    "demand": {
+      "manual_seconds": 2,
+      "unit_load": 1.0,
+      "base_error": 0.02,
+      "attempt_cost_cents": 100
+    },
+    "product": {
+      "manual_seconds": 6,
+      "unit_load": 1.4,
+      "base_error": 0.03,
+      "attempt_cost_cents": 25
+    },
+    "monetisation": {
+      "manual_seconds": 3,
+      "unit_load": 0.8,
+      "base_error": 0.02,
+      "attempt_cost_cents": 10
+    },
+    "retention": {
+      "manual_seconds": 4,
+      "unit_load": 0.8,
+      "base_error": 0.02,
+      "attempt_cost_cents": 50
+    },
+    "expansion": {
+      "manual_seconds": 6,
+      "unit_load": 1.2,
+      "base_error": 0.03,
+      "attempt_cost_cents": 25
+    },
+    "operations": {
+      "manual_seconds": 5,
+      "unit_load": 0.6,
+      "base_error": 0.02,
+      "attempt_cost_cents": 30,
+      "mode": "maintain"
+    }
+  },
+  "segments": {
+    "creator": {
+      "wtp_cents": 4000,
+      "service_cents_month": 400,
+      "needs": [
+        0.7,
+        0.2,
+        0.1
+      ],
+      "collection_probability": 0.95,
+      "collection_delay_ticks": 60
+    },
+    "team": {
+      "wtp_cents": 15000,
+      "service_cents_month": 1800,
+      "needs": [
+        0.2,
+        0.6,
+        0.2
+      ],
+      "collection_probability": 0.98,
+      "collection_delay_ticks": 120
+    },
+    "enterprise": {
+      "wtp_cents": 80000,
+      "service_cents_month": 12000,
+      "needs": [
+        0.1,
+        0.3,
+        0.6
+      ],
+      "collection_probability": 0.9,
+      "collection_delay_ticks": 240
+    }
+  },
+  "channels": {
+    "community": {
+      "reach_per_attempt": 4,
+      "cost_per_attempt_cents": 100,
+      "segment_weights": [
+        0.7,
+        0.25,
+        0.05
+      ],
+      "pool_per_month": 1000
+    },
+    "paid": {
+      "reach_per_attempt": 12,
+      "cost_per_attempt_cents": 800,
+      "segment_weights": [
+        0.25,
+        0.6,
+        0.15
+      ],
+      "pool_per_month": 6000
+    },
+    "outbound": {
+      "reach_per_attempt": 2,
+      "cost_per_attempt_cents": 200,
+      "segment_weights": [
+        0.05,
+        0.25,
+        0.7
+      ],
+      "pool_per_month": 500
+    }
+  },
+  "pressure_applies_to": [
+    "qualification_probability",
+    "willingness_to_pay",
+    "churn_probability"
+  ],
+  "founder_relic_catalogue": [],
+  "founder_power_policy": "earned_repeat_run_advantage_intended_no_difficulty_normalization",
+  "runtime_precision": {
+    "money": "integer_cents",
+    "time": "integer_ticks",
+    "ratios": "binary64",
+    "score": "Decimal_28_then_floor_to_cents"
+  }
+}

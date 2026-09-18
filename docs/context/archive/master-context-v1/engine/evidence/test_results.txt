@@ -1,0 +1,56 @@
+test_absurd_price_cannot_buy_lottery_arr (test_contract.ContractTests.test_absurd_price_cannot_buy_lottery_arr) ... ok
+test_accrual_is_partition_invariant (test_contract.ContractTests.test_accrual_is_partition_invariant) ... ok
+test_accumulated_strain_survives_throttling (test_contract.ContractTests.test_accumulated_strain_survives_throttling) ... ok
+test_all_formula_symbols_resolve (test_contract.ContractTests.test_all_formula_symbols_resolve) ... ok
+test_arr_bridge_must_reconcile (test_contract.ContractTests.test_arr_bridge_must_reconcile) ... ok
+test_bootstrap_has_no_growth_failure (test_contract.ContractTests.test_bootstrap_has_no_growth_failure) ... ok
+test_collection_cannot_duplicate_or_create_revenue (test_contract.ContractTests.test_collection_cannot_duplicate_or_create_revenue) ... ok
+test_craft_doubles_batch (test_contract.ContractTests.test_craft_doubles_batch) ... ok
+test_delinquent_customer_cannot_expand (test_contract.ContractTests.test_delinquent_customer_cannot_expand) ... ok
+test_due_failure_precedes_unicorn (test_contract.ContractTests.test_due_failure_precedes_unicorn) ... ok
+test_duplicate_event_is_idempotent (test_contract.ContractTests.test_duplicate_event_is_idempotent) ... ok
+test_every_scope_evaluates (test_contract.ContractTests.test_every_scope_evaluates) ... ok
+test_forecast_excludes_unsigned_funding_and_detects_timing (test_contract.ContractTests.test_forecast_excludes_unsigned_funding_and_detects_timing) ... ok
+test_founder_advantage_is_preserved (test_contract.ContractTests.test_founder_advantage_is_preserved) ... ok
+test_incident_ops_does_not_also_repair_rot (test_contract.ContractTests.test_incident_ops_does_not_also_repair_rot) ... ok
+test_late_cash_cannot_rescue_earlier_bill (test_contract.ContractTests.test_late_cash_cannot_rescue_earlier_bill) ... ok
+test_liquidity_risk_reduces_valuation (test_contract.ContractTests.test_liquidity_risk_reduces_valuation) ... ok
+test_loan_cannot_exceed_capacity (test_contract.ContractTests.test_loan_cannot_exceed_capacity) ... ok
+test_loan_cash_is_not_revenue_and_principal_reduces_debt (test_contract.ContractTests.test_loan_cash_is_not_revenue_and_principal_reduces_debt) ... ok
+test_luck_mean_and_variance (test_contract.ContractTests.test_luck_mean_and_variance) ... ok
+test_metric_ids_unique (test_contract.ContractTests.test_metric_ids_unique) ... ok
+test_modifier_order (test_contract.ContractTests.test_modifier_order) ... ok
+test_no_burn_runway_is_null_not_fake_infinity (test_contract.ContractTests.test_no_burn_runway_is_null_not_fake_infinity) ... ok
+test_offline_function_cannot_execute (test_contract.ContractTests.test_offline_function_cannot_execute) ... ok
+test_one_founder_attention (test_contract.ContractTests.test_one_founder_attention) ... ok
+test_ops_budget_is_conserved (test_contract.ContractTests.test_ops_budget_is_conserved) ... ok
+test_overextension_can_reduce_output (test_contract.ContractTests.test_overextension_can_reduce_output) ... ok
+test_override_order_is_stable (test_contract.ContractTests.test_override_order_is_stable) ... ok
+test_profit_can_coexist_with_cash_burn (test_contract.ContractTests.test_profit_can_coexist_with_cash_burn) ... ok
+test_rejects_fractional_money_input (test_contract.ContractTests.test_rejects_fractional_money_input) ... ok
+test_rejects_nonfinite (test_contract.ContractTests.test_rejects_nonfinite) ... ok
+test_rejects_rank_outside_tree (test_contract.ContractTests.test_rejects_rank_outside_tree) ... ok
+test_rejects_unknown_or_derived_input (test_contract.ContractTests.test_rejects_unknown_or_derived_input) ... ok
+test_rejects_zero_window_before_division (test_contract.ContractTests.test_rejects_zero_window_before_division) ... ok
+test_repricing_accrues_old_rate_first (test_contract.ContractTests.test_repricing_accrues_old_rate_first) ... ok
+test_rng_replay_unchanged_by_reads (test_contract.ContractTests.test_rng_replay_unchanged_by_reads) ... ok
+test_rng_streams_distinct (test_contract.ContractTests.test_rng_streams_distinct) ... ok
+test_rot_is_bounded (test_contract.ContractTests.test_rot_is_bounded) ... ok
+test_same_tick_collection_can_pay_bill (test_contract.ContractTests.test_same_tick_collection_can_pay_bill) ... ok
+test_sampled_output_never_exceeds_finite_room (test_contract.ContractTests.test_sampled_output_never_exceeds_finite_room) ... ok
+test_saturation_can_reverse_luck_ev (test_contract.ContractTests.test_saturation_can_reverse_luck_ev) ... ok
+test_scale_does_not_multiply_manual_hands (test_contract.ContractTests.test_scale_does_not_multiply_manual_hands) ... ok
+test_service_cannot_overlap (test_contract.ContractTests.test_service_cannot_overlap) ... ok
+test_shared_luck_group_is_effective (test_contract.ContractTests.test_shared_luck_group_is_effective) ... ok
+test_subscription_is_neither_earned_nor_cash (test_contract.ContractTests.test_subscription_is_neither_earned_nor_cash) ... ok
+test_success_only_awards_once (test_contract.ContractTests.test_success_only_awards_once) ... ok
+test_two_addon_slots (test_contract.ContractTests.test_two_addon_slots) ... ok
+test_unaffordable_optional_purchase_does_not_bankrupt (test_contract.ContractTests.test_unaffordable_optional_purchase_does_not_bankrupt) ... ok
+test_valuation_hand_calculation (test_contract.ContractTests.test_valuation_hand_calculation) ... ok
+test_vc_creates_conditional_growth_failure (test_contract.ContractTests.test_vc_creates_conditional_growth_failure) ... ok
+test_zero_arr_no_infinite_growth (test_contract.ContractTests.test_zero_arr_no_infinite_growth) ... ok
+
+----------------------------------------------------------------------
+Ran 51 tests in 0.585s
+
+OK

@@ -1,0 +1,1136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SoloUnicorn v1 interchange types",
+  "$defs": {
+    "run": {
+      "type": "object",
+      "properties": {
+        "tick": {
+          "type": "integer",
+          "default": 0,
+          "description": "ticks; clock.advance",
+          "minimum": 0
+        },
+        "active": {
+          "type": "boolean",
+          "default": true,
+          "description": "boolean; session.resume_or_suspend"
+        },
+        "first_unicorn_tick": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": null,
+          "description": "ticks; milestone.check",
+          "minimum": 0
+        },
+        "work_seconds": {
+          "type": "number",
+          "default": 0,
+          "description": "seconds; clock.attention_mode",
+          "minimum": 0
+        },
+        "inspection_seconds": {
+          "type": "number",
+          "default": 0,
+          "description": "seconds; clock.attention_mode",
+          "minimum": 0
+        },
+        "finance_seconds": {
+          "type": "number",
+          "default": 0,
+          "description": "seconds; clock.attention_mode",
+          "minimum": 0
+        },
+        "shopping_seconds": {
+          "type": "number",
+          "default": 0,
+          "description": "seconds; clock.attention_mode",
+          "minimum": 0
+        },
+        "idle_seconds": {
+          "type": "number",
+          "default": 0,
+          "description": "seconds; clock.attention_mode",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "Partial input snapshot; omitted values use the registry default. Derived values are rejected."
+    },
+    "founder": {
+      "type": "object",
+      "properties": {
+        "successful_runs": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; founder.record_success_once",
+          "minimum": 0
+        },
+        "failed_runs": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; founder.record_failure_once",
+          "minimum": 0
+        },
+        "owned_relic_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; count(founder.owned_relic_ids)",
+          "minimum": 0
+        },
+        "run_succeeded": {
+          "type": "boolean",
+          "default": false,
+          "description": "boolean; run.first_valid_unicorn_checkpoint"
+        },
+        "starting_cash_bonus_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; sum(founder_relic.start_cash_effects)",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "Partial input snapshot; omitted values use the registry default. Derived values are rejected."
+    },
+    "market": {
+      "type": "object",
+      "properties": {
+        "completed_quarters": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; run.quarter_index - 1",
+          "minimum": 0
+        },
+        "capability_speed": {
+          "type": "number",
+          "default": 0.35,
+          "description": "ratio; product.development_commit",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "capability_collaboration": {
+          "type": "number",
+          "default": 0.15,
+          "description": "ratio; product.development_commit",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "capability_control": {
+          "type": "number",
+          "default": 0.05,
+          "description": "ratio; product.development_commit",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "channel_remaining_pool": {
+          "type": "integer",
+          "default": 1000,
+          "description": "count; market.month_refill_or_demand_consumption",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "Partial input snapshot; omitted values use the registry default. Derived values are rejected."
+    },
+    "function": {
+      "type": "object",
+      "properties": {
+        "craft_rank": {
+          "type": "integer",
+          "default": 0,
+          "description": "rank; upgrade.activate_after_paid_deployment",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "scale_rank": {
+          "type": "integer",
+          "default": 0,
+          "description": "rank; upgrade.activate_after_paid_deployment",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "automate_rank": {
+          "type": "integer",
+          "default": 0,
+          "description": "rank; upgrade.activate_after_paid_deployment",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "luck_rank": {
+          "type": "integer",
+          "default": 0,
+          "description": "rank; upgrade.activate_after_paid_deployment",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "online_units": {
+          "type": "integer",
+          "default": 1,
+          "description": "count; function.route_or_throttle",
+          "minimum": 0
+        },
+        "founder_focus": {
+          "type": "boolean",
+          "default": false,
+          "description": "boolean; input.select_one_function"
+        },
+        "manual_performance": {
+          "type": "number",
+          "default": 1,
+          "description": "ratio; engaged_ticks / sampled_ticks",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "auto_utilization": {
+          "type": "number",
+          "default": 1,
+          "description": "ratio; function.throttle_policy",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "rework_share": {
+          "type": "number",
+          "default": 0.25,
+          "description": "ratio; function.rework_policy",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "verification_share": {
+          "type": "number",
+          "default": 0,
+          "description": "ratio; function.verification_policy",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "luck_exposure": {
+          "type": "number",
+          "default": 1,
+          "description": "ratio; function.risk_policy",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "queue_work_units": {
+          "type": "number",
+          "default": 0,
+          "description": "work_units; queue.accept_expire_complete",
+          "minimum": 0
+        },
+        "oldest_queue_age_ticks": {
+          "type": "integer",
+          "default": 0,
+          "description": "ticks; now_tick - oldest_expirable_opportunity.created_tick; 0 if none",
+          "minimum": 0
+        },
+        "rework_backlog": {
+          "type": "number",
+          "default": 0,
+          "description": "work_units; function.commit_work_outcome",
+          "minimum": 0
+        },
+        "context_rot": {
+          "type": "number",
+          "default": 0,
+          "description": "ratio; function.commit_next_rot",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "configuration_changes": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; count(config_events_since_previous_step)",
+          "minimum": 0
+        },
+        "maintenance_points_per_second": {
+          "type": "number",
+          "default": 0,
+          "description": "maintenance_points/second; ops.allocate_accepted_maintenance",
+          "minimum": 0
+        },
+        "ops_maintenance_weight": {
+          "type": "number",
+          "default": 0.125,
+          "description": "ratio; ops.allocation_weights",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "eligible_output_room": {
+          "type": "number",
+          "default": 100,
+          "description": "output_units; domain.remaining_eligible_target_units",
+          "minimum": 0
+        },
+        "batch_output_credit": {
+          "type": "number",
+          "default": 0,
+          "description": "output_units; work_output.whole_units_and_remainder",
+          "minimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "manual_work_credit": {
+          "type": "number",
+          "default": 0,
+          "description": "work_units; manual_clock.completed_attempts_and_remainder",
+          "minimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "auto_work_credit": {
+          "type": "number",
+          "default": 0,
+          "description": "work_units; auto_clock.completed_attempts_and_remainder",
+          "minimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "attempt_sequence": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; increment_once_per_started_attempt; never reset on requeue",
+          "minimum": 0
+        },
+        "window_useful_output_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; sum task.useful_output_count in W filtered by function_id and work mode",
+          "minimum": 0
+        },
+        "window_domain_attempts": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; sum actual consumed domain inputs in W filtered by function_id and work mode",
+          "minimum": 0
+        },
+        "window_attempt_cost_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; sum committed variable work charges in W filtered by function_id",
+          "minimum": 0
+        },
+        "window_dropped_output_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; sum downstream-capacity rejection counts in W filtered by source function_id",
+          "minimum": 0
+        },
+        "window_expired_input_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; sum unresolved dated input counts expiring in W filtered by function_id",
+          "minimum": 0
+        },
+        "founder_work_seconds": {
+          "type": "number",
+          "default": 0,
+          "description": "seconds; tick_seconds * count active founder-work ticks assigned to function_id",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "Partial input snapshot; omitted values use the registry default. Derived values are rejected."
+    },
+    "operations": {
+      "type": "object",
+      "properties": {
+        "total_coordination_load": {
+          "type": "number",
+          "default": 0,
+          "description": "load_units; sum(function.coordination_load)",
+          "minimum": 0
+        },
+        "ops_capacity_contribution": {
+          "type": "number",
+          "default": 0,
+          "description": "load_units; function.operations.coordination_capacity_contribution",
+          "minimum": 0
+        },
+        "strain_backlog": {
+          "type": "number",
+          "default": 0,
+          "description": "load_units; ops.commit_strain_backlog",
+          "minimum": 0
+        },
+        "strain_repair_share": {
+          "type": "number",
+          "default": 0.25,
+          "description": "ratio; ops.allocation_weights",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "maintenance_output_per_second": {
+          "type": "number",
+          "default": 0,
+          "description": "maintenance_points/second; function.operations.available_maintenance_points_per_second",
+          "minimum": 0
+        },
+        "allocation_weight_sum": {
+          "type": "number",
+          "default": 0.75,
+          "description": "ratio; sum(function.ops_maintenance_weight)",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false,
+      "description": "Partial input snapshot; omitted values use the registry default. Derived values are rejected."
+    },
+    "customer": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "default": 1,
+          "description": "count; cohort.subscribe_split_cancel",
+          "minimum": 0
+        },
+        "active": {
+          "type": "boolean",
+          "default": true,
+          "description": "boolean; cohort.activate_or_cancel"
+        },
+        "price_cents_per_month": {
+          "type": "integer",
+          "default": 4000,
+          "description": "cents/month; monetisation.accepted_price",
+          "minimum": 0
+        },
+        "addon_count_per_customer": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; expansion.attach_or_downgrade",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "health": {
+          "type": "number",
+          "default": 70,
+          "description": "health_points; customer.commit_health_next",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "defect_exposure": {
+          "type": "number",
+          "default": 0,
+          "description": "ratio; product.ship_or_fix",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "incident_exposure": {
+          "type": "number",
+          "default": 0,
+          "description": "ratio; incident.open_or_resolve",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "care_coverage": {
+          "type": "number",
+          "default": 0,
+          "description": "ratio; min(1, retention.serviced_customers / eligible_customers)",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "age_ticks": {
+          "type": "integer",
+          "default": 0,
+          "description": "ticks; clock.tick - customer.activation_tick",
+          "minimum": 0
+        },
+        "delinquency_ticks": {
+          "type": "integer",
+          "default": 0,
+          "description": "ticks; max(0,now_tick - min(unpaid_due_ticks + unresolved_default_due_ticks)); 0 when both sets empty",
+          "minimum": 0
+        },
+        "at_risk_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; churn.spawn_threat_or_save",
+          "minimum": 0
+        },
+        "save_discount_bps": {
+          "type": "integer",
+          "default": 0,
+          "description": "basis_points; retention.concession_policy",
+          "minimum": 0,
+          "maximum": 2000
+        }
+      },
+      "additionalProperties": false,
+      "description": "Partial input snapshot; omitted values use the registry default. Derived values are rejected."
+    },
+    "company": {
+      "type": "object",
+      "properties": {
+        "cash_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:cash_cents",
+          "minimum": 0
+        },
+        "eligible_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:eligible_arr_cents",
+          "minimum": 0
+        },
+        "contractual_mrr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/month; aggregate_ledger_or_entity:contractual_mrr_cents",
+          "minimum": 0
+        },
+        "window_open_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:window_open_arr_cents",
+          "minimum": 0
+        },
+        "window_new_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:window_new_arr_cents",
+          "minimum": 0
+        },
+        "window_expansion_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:window_expansion_arr_cents",
+          "minimum": 0
+        },
+        "window_contraction_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:window_contraction_arr_cents",
+          "minimum": 0
+        },
+        "window_churn_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:window_churn_arr_cents",
+          "minimum": 0
+        },
+        "window_eligibility_loss_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:window_eligibility_loss_arr_cents",
+          "minimum": 0
+        },
+        "window_eligibility_restore_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:window_eligibility_restore_arr_cents",
+          "minimum": 0
+        },
+        "window_revenue_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:window_revenue_cents",
+          "minimum": 0
+        },
+        "window_cogs_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:window_cogs_cents",
+          "minimum": 0
+        },
+        "window_opex_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:window_opex_cents",
+          "minimum": 0
+        },
+        "window_interest_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:window_interest_cents",
+          "minimum": 0
+        },
+        "window_collections_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:window_collections_cents",
+          "minimum": 0
+        },
+        "window_operating_payments_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:window_operating_payments_cents",
+          "minimum": 0
+        },
+        "window_refund_payments_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:window_refund_payments_cents",
+          "minimum": 0
+        },
+        "window_install_payments_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:window_install_payments_cents",
+          "minimum": 0
+        },
+        "window_principal_payments_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:window_principal_payments_cents",
+          "minimum": 0
+        },
+        "window_cash_interest_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:window_cash_interest_cents",
+          "minimum": 0
+        },
+        "window_ticks": {
+          "type": "integer",
+          "default": 1,
+          "description": "ticks; aggregate_ledger_or_entity:window_ticks",
+          "minimum": 1
+        },
+        "receivables_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:receivables_cents",
+          "minimum": 0
+        },
+        "unbilled_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:unbilled_cents",
+          "minimum": 0
+        },
+        "debt_principal_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:debt_principal_cents",
+          "minimum": 0
+        },
+        "current_run_rate_cost_cents_month": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/month; aggregate_ledger_or_entity:current_run_rate_cost_cents_month",
+          "minimum": 0
+        },
+        "forecast_obligations_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:forecast_obligations_cents",
+          "minimum": 0
+        },
+        "forecast_expected_collections_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:forecast_expected_collections_cents",
+          "minimum": 0
+        },
+        "forecast_peak_shortfall_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:forecast_peak_shortfall_cents",
+          "minimum": 0
+        },
+        "customer_count": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; aggregate_ledger_or_entity:customer_count",
+          "minimum": 0
+        },
+        "largest_exposure_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:largest_exposure_arr_cents",
+          "minimum": 0
+        },
+        "window_new_payers": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; aggregate_ledger_or_entity:window_new_payers",
+          "minimum": 0
+        },
+        "matched_acquisition_cost_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; aggregate_ledger_or_entity:matched_acquisition_cost_cents",
+          "minimum": 0
+        },
+        "opening_cohort_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:opening_cohort_arr_cents",
+          "minimum": 0
+        },
+        "opening_cohort_churn_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:opening_cohort_churn_arr_cents",
+          "minimum": 0
+        },
+        "opening_cohort_contraction_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:opening_cohort_contraction_arr_cents",
+          "minimum": 0
+        },
+        "opening_cohort_expansion_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; aggregate_ledger_or_entity:opening_cohort_expansion_arr_cents",
+          "minimum": 0
+        },
+        "forecast_first_shortfall_ticks": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": null,
+          "description": "ticks; forecast.prefix_cash_paths",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "Partial input snapshot; omitted values use the registry default. Derived values are rejected."
+    },
+    "loan": {
+      "type": "object",
+      "properties": {
+        "principal_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents; loan.draw_repay",
+          "minimum": 0
+        },
+        "apr_bps": {
+          "type": "integer",
+          "default": 1800,
+          "description": "basis_points; accepted_contract",
+          "minimum": 0
+        },
+        "months_remaining": {
+          "type": "integer",
+          "default": 6,
+          "description": "count; loan.month_settlement",
+          "minimum": 0
+        },
+        "accrued_interest_numerator": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents_times_120000; loan.month_accrue",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "Partial input snapshot; omitted values use the registry default. Derived values are rejected."
+    },
+    "vc": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean",
+          "default": false,
+          "description": "boolean; vc.accept"
+        },
+        "baseline_arr_cents": {
+          "type": "integer",
+          "default": 0,
+          "description": "cents/year; vc.accept_baseline_snapshot",
+          "minimum": 0
+        },
+        "growth_target_bps": {
+          "type": "integer",
+          "default": 5000,
+          "description": "basis_points; vc.accepted_contract",
+          "minimum": 0
+        },
+        "absolute_target_arr_cents": {
+          "type": "integer",
+          "default": 1200000,
+          "description": "cents/year; vc.accepted_contract",
+          "minimum": 0
+        },
+        "deadline_tick": {
+          "type": "integer",
+          "default": 1800,
+          "description": "ticks; vc.accept_plus_full_quarter",
+          "minimum": 0
+        },
+        "founder_ownership_ppm": {
+          "type": "integer",
+          "default": 1000000,
+          "description": "parts_per_million; equity.issue",
+          "minimum": 0,
+          "maximum": 1000000
+        }
+      },
+      "additionalProperties": false,
+      "description": "Partial input snapshot; omitted values use the registry default. Derived values are rejected."
+    },
+    "task": {
+      "type": "object",
+      "properties": {
+        "eligible_inputs": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; queue.valid_items_at_commit",
+          "minimum": 0
+        },
+        "attempts": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; work_credit.whole_attempts",
+          "minimum": 0
+        },
+        "technical_successes": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; seeded_binomial(attempts, 1 - failure_probability)",
+          "minimum": 0
+        },
+        "domain_successes": {
+          "type": "integer",
+          "default": 0,
+          "description": "count; seeded_binomial(eligible_output_count, domain_probability)",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "Partial input snapshot; omitted values use the registry default. Derived values are rejected."
+    },
+    "queue_item": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "function_id": {
+          "enum": [
+            "demand",
+            "product",
+            "monetisation",
+            "retention",
+            "expansion",
+            "operations"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "reach",
+            "develop",
+            "activate",
+            "fix",
+            "sell",
+            "save",
+            "care",
+            "expand",
+            "maintain",
+            "incident"
+          ]
+        },
+        "cohort_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "created_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expires_tick": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "remaining_inputs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "attempt_credit": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "domain_attempt_cursor": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "channel_id": {
+          "enum": [
+            "community",
+            "paid",
+            "outbound",
+            null
+          ]
+        },
+        "feature_axis": {
+          "enum": [
+            "speed",
+            "collaboration",
+            "control",
+            null
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "function_id",
+        "mode",
+        "cohort_id",
+        "created_tick",
+        "expires_tick",
+        "remaining_inputs",
+        "attempt_credit",
+        "domain_attempt_cursor",
+        "channel_id",
+        "feature_axis"
+      ],
+      "additionalProperties": false
+    },
+    "invoice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cohort_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issued_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "due_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "issued_cents": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "outstanding_cents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "collected_cents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "credited_cents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "attempt_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "next_attempt_tick": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "required": [
+        "id",
+        "cohort_id",
+        "issued_tick",
+        "due_tick",
+        "issued_cents",
+        "outstanding_cents",
+        "collected_cents",
+        "credited_cents",
+        "attempt_count",
+        "next_attempt_tick"
+      ],
+      "additionalProperties": false
+    },
+    "bill": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "due_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "category": {
+          "enum": [
+            "cogs",
+            "opex",
+            "interest",
+            "principal",
+            "refund"
+          ]
+        },
+        "paid": {
+          "type": "boolean"
+        },
+        "loan_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "due_tick",
+        "cents",
+        "category",
+        "paid",
+        "loan_id"
+      ],
+      "additionalProperties": false
+    },
+    "account_metadata": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin_account_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "segment_id": {
+          "enum": [
+            "creator",
+            "team",
+            "enterprise"
+          ]
+        },
+        "activation_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "service_cursor": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "service_remainder": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 599
+        },
+        "acquisition_cost_cents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "exposure_group": {
+          "type": "string",
+          "minLength": 1
+        },
+        "care_valid_until_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "last_contract_change_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "next_invoice_tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unresolved_default_due_tick": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "required": [
+        "id",
+        "origin_account_id",
+        "segment_id",
+        "activation_tick",
+        "service_cursor",
+        "service_remainder",
+        "acquisition_cost_cents",
+        "exposure_group",
+        "care_valid_until_tick",
+        "last_contract_change_tick",
+        "next_invoice_tick",
+        "unresolved_default_due_tick"
+      ],
+      "additionalProperties": false
+    },
+    "modifier": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "operation": {
+          "enum": [
+            "add",
+            "increase_bps",
+            "multiply",
+            "override",
+            "clamp_min",
+            "clamp_max",
+            "floor",
+            "ceil"
+          ]
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "target",
+        "source_id",
+        "priority",
+        "operation",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "event_envelope": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tick": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "data": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "tick",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

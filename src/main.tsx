@@ -1,17 +1,12 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import { useGameStore } from './state/gameStore'
-import { useV1Store } from './state/v1Store'
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './ui/App'
 
-if (typeof window !== 'undefined') {
-  (window as any).__gameStore = useGameStore;
-  (window as any).__v1Store = useV1Store;
+const rootEl = document.getElementById('root')
+if (rootEl) {
+  ReactDOM.createRoot(rootEl).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  )
 }
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)

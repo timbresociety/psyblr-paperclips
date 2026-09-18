@@ -1,0 +1,225 @@
+{
+  "version": "skill-tree-v1",
+  "status": "candidate_topology_not_balance_validated",
+  "mechanical_axes": [
+    "Craft",
+    "Scale",
+    "Automate",
+    "Luck"
+  ],
+  "operating_functions": {
+    "Demand": {
+      "Craft": [
+        "Signal Reading",
+        "Qualification",
+        "Swipe Control",
+        "Portfolio Sense"
+      ],
+      "Scale": [
+        "Channels",
+        "Queue",
+        "Repurposing",
+        "Campaign Burst"
+      ],
+      "Automate": [
+        "Agent Core",
+        "Perception",
+        "Quality Policy",
+        "Routing"
+      ],
+      "Luck": [
+        "Virality",
+        "Trend Surfing",
+        "Creator Bet",
+        "Controversy"
+      ]
+    },
+    "Product": {
+      "Craft": [
+        "Requirement Reading",
+        "Assembly",
+        "Verification",
+        "Ship Judgment"
+      ],
+      "Scale": [
+        "Workspaces",
+        "Component Supply",
+        "Parallel Build",
+        "Release System"
+      ],
+      "Automate": [
+        "Agent Core",
+        "Builder",
+        "QA",
+        "Release Policy"
+      ],
+      "Luck": [
+        "Weekend Ship",
+        "Model Upgrade",
+        "Prototype Lottery",
+        "Moonshot Feature"
+      ]
+    },
+    "Monetisation": {
+      "Craft": [
+        "Customer Signals",
+        "Timing",
+        "Segmentation",
+        "Pricing Models"
+      ],
+      "Scale": [
+        "Opportunity Queue",
+        "Quote Speed",
+        "Packaging",
+        "Collections"
+      ],
+      "Automate": [
+        "Agent Core",
+        "Segmenter",
+        "Pricing Policy",
+        "Contracting"
+      ],
+      "Luck": [
+        "Whale Hunt",
+        "Usage Spike",
+        "Annual Prepay",
+        "Premium Packaging"
+      ]
+    },
+    "Retention": {
+      "Craft": [
+        "Cohort Value",
+        "Aim",
+        "Root Cause",
+        "Save Streak"
+      ],
+      "Scale": [
+        "Fire Rate",
+        "Coverage",
+        "Early Warning",
+        "Recovery"
+      ],
+      "Automate": [
+        "Agent Core",
+        "Targeting",
+        "Billing",
+        "Health"
+      ],
+      "Luck": [
+        "Hero Save",
+        "Advocacy",
+        "Winback",
+        "Refund Gambit"
+      ]
+    },
+    "Expansion": {
+      "Craft": [
+        "Need Reading",
+        "Merge Control",
+        "Packing",
+        "Conflict Sense"
+      ],
+      "Scale": [
+        "Generators",
+        "Board",
+        "Merge Depth",
+        "Accounts"
+      ],
+      "Automate": [
+        "Agent Core",
+        "Merge Bot",
+        "Package Agent",
+        "Account Router"
+      ],
+      "Luck": [
+        "Whale Expansion",
+        "Seat Surge",
+        "Partner Jackpot",
+        "Bundle Bet"
+      ]
+    },
+    "Operations": {
+      "Craft": [
+        "Scratch Control",
+        "Evidence",
+        "Diagnosis",
+        "Risk Reading"
+      ],
+      "Scale": [
+        "Inbox",
+        "Observability",
+        "Ops Capacity",
+        "Recovery"
+      ],
+      "Automate": [
+        "Agent Core",
+        "Evidence",
+        "Remediation",
+        "Rot Maintenance"
+      ],
+      "Luck": [
+        "One-Line Fix",
+        "Black Box Optimizer",
+        "Vendor Roulette",
+        "Permission Roulette"
+      ]
+    }
+  },
+  "function_ids": {
+    "Demand": "demand",
+    "Product": "product",
+    "Monetisation": "monetisation",
+    "Retention": "retention",
+    "Expansion": "expansion",
+    "Operations": "operations"
+  },
+  "rank_contract": {
+    "ranks_per_subbranch": 4,
+    "total_operating_slots": 384,
+    "rank_1": "Teach a capability or add useful analysis while baseline costs and risks remain visible.",
+    "rank_2": "Increase reliability, capacity or control while preserving branch identity.",
+    "rank_3": "Introduce a meaningful combination, routing choice or cross-function consequence.",
+    "rank_4": "Create a distinctive build-defining capability with a visible cost, dependency or risk.",
+    "required_fields": [
+      "id",
+      "name",
+      "description",
+      "cost",
+      "prerequisites",
+      "effect_id",
+      "observable_change",
+      "downside_or_tradeoff",
+      "affected_function",
+      "affected_systems",
+      "content_version"
+    ],
+    "forbidden": [
+      "anonymous percentage-only nodes",
+      "hidden economic effects",
+      "duplicate ranks with renamed copy",
+      "ranks that make another function irrelevant",
+      "effects that bypass the deterministic resolver"
+    ]
+  },
+  "finance_management": {
+    "enabled_in_engine_v1": false,
+    "is_manual_operating_function": false,
+    "principle": "Finance is a continuous cashflow-management surface for liquidity, collections, bills, debt, equity, reserves and allocation. It is not a reflex minigame.",
+    "future_upgrade_surfaces": [
+      "forecast comparison",
+      "runway policy",
+      "treasury automation",
+      "debt management",
+      "collection policy"
+    ],
+    "rule": "Any future Finance progression needs explicit numerical effect IDs and cannot hide baseline terms or create ARR."
+  },
+  "founder_relics": {
+    "enabled_in_engine_v1": false,
+    "award": "successful runs only",
+    "failed_run_award": "none",
+    "repeat_advantage": "intentional and unnormalized",
+    "balance_evaluation": "separate later pass"
+  },
+  "scope": "Catalogue horizon. Only a declared subset is enabled in a playable milestone; names do not imply implemented effects."
+}

@@ -1,0 +1,12 @@
+# Optional project config fragment, checked against docs on 2026-09-06.
+# Merge only after confirming installed-client and account support.
+# This is not installed by the context pack and changes no permission settings.
+model = "gpt-5.6-terra"
+model_reasoning_effort = "medium"
+
+[agents]
+enabled = true
+# Two children plus the primary; this key excludes the primary thread.
+max_concurrent_threads_per_session = 2
+default_subagent_model = "gpt-5.6-terra"
+default_subagent_reasoning_effort = "medium"

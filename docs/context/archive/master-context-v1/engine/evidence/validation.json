@@ -1,0 +1,21 @@
+{
+  "profile_id": "candidate-2026-09-07.1",
+  "metric_definitions": 244,
+  "executable_formulas": 128,
+  "input_bindings": 116,
+  "binding_coverage_complete": true,
+  "unit_tests_run": 51,
+  "failures": 0,
+  "errors": 0,
+  "registry_lint": [],
+  "passed": true,
+  "verification_scope": "formula, transaction, finite-resource and ordering fixtures; not full-run play balance",
+  "file_sha256": {
+    "candidate_profile.json": "502828c24a0b2f2f0c118a3df7b740a362d32c56c5a828ca8063e382a6f3b380",
+    "metric_registry.json": "0c12a981c331dc2795da622aaecfd9f2c4afcdf45e2151fb8b26831d5231adac",
+    "state_schema.json": "55954fd0a6c690860abe5a8198afcc67e8a38f533c91e9f199a9a5bd6cf70e5b",
+    "event_contract.json": "7123370b6b69edce77ef9f99ac15e53020b2abb3f590743f15936818ded47f92",
+    "kernel.py": "3120e7785cb55382354944298e56d16e7f5a3da03e3b79b6508fd34c890c6e4e",
+    "tests/test_contract.py": "870566b4c7c1070d79ad8cff003406d0716bf8f9157fff654f500e3ec993f085"
+  }
+}

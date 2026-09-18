@@ -1,0 +1,37 @@
+{
+  "version": "parameter-registry-v1",
+  "runtimeReady": true,
+  "maturity": "candidate",
+  "profile_path": "../engine/candidate_profile.json",
+  "metric_registry_path": "../engine/metric_registry.json",
+  "state_schema_path": "../engine/state_schema.json",
+  "event_contract_path": "../engine/event_contract.json",
+  "candidate_status": "numerically_specified_not_play_balanced",
+  "metric_definition_count": 244,
+  "executable_formula_count": 128,
+  "input_aggregate_count": 116,
+  "states": [
+    "candidate",
+    "numerically_verified",
+    "playtest_validated",
+    "owner_accepted"
+  ],
+  "promotion_rule": "Numerically verified requires passing reproducible fixtures. Playtest validated requires declared player sessions. Owner accepted is separate. Do not infer one status from another.",
+  "owner_confirmed_causal_rules": [
+    "valuation_is_score",
+    "cash_failure_at_mandatory_due",
+    "VC_only_growth_failure",
+    "continuous_attention_time",
+    "six_operating_functions",
+    "subscription_billing_collection_separation",
+    "successful_repeat_founder_advantage"
+  ],
+  "deferred_surfaces": [
+    "quarter_shop_catalogue",
+    "founder_relic_catalogue",
+    "Finance progression effects",
+    "full 448 rank effect catalogue",
+    "human play balance"
+  ],
+  "note": "This pointer prevents the old unspecified inventory from being imported as runtime values. The engine profile is explicit but remains a candidate until full-run calibration."
+}

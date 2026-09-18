@@ -1,0 +1,252 @@
+{
+  "version": "1.0-engine-consolidated",
+  "date": "2026-09-07",
+  "purpose": "Provenance and authority for the consolidated SoloUnicorn context pack. A generated document cannot promote a proposal into owner approval.",
+  "owner_confirmed_current_chat": [
+    {
+      "id": "D001",
+      "topic": "cash_failure",
+      "decision": "Failure occurs when an unfunded mandatory obligation is due. Cash reaching zero without a due obligation is not failure. Pressure escalates through obligations, burn, collections and financing dependence.",
+      "status": "confirmed",
+      "source": "Owner clarification answer A1"
+    },
+    {
+      "id": "D002",
+      "topic": "continuous_time",
+      "decision": "The company keeps running while the founder performs manual work, inspects metrics, plans upgrades, chooses post-quarter options and makes Finance decisions with cash.",
+      "status": "confirmed",
+      "source": "Owner clarification answer B"
+    },
+    {
+      "id": "D003",
+      "topic": "accumulated_overextension",
+      "decision": "Individual strain and context-rot penalties begin small, accumulate when neglected and can eventually outweigh gains. Operations must solve the accumulated condition.",
+      "status": "confirmed",
+      "source": "Owner clarification answer A3"
+    },
+    {
+      "id": "D004",
+      "topic": "luck_distribution",
+      "decision": "Luck has a slightly higher average output and much wider swings. Bad sequences can destroy an overextended company.",
+      "status": "confirmed",
+      "source": "Owner clarification answer B4"
+    },
+    {
+      "id": "D005",
+      "topic": "subscription_billing",
+      "decision": "Use one subscription business model. ARR, earned revenue and collected cash are separate. Explicit billing, collection timing and operating payments determine liquidity.",
+      "status": "confirmed",
+      "source": "Owner clarification answer A5"
+    },
+    {
+      "id": "D006",
+      "topic": "valuation_burn_tradeoff",
+      "decision": "Strong ARR and growth can outweigh burn. Profitable and venture-funded strategies can both win. Financing dependence and limited runway reduce valuation.",
+      "status": "confirmed",
+      "source": "Owner clarification answer A6"
+    },
+    {
+      "id": "D007",
+      "topic": "successful_founder_advantage",
+      "decision": "Successful repeat founders intentionally accumulate enough advantage to make later runs easier. Failed founders receive no new relic power. Do not normalize away winner advantages or add an arbitrary cap solely to preserve first-run difficulty.",
+      "status": "confirmed",
+      "source": "Owner follow-up correction after prior engine review"
+    },
+    {
+      "id": "D008",
+      "topic": "north_star",
+      "decision": "Valuation is the north-star score. The founder optimizes speed to a $1B company valuation; ARR is the operating base and cash is the spendable currency.",
+      "status": "confirmed",
+      "source": "SoloUnicorn product discussions"
+    },
+    {
+      "id": "D009",
+      "topic": "operating_functions",
+      "decision": "Demand, Product, Monetisation, Retention, Expansion and Operations are the six manual operating functions. Finance is the cashflow-management domain and is not a compulsory reflex minigame.",
+      "status": "confirmed",
+      "source": "SoloUnicorn product discussions and current clarification"
+    }
+  ],
+  "recovered_owner_direction": [
+    {
+      "id": "D010",
+      "topic": "founder_simulation",
+      "decision": "The game is a one-person founder POV company simulation with constrained early budget, manual work, agent leverage and consequences from how cash is spent.",
+      "status": "recovered_direction",
+      "source": "Earlier SoloUnicorn discussions"
+    },
+    {
+      "id": "D011",
+      "topic": "roguelike_run",
+      "decision": "Runs have seeded variation, compounding decisions, failure/reset and recognisable builds. Quarters are reporting/pressure boundaries, not predetermined levels.",
+      "status": "recovered_direction",
+      "source": "Earlier SoloUnicorn discussions"
+    },
+    {
+      "id": "D012",
+      "topic": "operations_trap",
+      "decision": "Optional Operations optimisation can have Lucky Cat-like trap-card risk: explicit high upside and downside, never a guaranteed reward or mandatory late-game chore.",
+      "status": "recovered_direction",
+      "source": "Earlier SoloUnicorn discussions"
+    },
+    {
+      "id": "D013",
+      "topic": "skill_axes",
+      "decision": "Craft, Scale, Automate and Luck are distinct progression axes. Their exact per-rank effects are numerical data, not prose.",
+      "status": "recovered_direction",
+      "source": "Earlier SoloUnicorn discussions and current engine contract"
+    },
+    {
+      "id": "D014",
+      "topic": "progression_separation",
+      "decision": "Skill trees, quarterly strategies, roguelike relics and founder history/meta are separate systems.",
+      "status": "recovered_direction",
+      "source": "Earlier SoloUnicorn discussions"
+    },
+    {
+      "id": "D015",
+      "topic": "attention_ui",
+      "decision": "Use a stable peripheral frame, central current gameplay and a persistent alert inbox. Routine events do not modal-interrupt active work.",
+      "status": "recovered_direction",
+      "source": "Earlier design discussions"
+    },
+    {
+      "id": "D016",
+      "topic": "platform",
+      "decision": "Build as a responsive React/HTML Canvas PWA for mobile and desktop with progressive unlocks.",
+      "status": "recovered_direction",
+      "source": "Earlier SoloUnicorn discussions"
+    },
+    {
+      "id": "D017",
+      "topic": "brand",
+      "decision": "Use minimal/luxurious UI, tactile contextual 3D objects, pastel ethereal atmosphere and liquid-metal iridescence only for the Ethereal rarity apex.",
+      "status": "recovered_direction",
+      "source": "Earlier design discussions and supplied reference pack"
+    },
+    {
+      "id": "D018",
+      "topic": "voice",
+      "decision": "Writing is human, witty, culturally literate and mechanically clear. Game design prioritises agency, causality, mastery and meaningful pressure.",
+      "status": "recovered_direction",
+      "source": "Earlier SoloUnicorn discussions"
+    }
+  ],
+  "consolidated_agent_defaults": [
+    {
+      "id": "D020",
+      "topic": "candidate_engine_profile",
+      "decision": "Use the versioned candidate numerical profile in engine/candidate_profile.json and the 244-definition registry for the first implementation. It is numerically specified and reference-tested, not play-balance validated.",
+      "status": "working_default",
+      "owner_acceptance": "not_requested",
+      "reason": "Owner delegated numerical balance within the causal rules; the profile makes all enabled mechanics quantifiable."
+    },
+    {
+      "id": "D021",
+      "topic": "run_pacing",
+      "decision": "Use 10 ticks/second, 60 seconds/month and 180 seconds/quarter as a candidate pacing profile. A 15-quarter run is approximately 45 active minutes; runs may win earlier, fail later or continue after unicorn.",
+      "status": "working_default",
+      "owner_acceptance": "not_requested",
+      "reason": "Candidate timing for implementation and later policy simulation, not a fixed timeout or proven genre optimum."
+    },
+    {
+      "id": "D022",
+      "topic": "four_axis_tree",
+      "decision": "The six operating functions use Craft, Scale, Automate and Luck with four ranks. Finance management progression is disabled until separately specified; it is not a seventh reflex tree.",
+      "status": "working_default",
+      "owner_acceptance": "not_requested",
+      "reason": "Keeps the six manual functions causal while respecting the separate Finance role."
+    },
+    {
+      "id": "D023",
+      "topic": "continuous_event_order",
+      "decision": "Use the ordered phases in engine/event_contract.json. Shop, Finance and inspection continue the clock; explicit pause can freeze it. Due mandatory cash failure is settled before a milestone.",
+      "status": "working_default",
+      "owner_acceptance": "not_requested",
+      "reason": "Makes the confirmed continuous-time answer executable without free work or retroactive rescue."
+    },
+    {
+      "id": "D024",
+      "topic": "narrative_boundary",
+      "decision": "Deterministic engine creates event eligibility, choices, values and effects. GenAI may render contextual copy and authored fallback is mandatory.",
+      "status": "working_default",
+      "owner_acceptance": "not_requested",
+      "reason": "Preserves cultural responsiveness without allowing model output to mutate economics."
+    },
+    {
+      "id": "D025",
+      "topic": "delivery_sequence",
+      "decision": "Ship a thin causal loop before broad catalogue, automation breadth, relic catalogue or release polish. Use M0–M4 in data/delivery_plan.json.",
+      "status": "working_default",
+      "owner_acceptance": "not_requested",
+      "reason": "Prevents context drift and large content work from hiding an unvalidated engine."
+    }
+  ],
+  "superseded_or_deferred": [
+    {
+      "id": "D030",
+      "topic": "universal_growth_failure",
+      "decision": "Every run fails on a founder-selected growth commitment, including bootstrap.",
+      "status": "superseded",
+      "rule": "Do not use in the active baseline. Only an accepted VC mandate creates a growth failure condition."
+    },
+    {
+      "id": "D031",
+      "topic": "frozen_quarter_shop",
+      "decision": "Quarter-close strategy/shop freezes simulation until the founder decides.",
+      "status": "superseded",
+      "rule": "Post-quarter decisions occur while the company continues running, unless the player explicitly pauses."
+    },
+    {
+      "id": "D032",
+      "topic": "immediate_arr_collection",
+      "decision": "Current ARR can be integrated as immediate cash without invoice and collection state.",
+      "status": "superseded",
+      "rule": "Use explicit service, invoice, collection, receivable and cash events."
+    },
+    {
+      "id": "D033",
+      "topic": "old_finance_tree",
+      "decision": "Finance is required to use the same motor-skill tree as operating functions.",
+      "status": "superseded",
+      "rule": "Finance is a management surface. Any future progression must have explicit cashflow effects and no hidden baseline terms."
+    },
+    {
+      "id": "D034",
+      "topic": "relic_balance",
+      "decision": "Final relic catalogue, stacking limits and balance are part of this engine pass.",
+      "status": "deferred",
+      "rule": "Relic balance receives its own evaluation after the core simulation is integrated. Successful-founder advantage remains intentional."
+    },
+    {
+      "id": "D035",
+      "topic": "hidden_one_trillion_ending",
+      "decision": "A hidden $1T or AI-takeover ending is required.",
+      "status": "deferred",
+      "rule": "Do not ship or reveal as canon without a later explicit product decision."
+    }
+  ],
+  "inherited_baselines": [
+    {
+      "id": "D040",
+      "topic": "gesture_mappings",
+      "decision": "Demand swipe/triage, Product semantic assembly, Monetisation price-fit timing, Retention prioritised aim, Expansion merge/package and Operations scratch/reveal are review-build interaction baselines.",
+      "status": "inherited_baseline",
+      "source": "Original context pack, reconciled with current Finance decision"
+    },
+    {
+      "id": "D041",
+      "topic": "visual_language",
+      "decision": "Original supplied references guide silhouette, material progression, atmosphere and contextual 3D object semantics. They are not finished licensed production assets or instructions to copy a third-party execution.",
+      "status": "inherited_baseline",
+      "source": "Original context pack references"
+    }
+  ],
+  "status_rules": {
+    "confirmed": "Owner explicitly stated or corrected it in the current decision chain.",
+    "recovered_direction": "Repeated direction from prior SoloUnicorn discussions, retained with provenance.",
+    "working_default": "Agent-authored executable choice within confirmed causal rules; not owner approval of every number.",
+    "superseded": "Must not be used by active implementation.",
+    "deferred": "Keep disabled until a later scoped decision/evaluation."
+  }
+}

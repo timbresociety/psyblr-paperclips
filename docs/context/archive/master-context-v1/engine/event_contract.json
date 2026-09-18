@@ -1,0 +1,873 @@
+{
+  "status": "specified; full scheduler integration not implemented by reference kernel",
+  "window": "W=(max(0,now_tick-1800),now_tick], with explicit tick0 bootstrap events included once in first window",
+  "phases": [
+    {
+      "order": 1,
+      "id": "accrue",
+      "rule": "Advance exactly one active tick. Accrue service revenue and operating cost for [t-1,t) at the old contract/rate. Age cohorts, queues, invoices and conditions. Suspended sessions advance zero ticks."
+    },
+    {
+      "order": 2,
+      "id": "external",
+      "rule": "At the timestamp: refill monthly market pools; update quarter competition; activate paid deployments; attempt due customer collections; settle irrevocably committed funding receipts. Never sample when merely reading metrics."
+    },
+    {
+      "order": 3,
+      "id": "work_snapshot",
+      "rule": "Compute all six rates from one pre-work snapshot, including prior strain_backlog and context_rot. Founder focus cardinality <=1. Acquire input reservations in (created_tick,id) order; spend affordable variable attempt cost before execution."
+    },
+    {
+      "order": 4,
+      "id": "work_commit",
+      "rule": "Resolve earned whole attempts using stable per-function attempt cursors. Split homogeneous cohorts for partial outcomes. Commit failures/rework, successes, contract changes and actual Ops maintenance exactly once. Emit outputs to downstream queues with available_tick=t+1."
+    },
+    {
+      "order": 5,
+      "id": "conditions",
+      "rule": "Commit actual next rot/strain and customer health. Resolve dated churn threats after same-timestamp rescue work. Create new threats only for customers without an open threat. Expire unresolved opportunities; no expiry penalty on non-opportunity maintenance jobs."
+    },
+    {
+      "order": 6,
+      "id": "billing",
+      "rule": "Issue monthly arrears invoices from earned unbilled service. Generate operating bills and anniversary loan interest/principal bills; unique IDs prevent forecast/bill duplication."
+    },
+    {
+      "order": 7,
+      "id": "mandatory_settlement",
+      "rule": "Pay due bills ordered by (due_tick,id). Failure at first unpaid mandatory bill when cash is insufficient. Then check accepted VC mandate. Cash=0 alone is not failure. A timestamp may not be skipped."
+    },
+    {
+      "order": 8,
+      "id": "score",
+      "rule": "Aggregate eligible ARR and the rolling window, rebuild dated cash forecast, compute valuation, then award first successful $1B checkpoint only if phase 7 survived."
+    },
+    {
+      "order": 9,
+      "id": "decisions",
+      "rule": "Accept affordable optional purchases, routing changes, new financing decisions and quarter-shop selections. Their effects start no earlier than t+1. Inspection, finance and shop use founder attention; background simulation continues."
+    },
+    {
+      "order": 10,
+      "id": "publish",
+      "rule": "Publish one immutable metric snapshot with version, tick and event cursor; record replay hash. Rendering must not mutate inputs or consume random draws."
+    }
+  ],
+  "transitions": {
+    "clock": {
+      "tick_next": "tick + int(active)",
+      "attention_seconds_delta": "tick_seconds to exactly one of work, inspection, finance, shopping, idle when active; 0 otherwise",
+      "quarter": "1 + tick // 1800",
+      "month": "tick // 600"
+    },
+    "upgrade": {
+      "guard": "0 <= selected_axis_rank < 4 and cash_cents >= 30000 * 6**selected_axis_rank and no pending upgrade for same axis",
+      "payment_cents": "30000 * 6**selected_axis_rank",
+      "ready_tick": "purchase_tick + 50",
+      "rank_at_ready": "old_rank + 1",
+      "configuration_changes": "+1 on each activated rank, changed mode, changed target/routing policy, changed verification policy or changed provider exposure; continuous throttle/founder focus changes add 0"
+    },
+    "queue": {
+      "ordering": "(available_tick, created_tick, id)",
+      "capacity_work_units": "12 * modified_unit_capacity",
+      "attempt_accounting": "attempt_credit += available_rate_per_second * 0.1; whole=floor(attempt_credit); debit only executed whole attempts; clamp stored residual to [0,1) when no eligible work remains; no idle stockpile",
+      "reservation": "reserve min(remaining eligible items, floor(craft_batch * max(luck_outcomes(rank)) + batch_credit)) per production attempt; release unattempted reservation; only actual domain attempts consume items",
+      "expiry": "expire opportunities at created_tick+300; churn threat at created_tick+120; process permitted same-tick work first; maintenance/development jobs have null expiry",
+      "overflow": "accept first capacity items; reject excess with dropped_count telemetry; rejected output creates no ARR or refund"
+    },
+    "demand": {
+      "input": "selected channel pool; one attempted reach consumes one remaining person from that channel month",
+      "work_batch": "craft_batch * channel.reach_per_attempt",
+      "cost_per_attempt_cents": "channel.cost_per_attempt_cents (replaces generic demand attempt_cost, does not add to it)",
+      "segment": "inverse CDF of channel.segment_weights using one stable seeded draw per consumed person",
+      "success_probability": "customer.qualification_probability for that segment",
+      "success": "one qualified opportunity to Product.activate; expiry now+300"
+    },
+    "product": {
+      "modes": [
+        "develop",
+        "activate",
+        "fix"
+      ],
+      "develop": "each useful output increases selected capability by 0.02, clamp [0,1]; domain probability 1; stop when capability=1",
+      "bad_ship": "per successful development attempt, escaped_defect_probability draw; on true add 0.05 to defect_exposure of every active cohort, clamp [0,1]",
+      "activate": "consume qualified opportunities, probability customer.activation_probability; success creates activated trial in Monetisation.sell, expiry now+300",
+      "fix": "domain probability 1; each useful output removes 0.02 defect_exposure from one selected cohort, clamp >=0"
+    },
+    "monetisation": {
+      "input": "activated trials only",
+      "success_probability": "customer.paid_conversion_probability",
+      "price": "founder-selected integer cents/month, >=1; same posted monthly subscription model across segments",
+      "success": "create active payer cohort at selected price, health=70, addons=0, age=0; ARR increases 12*price; earned revenue and cash increase 0 at signing",
+      "reprice": "new posted price affects new contracts only; existing changes are voluntary accepted renewal offers sampled once per billing anniversary with the same paid_conversion_probability; rejection keeps old price; retention concession uses its separate rule"
+    },
+    "retention": {
+      "threat_count": "Binomial(active_count - at_risk_count, churn_probability_step), independent per origin_account_id and tick",
+      "deadline": "threat_tick+120; each customer has at most one open threat",
+      "save": "sample once per targeted open threat using save_probability; success closes threat and health=min(100,health+10); failure leaves dated threat but marks it attempted so that threat cannot be retried",
+      "concession": "on successful save only, new price=max(1,floor(old_price*(10000-save_discount_bps)/10000)); this is contractual contraction, not a one-time cash refund",
+      "care": "domain probability 1, one output covers one customer for 600 ticks; care_coverage=covered_count/count; no stacking above 1",
+      "expiry": "cancel unsaved affected contracts at deadline, including addon ARR; no new revenue or cash for a save"
+    },
+    "expansion": {
+      "eligible": "active, health>=60, age_ticks>=1200, score_eligible, addon_count<2",
+      "success_probability": "customer.expansion_probability",
+      "price": "floor(base_monthly_price*.25) per slot; reject zero-priced addon",
+      "success": "consume one eligible slot and add one addon to one customer; split cohort; ARR increases 12*addon_price; earned revenue/cash unchanged at signing",
+      "service_cost": "segment.service_cents_month * (1+.30*addon_count)",
+      "repricing": "addon price recomputes from accepted current base price; bridge includes base and addon deltas"
+    },
+    "operations": {
+      "modes": [
+        "maintain",
+        "incident"
+      ],
+      "domain_probability": 1,
+      "maintain": "N useful output points; each function gets N * ops_maintenance_weight; accumulated strain receives N * strain_repair_share; sum of all seven weights <=1; unused output discarded",
+      "rot_commit": "clamp(old_rot + actual_auto_attempts*(.0008+.0004*automate_rank)*(1+.5*excess_strain) + .025*configuration_changes - allocated_actual_points*.008,0,1)",
+      "strain_commit": "max(0,old_strain_backlog + (total_coordination_load-capacity)/600 - actual_strain_points*.5)",
+      "incident": "one useful output reduces selected cohort incident_exposure by .02; incident-mode output does not also create maintenance points"
+    },
+    "failures": {
+      "rework": "+1.5 work units per technical failure, including failures in Ops",
+      "service": "consume min(backlog, raw_service_capacity*rework_share*dt) rework work; does not award production output; costs resources; rework does not recursively spawn another rework job",
+      "escaped_incident": "one escaped_defect_probability roll per technical failure; if true, +.05 incident_exposure on affected cohort, clamp<=1; demand/product develop failures with no target use segment pool of current active cohorts; never invent a direct score penalty"
+    },
+    "billing": {
+      "model": "monthly in arrears; one subscription; no annual prepay or deferred revenue in candidate",
+      "earned": "divmod(monthly_contract_cents*elapsed_ticks+remainder,600); carry remainder, accrue old rate before mutation",
+      "invoice": "at activation_tick+600*k, issue accrued unbilled cents; AR increases, unbilled decreases, earned and cash unchanged",
+      "collection": "due=invoice_tick+segment.collection_delay_ticks; at each of at most 3 attempts use segment.collection_probability; success collects full outstanding, reduces AR and raises cash; next failed attempt=previous+120; after third, next_attempt_tick=null",
+      "delinquency": "max(0,now-min(unpaid_due_ticks+unresolved_default_due_ticks)) per cohort, or 0 when both sets empty; score eligibility removed only when >1200; cash receipt may restore eligibility while contract remains active",
+      "bad_debt": "unpaid receivable remains until explicit writeoff; no automatic new cash. Writeoff reduces AR, books bad-debt expense once and persists unresolved_default_due_tick as the earliest written-off due date. This marker prevents writeoff from restoring score eligibility. Candidate forbids further credit sale to that origin account."
+    },
+    "payments": {
+      "variable_work": "deduct whole-cent cost per started attempt from prepaid cash; if unaffordable, throttle attempt to zero rather than fail an optional action",
+      "operating_accrual": "COGS=customer service + Product/Retention/Expansion work and attributable upkeep. Opex=Demand/Monetisation/Ops work/upkeep + base overhead + explicit bad debt. Classify once. Acquisition tagging is a report subset, never an additional debit.",
+      "upkeep": "accrue from actual online_units and active auto rank each tick; bill all unpaid accrued cents at next company month boundary; throttling utilization to 0 does not remove upkeep, taking unit offline does",
+      "mandatory_order": "receipts before due bills at identical tick; bill tie break by stable ID; interest and principal separate; cash shortfall at due timestamp is terminal",
+      "forecast": "1800-tick dated prefix; current contracts/rates only, no new sales/upgrades/funding. Include existing invoices plus invoices due from scheduled service, forecast each invoice once at its next attempt with probability*0.8 haircut; no extra forecast retries. Add booked unpaid bills plus future unbilled service/upkeep by unique period ID, scheduled debt, accepted refunds and committed purchase liabilities. Include only already irrevocably committed capital receipts. First negative prefix defines runway risk."
+    },
+    "debt": {
+      "guard": "eligible_MRR>=10000 and new_draw<=max(0,3*eligible_MRR-total_principal)",
+      "terms": "18% nominal APR, six monthly anniversary payments, no prepayment in candidate",
+      "interest": "divmod(principal_cents*1800+interest_remainder,120000) at anniversary before principal repayment",
+      "principal": "ceil(principal_cents/months_remaining)",
+      "failure": "unpaid scheduled debt service uses same cash-failure rule; no debt-linked growth target"
+    },
+    "vc": {
+      "guard": "eligible_ARR>=1200000; one active priced round in candidate",
+      "offer": "pre_money_cents=4*eligible_ARR; maximum_raise=floor(pre_money*.25); accepted amount integer cents in [1,maximum_raise]",
+      "ownership": "floor(old_ownership_ppm*pre_money/(pre_money+raise))",
+      "mandate": "deadline=accept_tick+1800; required_ARR=ceil(baseline_ARR*1.5) when baseline>=1200000, else 1200000; below target at deadline is terminal VC failure",
+      "renew": "on meeting target: baseline=current_eligible_ARR; deadline+=1800; no automatic new cash",
+      "score": "capital cash can improve dated payment coverage; financing never directly adds ARR or overwrites company valuation"
+    },
+    "success": {
+      "guard": "phase7_survived and valuation_cents>=100000000000",
+      "once": "first_unicorn_tick recorded once; successful_runs+=1 once; relic_award_eligible=true",
+      "failure": "failed_runs+=1 once; no new permanent relic power; already owned relics remain owned",
+      "rerun": "initial_cash=apply_modifiers(150000,'starting_cash',owned_relic_modifiers); do not normalize difficulty against founder wins; specific achievements/effects deferred"
+    }
+  },
+  "input_bindings": {
+    "run.tick": {
+      "source_expression": "clock.advance",
+      "state_type_ref": "state_schema.json#/$defs/run",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "clock.advance"
+    },
+    "run.active": {
+      "source_expression": "session.resume_or_suspend",
+      "state_type_ref": "state_schema.json#/$defs/run",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "session.resume_or_suspend"
+    },
+    "run.first_unicorn_tick": {
+      "source_expression": "milestone.check",
+      "state_type_ref": "state_schema.json#/$defs/run",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "milestone.check"
+    },
+    "run.work_seconds": {
+      "source_expression": "clock.attention_mode",
+      "state_type_ref": "state_schema.json#/$defs/run",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "clock.attention_mode"
+    },
+    "run.inspection_seconds": {
+      "source_expression": "clock.attention_mode",
+      "state_type_ref": "state_schema.json#/$defs/run",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "clock.attention_mode"
+    },
+    "run.finance_seconds": {
+      "source_expression": "clock.attention_mode",
+      "state_type_ref": "state_schema.json#/$defs/run",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "clock.attention_mode"
+    },
+    "run.shopping_seconds": {
+      "source_expression": "clock.attention_mode",
+      "state_type_ref": "state_schema.json#/$defs/run",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "clock.attention_mode"
+    },
+    "run.idle_seconds": {
+      "source_expression": "clock.attention_mode",
+      "state_type_ref": "state_schema.json#/$defs/run",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "clock.attention_mode"
+    },
+    "founder.successful_runs": {
+      "source_expression": "founder.record_success_once",
+      "state_type_ref": "state_schema.json#/$defs/founder",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "founder.record_success_once"
+    },
+    "founder.failed_runs": {
+      "source_expression": "founder.record_failure_once",
+      "state_type_ref": "state_schema.json#/$defs/founder",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "founder.record_failure_once"
+    },
+    "founder.owned_relic_count": {
+      "source_expression": "count(founder.owned_relic_ids)",
+      "state_type_ref": "state_schema.json#/$defs/founder",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "count(founder.owned_relic_ids)"
+    },
+    "founder.run_succeeded": {
+      "source_expression": "run.first_valid_unicorn_checkpoint",
+      "state_type_ref": "state_schema.json#/$defs/founder",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "run.first_valid_unicorn_checkpoint"
+    },
+    "founder.starting_cash_bonus_cents": {
+      "source_expression": "sum(founder_relic.start_cash_effects)",
+      "state_type_ref": "state_schema.json#/$defs/founder",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "sum(founder_relic.start_cash_effects)"
+    },
+    "market.completed_quarters": {
+      "source_expression": "run.quarter_index - 1",
+      "state_type_ref": "state_schema.json#/$defs/market",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "run.quarter_index - 1"
+    },
+    "market.capability_speed": {
+      "source_expression": "product.development_commit",
+      "state_type_ref": "state_schema.json#/$defs/market",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "product.development_commit"
+    },
+    "market.capability_collaboration": {
+      "source_expression": "product.development_commit",
+      "state_type_ref": "state_schema.json#/$defs/market",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "product.development_commit"
+    },
+    "market.capability_control": {
+      "source_expression": "product.development_commit",
+      "state_type_ref": "state_schema.json#/$defs/market",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "product.development_commit"
+    },
+    "market.channel_remaining_pool": {
+      "source_expression": "market.month_refill_or_demand_consumption",
+      "state_type_ref": "state_schema.json#/$defs/market",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "market.month_refill_or_demand_consumption"
+    },
+    "function.craft_rank": {
+      "source_expression": "upgrade.activate_after_paid_deployment",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "upgrade.activate_after_paid_deployment"
+    },
+    "function.scale_rank": {
+      "source_expression": "upgrade.activate_after_paid_deployment",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "upgrade.activate_after_paid_deployment"
+    },
+    "function.automate_rank": {
+      "source_expression": "upgrade.activate_after_paid_deployment",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "upgrade.activate_after_paid_deployment"
+    },
+    "function.luck_rank": {
+      "source_expression": "upgrade.activate_after_paid_deployment",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "upgrade.activate_after_paid_deployment"
+    },
+    "function.online_units": {
+      "source_expression": "function.route_or_throttle",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "function.route_or_throttle"
+    },
+    "function.founder_focus": {
+      "source_expression": "input.select_one_function",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "input.select_one_function"
+    },
+    "function.manual_performance": {
+      "source_expression": "engaged_ticks / sampled_ticks",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "engaged_ticks / sampled_ticks"
+    },
+    "function.auto_utilization": {
+      "source_expression": "function.throttle_policy",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "function.throttle_policy"
+    },
+    "function.rework_share": {
+      "source_expression": "function.rework_policy",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "function.rework_policy"
+    },
+    "function.verification_share": {
+      "source_expression": "function.verification_policy",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "function.verification_policy"
+    },
+    "function.luck_exposure": {
+      "source_expression": "function.risk_policy",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "function.risk_policy"
+    },
+    "function.queue_work_units": {
+      "source_expression": "queue.accept_expire_complete",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "queue.accept_expire_complete"
+    },
+    "function.oldest_queue_age_ticks": {
+      "source_expression": "now_tick - oldest_expirable_opportunity.created_tick; 0 if none",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "now_tick - oldest_expirable_opportunity.created_tick; 0 if none"
+    },
+    "function.rework_backlog": {
+      "source_expression": "function.commit_work_outcome",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "function.commit_work_outcome"
+    },
+    "function.context_rot": {
+      "source_expression": "function.commit_next_rot",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "function.commit_next_rot"
+    },
+    "function.configuration_changes": {
+      "source_expression": "count(config_events_since_previous_step)",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "count(config_events_since_previous_step)"
+    },
+    "function.maintenance_points_per_second": {
+      "source_expression": "ops.allocate_accepted_maintenance",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "ops.allocate_accepted_maintenance"
+    },
+    "function.ops_maintenance_weight": {
+      "source_expression": "ops.allocation_weights",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "ops.allocation_weights"
+    },
+    "function.eligible_output_room": {
+      "source_expression": "domain.remaining_eligible_target_units",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "domain.remaining_eligible_target_units"
+    },
+    "function.batch_output_credit": {
+      "source_expression": "work_output.whole_units_and_remainder",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "work_output.whole_units_and_remainder"
+    },
+    "function.manual_work_credit": {
+      "source_expression": "manual_clock.completed_attempts_and_remainder",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "manual_clock.completed_attempts_and_remainder"
+    },
+    "function.auto_work_credit": {
+      "source_expression": "auto_clock.completed_attempts_and_remainder",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "auto_clock.completed_attempts_and_remainder"
+    },
+    "function.attempt_sequence": {
+      "source_expression": "increment_once_per_started_attempt; never reset on requeue",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "increment_once_per_started_attempt; never reset on requeue"
+    },
+    "function.window_useful_output_count": {
+      "source_expression": "sum task.useful_output_count in W filtered by function_id and work mode",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "sum task.useful_output_count in W filtered by function_id and work mode"
+    },
+    "function.window_domain_attempts": {
+      "source_expression": "sum actual consumed domain inputs in W filtered by function_id and work mode",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "sum actual consumed domain inputs in W filtered by function_id and work mode"
+    },
+    "function.window_attempt_cost_cents": {
+      "source_expression": "sum committed variable work charges in W filtered by function_id",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "sum committed variable work charges in W filtered by function_id"
+    },
+    "function.window_dropped_output_count": {
+      "source_expression": "sum downstream-capacity rejection counts in W filtered by source function_id",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "sum downstream-capacity rejection counts in W filtered by source function_id"
+    },
+    "function.window_expired_input_count": {
+      "source_expression": "sum unresolved dated input counts expiring in W filtered by function_id",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "sum unresolved dated input counts expiring in W filtered by function_id"
+    },
+    "function.founder_work_seconds": {
+      "source_expression": "tick_seconds * count active founder-work ticks assigned to function_id",
+      "state_type_ref": "state_schema.json#/$defs/function",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "tick_seconds * count active founder-work ticks assigned to function_id"
+    },
+    "operations.total_coordination_load": {
+      "source_expression": "sum(function.coordination_load)",
+      "state_type_ref": "state_schema.json#/$defs/operations",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "sum(function.coordination_load)"
+    },
+    "operations.ops_capacity_contribution": {
+      "source_expression": "function.operations.coordination_capacity_contribution",
+      "state_type_ref": "state_schema.json#/$defs/operations",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "function.operations.coordination_capacity_contribution"
+    },
+    "operations.strain_backlog": {
+      "source_expression": "ops.commit_strain_backlog",
+      "state_type_ref": "state_schema.json#/$defs/operations",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "ops.commit_strain_backlog"
+    },
+    "operations.strain_repair_share": {
+      "source_expression": "ops.allocation_weights",
+      "state_type_ref": "state_schema.json#/$defs/operations",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "ops.allocation_weights"
+    },
+    "operations.maintenance_output_per_second": {
+      "source_expression": "function.operations.available_maintenance_points_per_second",
+      "state_type_ref": "state_schema.json#/$defs/operations",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "function.operations.available_maintenance_points_per_second"
+    },
+    "operations.allocation_weight_sum": {
+      "source_expression": "sum(function.ops_maintenance_weight)",
+      "state_type_ref": "state_schema.json#/$defs/operations",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "sum(function.ops_maintenance_weight)"
+    },
+    "customer.count": {
+      "source_expression": "cohort.subscribe_split_cancel",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "cohort.subscribe_split_cancel"
+    },
+    "customer.active": {
+      "source_expression": "cohort.activate_or_cancel",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "cohort.activate_or_cancel"
+    },
+    "customer.price_cents_per_month": {
+      "source_expression": "monetisation.accepted_price",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "monetisation.accepted_price"
+    },
+    "customer.addon_count_per_customer": {
+      "source_expression": "expansion.attach_or_downgrade",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "expansion.attach_or_downgrade"
+    },
+    "customer.health": {
+      "source_expression": "customer.commit_health_next",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "customer.commit_health_next"
+    },
+    "customer.defect_exposure": {
+      "source_expression": "product.ship_or_fix",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "product.ship_or_fix"
+    },
+    "customer.incident_exposure": {
+      "source_expression": "incident.open_or_resolve",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "incident.open_or_resolve"
+    },
+    "customer.care_coverage": {
+      "source_expression": "min(1, retention.serviced_customers / eligible_customers)",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "min(1, retention.serviced_customers / eligible_customers)"
+    },
+    "customer.age_ticks": {
+      "source_expression": "clock.tick - customer.activation_tick",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "clock.tick - customer.activation_tick"
+    },
+    "customer.delinquency_ticks": {
+      "source_expression": "max(0,now_tick - min(unpaid_due_ticks + unresolved_default_due_ticks)); 0 when both sets empty",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "max(0,now_tick - min(unpaid_due_ticks + unresolved_default_due_ticks)); 0 when both sets empty"
+    },
+    "customer.at_risk_count": {
+      "source_expression": "churn.spawn_threat_or_save",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "churn.spawn_threat_or_save"
+    },
+    "customer.save_discount_bps": {
+      "source_expression": "retention.concession_policy",
+      "state_type_ref": "state_schema.json#/$defs/customer",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "retention.concession_policy"
+    },
+    "company.cash_cents": {
+      "source_expression": "ledger.cash",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:cash_cents"
+    },
+    "company.eligible_arr_cents": {
+      "source_expression": "sum(customer.eligible_arr_cents)",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:eligible_arr_cents"
+    },
+    "company.contractual_mrr_cents": {
+      "source_expression": "sum(customer.contractual_mrr_cents)",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:contractual_mrr_cents"
+    },
+    "company.window_open_arr_cents": {
+      "source_expression": "eligible_ARR snapshot after all phases at max(0,run.tick-1800); at tick0 opening ARR=0",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_open_arr_cents"
+    },
+    "company.window_new_arr_cents": {
+      "source_expression": "sum eligible ARR delta magnitude for subscribe events in W; count each delta in exactly one bridge bucket",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_new_arr_cents"
+    },
+    "company.window_expansion_arr_cents": {
+      "source_expression": "sum eligible ARR delta magnitude for positive_contract_delta events in W; count each delta in exactly one bridge bucket",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_expansion_arr_cents"
+    },
+    "company.window_contraction_arr_cents": {
+      "source_expression": "sum eligible ARR delta magnitude for negative_contract_delta events in W; count each delta in exactly one bridge bucket",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_contraction_arr_cents"
+    },
+    "company.window_churn_arr_cents": {
+      "source_expression": "sum eligible ARR delta magnitude for cancel events in W; count each delta in exactly one bridge bucket",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_churn_arr_cents"
+    },
+    "company.window_eligibility_loss_arr_cents": {
+      "source_expression": "sum eligible ARR delta magnitude for exclude_delinquent events in W; count each delta in exactly one bridge bucket",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_eligibility_loss_arr_cents"
+    },
+    "company.window_eligibility_restore_arr_cents": {
+      "source_expression": "sum eligible ARR delta magnitude for restore_eligible events in W; count each delta in exactly one bridge bucket",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_eligibility_restore_arr_cents"
+    },
+    "company.window_revenue_cents": {
+      "source_expression": "sum signed cents of earned_service_revenue events in W; financing receipts excluded",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_revenue_cents"
+    },
+    "company.window_cogs_cents": {
+      "source_expression": "sum signed cents of cost_accrual[cogs] events in W; financing receipts excluded",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_cogs_cents"
+    },
+    "company.window_opex_cents": {
+      "source_expression": "sum signed cents of cost_accrual[opex] events in W; financing receipts excluded",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_opex_cents"
+    },
+    "company.window_interest_cents": {
+      "source_expression": "sum signed cents of loan_interest_accrual events in W; financing receipts excluded",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_interest_cents"
+    },
+    "company.window_collections_cents": {
+      "source_expression": "sum signed cents of customer_collection events in W; financing receipts excluded",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_collections_cents"
+    },
+    "company.window_operating_payments_cents": {
+      "source_expression": "sum signed cents of cash_payment[cogs or opex] events in W; financing receipts excluded",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_operating_payments_cents"
+    },
+    "company.window_refund_payments_cents": {
+      "source_expression": "sum signed cents of cash_refund events in W; financing receipts excluded",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_refund_payments_cents"
+    },
+    "company.window_install_payments_cents": {
+      "source_expression": "sum signed cents of upgrade_install_payment events in W; financing receipts excluded",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_install_payments_cents"
+    },
+    "company.window_principal_payments_cents": {
+      "source_expression": "sum signed cents of cash_payment[principal] events in W; financing receipts excluded",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_principal_payments_cents"
+    },
+    "company.window_cash_interest_cents": {
+      "source_expression": "sum signed cents of cash_payment[interest] events in W; financing receipts excluded",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_cash_interest_cents"
+    },
+    "company.window_ticks": {
+      "source_expression": "max(1,min(run.tick,1800))",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_ticks"
+    },
+    "company.receivables_cents": {
+      "source_expression": "sum(invoice.outstanding_cents)",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:receivables_cents"
+    },
+    "company.unbilled_cents": {
+      "source_expression": "sum(account.earned_cents-account.invoiced_cents-account.unbilled_credits_cents)",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:unbilled_cents"
+    },
+    "company.debt_principal_cents": {
+      "source_expression": "sum(loan.principal_cents)",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:debt_principal_cents"
+    },
+    "company.current_run_rate_cost_cents_month": {
+      "source_expression": "sum(service_cents_month)+sum(function.upkeep_cents_per_month)+10000+60*sum(function.resource_cost_cents_per_second)",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:current_run_rate_cost_cents_month"
+    },
+    "company.forecast_obligations_cents": {
+      "source_expression": "cash_forecast output.forecast_obligations_cents",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:forecast_obligations_cents"
+    },
+    "company.forecast_expected_collections_cents": {
+      "source_expression": "cash_forecast output.forecast_expected_collections_cents",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:forecast_expected_collections_cents"
+    },
+    "company.forecast_peak_shortfall_cents": {
+      "source_expression": "cash_forecast output.forecast_peak_shortfall_cents",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:forecast_peak_shortfall_cents"
+    },
+    "company.customer_count": {
+      "source_expression": "sum(customer.count where active)",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:customer_count"
+    },
+    "company.largest_exposure_arr_cents": {
+      "source_expression": "max(sum(eligible_ARR grouped by origin_account_id),default=0); cohort splitting does not diversify an account",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:largest_exposure_arr_cents"
+    },
+    "company.window_new_payers": {
+      "source_expression": "count distinct origin accounts first becoming paid in W",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:window_new_payers"
+    },
+    "company.matched_acquisition_cost_cents": {
+      "source_expression": "sum attribution-ledger costs for the origin accounts first becoming paid in W, including pre-W acquisition work",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:matched_acquisition_cost_cents"
+    },
+    "company.opening_cohort_arr_cents": {
+      "source_expression": "sum contractual ARR at W start for then-active origin accounts",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:opening_cohort_arr_cents"
+    },
+    "company.opening_cohort_churn_arr_cents": {
+      "source_expression": "sum B_i for opening origin accounts whose closing contractual ARR R_i=0; B_i is that account's ARR at W start",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:opening_cohort_churn_arr_cents"
+    },
+    "company.opening_cohort_contraction_arr_cents": {
+      "source_expression": "sum max(0,B_i-R_i) for opening origin accounts with R_i>0; net closing contraction, not all transient negative events",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:opening_cohort_contraction_arr_cents"
+    },
+    "company.opening_cohort_expansion_arr_cents": {
+      "source_expression": "sum max(0,R_i-B_i) over opening origin accounts; net closing expansion, not all transient positive events",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "aggregate_ledger_or_entity:opening_cohort_expansion_arr_cents"
+    },
+    "company.forecast_first_shortfall_ticks": {
+      "source_expression": "cash_forecast output.forecast_first_shortfall_ticks",
+      "state_type_ref": "state_schema.json#/$defs/company",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "forecast.prefix_cash_paths"
+    },
+    "loan.principal_cents": {
+      "source_expression": "loan.draw_repay",
+      "state_type_ref": "state_schema.json#/$defs/loan",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "loan.draw_repay"
+    },
+    "loan.apr_bps": {
+      "source_expression": "accepted_contract",
+      "state_type_ref": "state_schema.json#/$defs/loan",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "accepted_contract"
+    },
+    "loan.months_remaining": {
+      "source_expression": "loan.month_settlement",
+      "state_type_ref": "state_schema.json#/$defs/loan",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "loan.month_settlement"
+    },
+    "loan.accrued_interest_numerator": {
+      "source_expression": "loan.month_accrue",
+      "state_type_ref": "state_schema.json#/$defs/loan",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "loan.month_accrue"
+    },
+    "vc.active": {
+      "source_expression": "vc.accept",
+      "state_type_ref": "state_schema.json#/$defs/vc",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "vc.accept"
+    },
+    "vc.baseline_arr_cents": {
+      "source_expression": "vc.accept_baseline_snapshot",
+      "state_type_ref": "state_schema.json#/$defs/vc",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "vc.accept_baseline_snapshot"
+    },
+    "vc.growth_target_bps": {
+      "source_expression": "vc.accepted_contract",
+      "state_type_ref": "state_schema.json#/$defs/vc",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "vc.accepted_contract"
+    },
+    "vc.absolute_target_arr_cents": {
+      "source_expression": "vc.accepted_contract",
+      "state_type_ref": "state_schema.json#/$defs/vc",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "vc.accepted_contract"
+    },
+    "vc.deadline_tick": {
+      "source_expression": "vc.accept_plus_full_quarter",
+      "state_type_ref": "state_schema.json#/$defs/vc",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "vc.accept_plus_full_quarter"
+    },
+    "vc.founder_ownership_ppm": {
+      "source_expression": "equity.issue",
+      "state_type_ref": "state_schema.json#/$defs/vc",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "equity.issue"
+    },
+    "task.eligible_inputs": {
+      "source_expression": "queue.valid_items_at_commit",
+      "state_type_ref": "state_schema.json#/$defs/task",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "queue.valid_items_at_commit"
+    },
+    "task.attempts": {
+      "source_expression": "work_credit.whole_attempts",
+      "state_type_ref": "state_schema.json#/$defs/task",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "work_credit.whole_attempts"
+    },
+    "task.technical_successes": {
+      "source_expression": "seeded_binomial(attempts, 1 - failure_probability)",
+      "state_type_ref": "state_schema.json#/$defs/task",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "seeded_binomial(attempts, 1 - failure_probability)"
+    },
+    "task.domain_successes": {
+      "source_expression": "seeded_binomial(eligible_output_count, domain_probability)",
+      "state_type_ref": "state_schema.json#/$defs/task",
+      "mutation_contract": "event_contract.json#/transitions",
+      "source_writer": "seeded_binomial(eligible_output_count, domain_probability)"
+    }
+  },
+  "reference_ledger_scope": "Financial transaction examples assume all cohorts are score-eligible and homogeneous; full adapter must supply eligibility, cohort splitting, scheduler, cost ledger and outcome-based invoice linkage per this contract. Ledger.arr() is contractual ARR, not the production scoring adapter.",
+  "rng": "SHA256 compact JSON [str(seed),str(stream),str(event_id)], top53 bits / 2**53; stream names isolate technical/domain/local/shared/churn/collection; stable attempt cursor must never reset when a task is rebatched; persist full IDs with seed and profile hash."
+}
