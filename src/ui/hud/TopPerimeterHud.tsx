@@ -75,6 +75,11 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
   const upcomingObligationsCents = (state.mandatoryBills || []).reduce((acc, b) => acc + b.amountCents, 0)
     || (state.opexMonthCents + state.cogsMonthCents) * 3
 
+  // Next operating bill obligation & critical alert threshold:
+  const nextBill = state.mandatoryBills?.[0]
+  const nextBillAmountCents = nextBill?.amountCents ?? (state.opexMonthCents + state.cogsMonthCents)
+  const isOnlyNextBillRemaining = state.cashCents <= nextBillAmountCents && nextBillAmountCents > 0
+
   return (
     <header className="top-hud top-perimeter-hud">
       {/* DESKTOP AEROSPACE COCKPIT BAR */}
@@ -161,18 +166,39 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
 
           {/* LIQUID CASH */}
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: '120px' }}>
-            <span
-              className="font-mono"
-              style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: '#64748B' }}
-            >
-              LIQUID CASH
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span
+                className="font-mono"
+                style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: '#64748B' }}
+              >
+                LIQUID CASH
+              </span>
+              {isOnlyNextBillRemaining && (
+                <span
+                  className="font-mono animate-pulse-critical"
+                  style={{
+                    fontSize: '8px',
+                    fontWeight: 800,
+                    color: '#EF4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    padding: '1px 5px',
+                    borderRadius: '9999px',
+                    letterSpacing: '0.04em',
+                    lineHeight: 1.2,
+                  }}
+                  title={`Critical treasury alert: Cash ($${Math.round(state.cashCents / 100).toLocaleString()}) only covers next bill ($${Math.round(nextBillAmountCents / 100).toLocaleString()})!`}
+                >
+                  ⚠️ 1 BILL LEFT
+                </span>
+              )}
+            </div>
             <span
               className="font-display"
               style={{
                 fontSize: '20px',
                 fontWeight: 800,
-                color: state.cashCents < 50_000_00 ? '#E11D48' : '#0F172A',
+                color: isOnlyNextBillRemaining || state.cashCents < 50_000_00 ? '#E11D48' : '#0F172A',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.15,
                 margin: '1px 0',
@@ -515,12 +541,30 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
           </div>
 
           <div className="telemetry-col">
-            <span className="telemetry-label font-mono" style={{ color: '#64748B' }}>
-              LIQUID CASH
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+              <span className="telemetry-label font-mono" style={{ color: '#64748B' }}>
+                LIQUID CASH
+              </span>
+              {isOnlyNextBillRemaining && (
+                <span
+                  className="font-mono animate-pulse-critical"
+                  style={{
+                    fontSize: '7.5px',
+                    fontWeight: 800,
+                    color: '#EF4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    padding: '0 4px',
+                    borderRadius: '9999px',
+                  }}
+                >
+                  ⚠️ 1 BILL
+                </span>
+              )}
+            </div>
             <span
               className="telemetry-number font-display"
-              style={{ color: state.cashCents < 50_000_00 ? '#E11D48' : '#0F172A' }}
+              style={{ color: isOnlyNextBillRemaining || state.cashCents < 50_000_00 ? '#E11D48' : '#0F172A' }}
             >
               {formatDollars(state.cashCents)}
             </span>

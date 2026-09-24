@@ -556,6 +556,32 @@ class ProceduralAudioEngine {
       osc.stop(now + 0.8)
     })
   }
+
+  /**
+   * Rising synth power-up sound for system failovers and instant recovery
+   */
+  playPowerUp() {
+    if (this.muted) return
+    const ctx = this.initContext()
+    if (!ctx) return
+
+    const now = ctx.currentTime
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+
+    osc.type = 'sawtooth'
+    osc.frequency.setValueAtTime(220, now)
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.25)
+
+    gain.gain.setValueAtTime(this.volume * 0.35, now)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28)
+
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+
+    osc.start(now)
+    osc.stop(now + 0.28)
+  }
 }
 
 export const sound = new ProceduralAudioEngine()

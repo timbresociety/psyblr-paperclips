@@ -9,14 +9,15 @@ interface GameOverModalProps {
 }
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({ state, dispatch }) => {
-  if (state.runStatus !== 'failed') return null
+  const isVisible = state.runStatus === 'failed'
 
-  const handleReset = () => {
+  const handleReset = React.useCallback(() => {
     sound.playClick()
     dispatch({ type: 'run.reset' })
-  }
+  }, [dispatch])
 
   React.useEffect(() => {
+    if (!isVisible) return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault()
@@ -25,7 +26,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ state, dispatch })
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [isVisible, handleReset])
+
+  if (!isVisible) return null
 
   return (
     <div

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useGameEngine } from '../store/gameStore'
 import { getActiveEvolutionTier } from '../engine/formulas'
 import { sound } from '../audio/soundEngine'
@@ -40,6 +40,38 @@ export default function App() {
   const [isFounderRelicsOpen, setIsFounderRelicsOpen] = useState(false)
   const [isCompanyDrawerOpen, setIsCompanyDrawerOpen] = useState(false)
   const [isTutorialOpen, setIsTutorialOpen] = useState(!state.hasSeenTutorial && state.elapsedTicks < 60)
+
+  // Delayed room transition state: lets DemandRoom animate the green success shake & glide before navigating to Product
+  const [displayedRoom, setDisplayedRoom] = useState<FunctionId>(state.activeFunction)
+  const roomTransitionTimeoutRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    // When transitioning from demand to product after a successful qualification,
+    // delay room switch by 850ms so user can see the green success shake and moving into product!
+    if (displayedRoom === 'demand' && state.activeFunction === 'product' && state.lastTriageOutcome?.success) {
+      if (roomTransitionTimeoutRef.current) {
+        window.clearTimeout(roomTransitionTimeoutRef.current)
+      }
+      roomTransitionTimeoutRef.current = window.setTimeout(() => {
+        setDisplayedRoom('product')
+      }, 850)
+      return
+    }
+
+    if (roomTransitionTimeoutRef.current) {
+      window.clearTimeout(roomTransitionTimeoutRef.current)
+      roomTransitionTimeoutRef.current = null
+    }
+    setDisplayedRoom(state.activeFunction)
+  }, [state.activeFunction, state.lastTriageOutcome, displayedRoom])
+
+  useEffect(() => {
+    return () => {
+      if (roomTransitionTimeoutRef.current) {
+        window.clearTimeout(roomTransitionTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const tierInfo = getActiveEvolutionTier(state)
 
@@ -184,10 +216,10 @@ export default function App() {
 
     window.addEventListener('keydown', handleGlobalKeyDown)
     return () => window.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [state.paused, state.speedMultiplier, state.activeFunction, state.quarterReviewPending, isShortcutsOpen, isSkillTreeOpen, isLedgerOpen, dispatch])
+  }, [state.paused, state.speedMultiplier, state.activeFunction, state.quarterReviewPending, state.founderHistory, isTutorialOpen, isShortcutsOpen, isSkillTreeOpen, isLedgerOpen, dispatch])
 
   const renderActiveRoom = () => {
-    switch (state.activeFunction) {
+    switch (displayedRoom) {
       case 'demand':
         return <DemandRoom state={state} dispatch={dispatch} />
       case 'product':
@@ -226,6 +258,7 @@ export default function App() {
         <FunctionNav
           state={state}
           dispatch={dispatch}
+          activeRoomOverride={displayedRoom}
           onOpenFleetModal={() => setIsSkillTreeOpen(true)}
           onOpenLedger={() => setIsLedgerOpen(true)}
         />

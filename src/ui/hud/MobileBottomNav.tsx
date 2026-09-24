@@ -2,6 +2,7 @@ import React from 'react'
 import type { GameState, FunctionId } from '../../engine/types'
 import type { GameAction } from '../../engine/actions'
 import { sound } from '../../audio/soundEngine'
+import { getMonetisationDealStats } from '../../engine/formulas'
 
 interface MobileBottomNavProps {
   state: GameState
@@ -38,10 +39,29 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const demandAlerts = (state.demandSignals || []).length
   const productReadyPods = (state.productPods || []).filter(p => p.isReadyToShip).length
   const productAlerts = (state.qualifiedOpportunities || []).length + productReadyPods
-  const monetisationAlerts = (state.currentActivation ? 1 : 0) + (state.activationsQueue || []).length
-  const retentionAlerts = (state.accounts || []).filter(a => a.isThreatened || a.health < 50).length
+  const activeThreatIds = new Set<string>()
+  ;(state.accounts || []).forEach(a => {
+    if (a.isThreatened || (a.health !== undefined && a.health < 65)) {
+      activeThreatIds.add(a.id)
+    }
+  })
+  ;(state.retentionIncidents || []).forEach(inc => {
+    activeThreatIds.add(inc.accountId || inc.id)
+  })
+  if (state.retentionEvent?.active && state.retentionEvent.accountId) {
+    activeThreatIds.add(state.retentionEvent.accountId)
+  }
+  const retentionAlerts =
+    activeThreatIds.size + (state.retentionEvent?.active && !state.retentionEvent.accountId ? 1 : 0)
+  const monetisationAlerts = getMonetisationDealStats(state).totalCount
   const expansionAlerts = (state.expansionOrders || []).length
-  const opsAlerts = (state.operationsEvent?.active ? 1 : 0) + ((state.operations?.incidentsBacklog || 0) > 0 ? 1 : 0)
+  const opsBustedTickets = (state.activeTickets || []).filter(t => t.isBusted).length
+  const opsStrainAlert = (state.operations?.strainBacklog ?? 0) >= 10 ? 1 : 0
+  const opsRotAlert = (state.operations?.contextRot ?? 0) >= 0.35 ? 1 : 0
+  const opsUnackAlerts = (state.alerts || []).filter(
+    a => !a.acknowledged && (a.targetFunction === 'operations' || (a.tone === 'critical' && (a.id.startsWith('ticket-') || a.id.startsWith('ops-'))))
+  ).length
+  const opsAlerts = (state.operationsEvent?.active ? 1 : 0) + (state.operations?.incidentsBacklog || 0) + opsBustedTickets + opsStrainAlert + opsRotAlert + opsUnackAlerts
 
   const getAlertBadge = (id: FunctionId | 'company') => {
     switch (id) {
@@ -105,7 +125,13 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             </span>
 
             {badgeCount !== null && (
-              <span className="mobile-nav-badge">
+              <span
+                className="mobile-nav-badge animate-badge-glow"
+                style={{
+                  ['--badge-glow' as any]: item.accentColor,
+                  boxShadow: `0 0 8px ${item.accentColor}80`,
+                }}
+              >
                 {badgeCount > 9 ? '9+' : badgeCount}
               </span>
             )}

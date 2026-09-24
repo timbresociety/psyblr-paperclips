@@ -1,5 +1,5 @@
 import React from 'react'
-import type { GameState, Relic, Consumable, ArrBridge } from '../../engine/types'
+import type { GameState, Relic, Consumable } from '../../engine/types'
 import type { GameAction } from '../../engine/actions'
 import { sound } from '../../audio/soundEngine'
 import {
@@ -9,6 +9,7 @@ import {
   MAX_CONSUMABLE_SLOTS,
 } from '../../engine/constants'
 import { getMilestoneUpgradeAsset } from '../../engine/assets'
+import { reconcileQuarterBridge } from '../../engine/formulas'
 
 
 interface QuarterReviewProps {
@@ -51,59 +52,23 @@ const RARITY_THEME: Record<
   },
 }
 
-/**
- * Resolves the audited ARR bridge for the completed quarter.
- */
-export function reconcileQuarterBridge(state: GameState): ArrBridge {
-  if (state.auditedArrBridge) {
-    return state.auditedArrBridge
-  }
-
-  const currentBridge = state.arrBridge
-  const hasDeltas =
-    currentBridge.newArrCents > 0 ||
-    currentBridge.expansionArrCents > 0 ||
-    currentBridge.contractionArrCents > 0 ||
-    currentBridge.churnArrCents > 0 ||
-    currentBridge.delinquencyLossArrCents > 0 ||
-    currentBridge.restorationArrCents > 0
-
-  if (hasDeltas || currentBridge.openingArrCents !== state.eligibleArrCents) {
-    return currentBridge
-  }
-
-  let reconstructedNewArr = 0
-  let reconstructedExpansionArr = 0
-
-  for (const acc of state.accounts) {
-    if (acc.delinquent) continue
-    if (acc.ageTicks <= 1800) {
-      reconstructedNewArr += acc.baseMrrCents * 12
-      if (acc.addonMrrCents > 0) {
-        reconstructedExpansionArr += acc.addonMrrCents * 12
-      }
-    } else if (acc.addonMrrCents > 0) {
-      reconstructedExpansionArr += acc.addonMrrCents * 12
-    }
-  }
-
-  const totalGains = reconstructedNewArr + reconstructedExpansionArr
-  const openingEligible = Math.max(0, state.eligibleArrCents - totalGains)
-
-  return {
-    openingArrCents: openingEligible,
-    newArrCents: reconstructedNewArr,
-    expansionArrCents: reconstructedExpansionArr,
-    contractionArrCents: 0,
-    churnArrCents: 0,
-    delinquencyLossArrCents: 0,
-    restorationArrCents: 0,
-    closingArrCents: state.eligibleArrCents,
-  }
-}
-
 export const QuarterReviewModal: React.FC<QuarterReviewProps> = ({ state, dispatch }) => {
-  if (!state.quarterReviewPending) return null
+  const isVisible = Boolean(state.quarterReviewPending)
+
+  React.useEffect(() => {
+    if (!isVisible) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Quarter review modal is strictly non-dismissable via keyboard shortcuts or escape
+      if (e.key === 'Escape' || e.key === 'Enter') {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [isVisible])
+
+  if (!isVisible) return null
 
   const rerollCostCents = QUARTER_REROLL_BASE_COST_CENTS * Math.max(1, Math.floor(state.quarter / 2))
   const canAffordReroll = state.cashCents >= rerollCostCents
@@ -147,18 +112,6 @@ export const QuarterReviewModal: React.FC<QuarterReviewProps> = ({ state, dispat
     sound.playClick()
     dispatch({ type: 'quarter.close_review' })
   }
-
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Quarter review modal is strictly non-dismissable via keyboard shortcuts or escape
-      if (e.key === 'Escape' || e.key === 'Enter') {
-        e.preventDefault()
-        e.stopPropagation()
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown, true)
-    return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [])
 
   const bridge = reconcileQuarterBridge(state)
   const formatArr = (cents: number) => `$${Math.round(cents / 100).toLocaleString()}`

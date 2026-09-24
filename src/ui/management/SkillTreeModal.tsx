@@ -3,13 +3,11 @@ import type { GameState, FunctionId, ProgressionAxis } from "../../engine/types"
 import type { GameAction } from "../../engine/actions"
 import { sound } from "../../audio/soundEngine"
 import {
-  UPGRADE_RANK_COSTS,
-  CRAFT_MULTIPLIERS,
   SCALE_UNITS,
-  AUTOMATE_SPEEDS,
-  AUTOMATE_UPKEEP_CENTS
+  getMaxUnlockedSpeed,
 } from "../../engine/constants"
-import { getSkillTreeUpgradeAsset } from "../../engine/assets"
+import { getUpgradeRankCost } from "../../engine/formulas"
+import { getSkillTreeUpgradeAsset, getSkillTreeUpgradeInfo } from "../../engine/assets"
 
 
 interface SkillTreeModalProps {
@@ -105,7 +103,6 @@ const AXIS_CONFIG: Record<
     code: string
     color: string
     angleOffsetDeg: number
-    tiers: Array<{ label: string; desc: string; detail: string }>
   }
 > = {
   craft: {
@@ -113,52 +110,24 @@ const AXIS_CONFIG: Record<
     code: "CRFT",
     color: "#58D9FF",
     angleOffsetDeg: -19,
-    tiers: [
-      { label: "Precision AST", desc: "1.3x Output Multiplier", detail: "Optimizes worker code generation pipelines with strict syntax caching." },
-      { label: "Vector Pipelines", desc: "1.7x Output Multiplier", detail: "Direct semantic vector embeddings eliminate repetitive work passes." },
-      { label: "Synthesis Engine", desc: "2.2x Output Multiplier", detail: "Autonomous intermediate representation compiler compounds single-agent yield." },
-      { label: "Autonomous Foundry", desc: "3.0x Output Multiplier", detail: "Self-compiling recursive agents produce production-grade output instantaneously." },
-      { label: "Omni Compiler", desc: "4.5x Output Multiplier", detail: "Exascale recursive compiler multiplying output yield to physical limits." },
-    ],
   },
   scale: {
     name: "SCALE",
     code: "SCLE",
     color: "#FFC857",
     angleOffsetDeg: -6.5,
-    tiers: [
-      { label: "Dual Agent Pod", desc: "4 Max Concurrent Units", detail: "Spawns 4 parallel worker instances to process inbound throughput." },
-      { label: "Octa-Core Cluster", desc: "8 Max Concurrent Units", detail: "Distributed worker cluster handling high-volume operational loads." },
-      { label: "Distributed Grid", desc: "14 Max Concurrent Units", detail: "Multi-datacenter execution grid for zero-queue enterprise processing." },
-      { label: "Hyperscale Fleet", desc: "20 Max Concurrent Units", detail: "Industrial-grade swarm capability running 20 parallel agent threads." },
-      { label: "Omnipresent Swarm", desc: "28 Max Concurrent Units", detail: "Global distributed swarm running 28 parallel autonomous threads." },
-    ],
   },
   automate: {
     name: "AUTOMATE",
     code: "AUTO",
     color: "#B5F35A",
     angleOffsetDeg: 6.5,
-    tiers: [
-      { label: "JIT Cron Daemon", desc: "0.35x Auto · $30/mo", detail: "Background scheduler continuously executes this function without manual intervention." },
-      { label: "Autonomous Worker", desc: "0.80x Auto · $70/mo", detail: "Self-starting worker agent executes tasks asynchronously at near-human speed." },
-      { label: "Swarm Orchestrator", desc: "1.60x Auto · $180/mo", detail: "High-frequency coordination daemon accelerating autonomous background loops." },
-      { label: "Self-Healing AI", desc: "3.20x Auto · $500/mo", detail: "Singularity-grade autonomous execution running at super-human velocity." },
-      { label: "Self-Sovereign Mind", desc: "6.00x Auto · $1,200/mo", detail: "Zero-latency autonomous execution operating at singularity speeds." },
-    ],
   },
   luck: {
     name: "LUCK",
     code: "LUCK",
     color: "#A778FF",
     angleOffsetDeg: 19,
-    tiers: [
-      { label: "Market Tailwinds", desc: "+10% Value Variance", detail: "Favorable customer sentiment and positive outcome skew on all operations." },
-      { label: "Alpha Signals", desc: "+20% Value Variance", detail: "Front-runs high-margin market opportunities with elevated conversion upside." },
-      { label: "Catalyst Resonance", desc: "+30% Value Variance", detail: "Multiplies compounding valuation bonuses and viral organic customer loops." },
-      { label: "Serendipity Engine", desc: "+40% Value Variance", detail: "Statistically tilts random events and customer willingness-to-pay to peak ceilings." },
-      { label: "Reality Distortion", desc: "+60% Value Variance", detail: "Quantum variance field permanently skewing conversion and pricing to cosmic peaks." },
-    ],
   },
 }
 
@@ -178,9 +147,10 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
     tier: (state.fleet.product.automateRank < 5 ? state.fleet.product.automateRank + 1 : 5)
   })
   const [selectedHub, setSelectedHub] = useState<OperationalFunctionId | null>(null)
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768)
   const [viewMode, setViewMode] = useState<'cards' | 'canvas'>(() => (typeof window !== 'undefined' && window.innerWidth <= 768) ? 'cards' : 'canvas')
   const [activeSector, setActiveSector] = useState<OperationalFunctionId>('demand')
+  const hasSyndicate = state.activeRelics.some(r => r.id === 'relic-syndicate')
+  const hasHoldingSwarm = state.activeRelics.some(r => r.id === 'relic-holding-swarm')
 
   // Center canvas on mount & handle viewport resize
   useEffect(() => {
@@ -190,8 +160,10 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
     }
 
     const handleResize = () => {
-      const mobile = window.innerWidth <= 768
-      setIsMobile(mobile)
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        setPan({ x: rect.width / 2, y: rect.height / 2 })
+      }
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -286,7 +258,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
       } else if ((e.key === "Enter" || e.key === " " || (e.key >= "1" && e.key <= "5")) && selectedNode) {
         const f = state.fleet[selectedNode.functionId]
         const currentRank = f[`${selectedNode.axis}Rank`]
-        const nextCost = currentRank < 5 ? UPGRADE_RANK_COSTS[currentRank] : null
+        const nextCost = currentRank < 5 ? getUpgradeRankCost(currentRank, hasSyndicate) : null
         if (nextCost && state.cashCents >= nextCost) {
           e.preventDefault()
           handleBuyUpgrade(selectedNode.functionId, selectedNode.axis)
@@ -296,13 +268,54 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [onClose, selectedNode, state.cashCents, state.fleet, handleBuyUpgrade])
+  }, [onClose, selectedNode, state.cashCents, state.fleet, handleBuyUpgrade, hasSyndicate])
 
   // Helper to format currency
   const formatCost = (cents: number) => {
     if (cents >= 1_000_000) return `$${(cents / 100_000).toFixed(1)}k`
     if (cents >= 100_000) return `$${Math.round(cents / 100).toLocaleString()}`
     return `$${Math.round(cents / 100)}`
+  }
+
+  const formatDollars = (cents: number) => {
+    const dollars = Math.round(cents / 100)
+    if (dollars >= 1_000_000_000) return `$${(dollars / 1_000_000_000).toFixed(2)}B`
+    if (dollars >= 1_000_000) return `$${(dollars / 1_000_000).toFixed(2)}M`
+    if (dollars >= 1_000) return `$${(dollars / 1_000).toFixed(1)}k`
+    return `$${dollars.toLocaleString()}`
+  }
+
+  // Quarter countdown: 1,800 ticks per quarter (10 ticks/second = 180s)
+  const quarterTicks = 1800
+  const elapsedInQuarter = state.elapsedTicks % quarterTicks
+  const ticksRemaining = Math.max(0, quarterTicks - elapsedInQuarter)
+  const secondsRemaining = Math.floor(ticksRemaining / 10)
+  const mins = Math.floor(secondsRemaining / 60)
+  const secs = secondsRemaining % 60
+  const quarterProgressPct = Math.min(100, (elapsedInQuarter / quarterTicks) * 100)
+
+  // 180s obligations: upcoming bills due in next quarter
+  const upcomingObligationsCents = (state.mandatoryBills || []).reduce((acc, b) => acc + b.amountCents, 0)
+    || (state.opexMonthCents + state.cogsMonthCents) * 3
+
+  // Next operating bill obligation & critical alert threshold:
+  const nextBill = state.mandatoryBills?.[0]
+  const nextBillAmountCents = nextBill?.amountCents ?? (state.opexMonthCents + state.cogsMonthCents)
+  const isOnlyNextBillRemaining = state.cashCents <= nextBillAmountCents && nextBillAmountCents > 0
+
+  const handleTogglePause = () => {
+    sound.playClick()
+    dispatch({ type: state.paused ? 'run.resume' : 'run.pause' })
+  }
+
+  const handleCycleSpeed = () => {
+    sound.playClick()
+    const maxUnlockedSpeed = getMaxUnlockedSpeed(state.founderHistory)
+    const speeds = [1, 2, 5].filter(s => s <= maxUnlockedSpeed)
+    const currentIdx = speeds.indexOf(state.speedMultiplier)
+    const nextSpeed = speeds[(currentIdx + 1) % speeds.length]
+    dispatch({ type: 'run.set_speed', speed: nextSpeed })
+    if (state.paused) dispatch({ type: 'run.resume' })
   }
 
   return (
@@ -459,22 +472,6 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
             {viewMode === 'cards' ? '🌐 Canvas' : '📋 Cards'}
           </button>
 
-          <div
-            style={{
-              padding: "5px 10px",
-              borderRadius: "9999px",
-              backgroundColor: "rgba(16, 185, 129, 0.08)",
-              border: "1px solid rgba(16, 185, 129, 0.25)",
-              display: "flex",
-              alignItems: "center",
-              gap: "5px",
-            }}
-          >
-            <span className="font-mono" style={{ fontSize: "12px", fontWeight: 700, color: "#059669" }}>
-              ${Math.round(state.cashCents / 100).toLocaleString()}
-            </span>
-          </div>
-
           <button
             onClick={onClose}
             className="cred-3d-button cred-3d-button-light"
@@ -489,6 +486,142 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
           </button>
         </div>
       </header>
+
+      {/* AEROSPACE TELEMETRY RIBBON (Top HUD Metrics) */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "8px 16px",
+          backgroundColor: "#FFFFFF",
+          borderBottom: "1px solid rgba(15, 23, 42, 0.08)",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
+          flexWrap: "wrap",
+          gap: "12px",
+          zIndex: 9,
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap" }}>
+          {/* VALUATION */}
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: '95px' }}>
+            <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: '#64748B' }}>
+              VALUATION
+            </span>
+            <span className="font-display" style={{ fontSize: '17px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+              {formatDollars(state.valuationCents)}
+            </span>
+            <span className="font-mono" style={{ fontSize: '8.5px', color: '#94A3B8' }}>
+              TARGET $1B
+            </span>
+          </div>
+
+          {/* ARR */}
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: '95px' }}>
+            <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: '#64748B' }}>
+              ARR
+            </span>
+            <span className="font-display" style={{ fontSize: '17px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+              {formatDollars(state.contractualArrCents)}
+            </span>
+            <span className="font-mono" style={{ fontSize: '8.5px', color: '#64748B' }}>
+              {state.accounts.length} paying customers
+            </span>
+          </div>
+
+          {/* LIQUID CASH */}
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: '115px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: '#64748B' }}>
+                LIQUID CASH
+              </span>
+              {isOnlyNextBillRemaining && (
+                <span
+                  className="font-mono animate-pulse-critical"
+                  style={{
+                    fontSize: '7.5px',
+                    fontWeight: 800,
+                    color: '#EF4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    padding: '0 4px',
+                    borderRadius: '9999px',
+                    lineHeight: 1.2,
+                  }}
+                  title={`Critical treasury alert: Cash ($${Math.round(state.cashCents / 100).toLocaleString()}) only covers next bill ($${Math.round(nextBillAmountCents / 100).toLocaleString()})!`}
+                >
+                  ⚠️ 1 BILL LEFT
+                </span>
+              )}
+            </div>
+            <span className="font-display" style={{ fontSize: '17px', fontWeight: 800, color: isOnlyNextBillRemaining || state.cashCents < 50_000_00 ? '#E11D48' : '#059669', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+              {formatDollars(state.cashCents)}
+            </span>
+            <span className="font-mono" style={{ fontSize: '8.5px', color: '#64748B' }}>
+              {formatDollars(upcomingObligationsCents)} 180s obligations
+            </span>
+          </div>
+
+          {/* QUARTER PROGRESS */}
+          <div style={{ display: 'flex', flexDirection: 'column', minWidth: '95px' }}>
+            <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: '#64748B' }}>
+              QUARTER {state.quarter}
+            </span>
+            <span className="font-mono" style={{ fontSize: '17px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+              {mins}:{secs.toString().padStart(2, '0')}
+            </span>
+            <div
+              style={{
+                width: '100%',
+                height: '3px',
+                backgroundColor: '#E2E8F0',
+                borderRadius: '2px',
+                overflow: 'hidden',
+                marginTop: '2px',
+              }}
+            >
+              <div
+                style={{
+                  width: `${quarterProgressPct}%`,
+                  height: '100%',
+                  backgroundColor: '#0284C7',
+                  transition: 'width 250ms ease',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Simulation Controls: Pause & Speed */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <button
+            onClick={handleTogglePause}
+            className={`cred-3d-button font-mono ${state.paused ? 'cred-3d-button-amber' : 'cred-3d-button-light'}`}
+            style={{
+              padding: '4px 10px',
+              fontSize: '11px',
+              fontWeight: 700,
+            }}
+            title={state.paused ? 'Resume Simulation' : 'Pause Simulation'}
+          >
+            {state.paused ? '▶ Resume' : '⏸ Pause'}
+          </button>
+
+          <button
+            onClick={handleCycleSpeed}
+            className="cred-3d-button cred-3d-button-light font-mono"
+            style={{
+              padding: '4px 9px',
+              fontSize: '11px',
+              fontWeight: 700,
+            }}
+            title="Cycle Speed (1x, 2x, 5x)"
+          >
+            {state.speedMultiplier}×
+          </button>
+        </div>
+      </div>
 
       {viewMode === 'cards' ? (
         /* TOUCH-FRIENDLY MOBILE CARDS VIEW */
@@ -645,10 +778,10 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
               const currentRank = f[`${axis}Rank`]
               const isMaxed = currentRank >= 5
               const nextTierIdx = currentRank
-              const nextCostCents = !isMaxed ? UPGRADE_RANK_COSTS[currentRank] : null
+              const nextCostCents = !isMaxed ? getUpgradeRankCost(currentRank, hasSyndicate) : null
               const canAfford = nextCostCents !== null && state.cashCents >= nextCostCents
-              const currentTierInfo = currentRank > 0 ? axisCfg.tiers[currentRank - 1] : null
-              const nextTierInfo = !isMaxed ? axisCfg.tiers[nextTierIdx] : null
+              const currentTierInfo = currentRank > 0 ? getSkillTreeUpgradeInfo(activeSector, axis, currentRank) : null
+              const nextTierInfo = !isMaxed ? getSkillTreeUpgradeInfo(activeSector, axis, nextTierIdx + 1) : null
 
               return (
                 <div
@@ -766,11 +899,21 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                           <>
                             <span>Research Tier {currentRank + 1}</span>
                             <span className="font-mono">({formatCost(nextCostCents!)})</span>
+                            {hasSyndicate && (
+                              <span style={{ fontSize: '9px', backgroundColor: '#B5F35A', color: '#0F172A', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
+                                -35% Syndicate
+                              </span>
+                            )}
                             <span>→</span>
                           </>
                         ) : (
                           <>
                             <span>Requires {formatCost(nextCostCents!)}</span>
+                            {hasSyndicate && (
+                              <span style={{ fontSize: '9px', backgroundColor: '#E2E8F0', color: '#64748B', padding: '1px 4px', borderRadius: '4px', fontWeight: 800 }}>
+                                -35%
+                              </span>
+                            )}
                             <span className="font-mono" style={{ fontSize: '10.5px', opacity: 0.8 }}>
                               (Have {formatCost(state.cashCents)})
                             </span>
@@ -900,12 +1043,12 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
               const axis = selectedNode.axis
               const axisInfo = AXIS_CONFIG[axis]
               const tier = selectedNode.tier
-              const tierInfo = axisInfo.tiers[tier - 1]
+              const tierInfo = getSkillTreeUpgradeInfo(fn, axis, tier)
               const f = state.fleet[fn]
               const currentRank = f[`${axis}Rank`]
               const isResearched = currentRank >= tier
               const isAvailable = currentRank === tier - 1
-              const cost = UPGRADE_RANK_COSTS[tier - 1]
+              const cost = getUpgradeRankCost(tier - 1, hasSyndicate)
               const canAfford = state.cashCents >= cost
 
               return (
@@ -970,6 +1113,11 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                       </div>
                       <div className="font-mono" style={{ fontSize: "16px", fontWeight: 800, color: canAfford ? "var(--color-positive)" : "var(--color-critical)" }}>
                         {formatCost(cost)}
+                        {hasSyndicate && (
+                          <span style={{ fontSize: "10px", color: "#10B981", marginLeft: "6px", fontWeight: 800 }}>
+                            (-35% Syndicate)
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -1314,13 +1462,14 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                       </span>
                       <button
                         onClick={() => {
-                          const maxUnits = SCALE_UNITS[fleet.scaleRank] || 1
+                          const baseMax = SCALE_UNITS[fleet.scaleRank] || 1
+                          const maxUnits = baseMax * (hasHoldingSwarm ? 2 : 1)
                           if (fleet.onlineUnits < maxUnits) {
                             sound.playClick()
                             dispatch({ type: "fleet.set_online_units", functionId: fn, units: fleet.onlineUnits + 1 })
                           }
                         }}
-                        disabled={fleet.onlineUnits >= (SCALE_UNITS[fleet.scaleRank] || 1)}
+                        disabled={fleet.onlineUnits >= ((SCALE_UNITS[fleet.scaleRank] || 1) * (hasHoldingSwarm ? 2 : 1))}
                         style={{
                           width: "16px",
                           height: "16px",
@@ -1331,8 +1480,8 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          cursor: fleet.onlineUnits < (SCALE_UNITS[fleet.scaleRank] || 1) ? "pointer" : "default",
-                          opacity: fleet.onlineUnits < (SCALE_UNITS[fleet.scaleRank] || 1) ? 1 : 0.3,
+                          cursor: fleet.onlineUnits < ((SCALE_UNITS[fleet.scaleRank] || 1) * (hasHoldingSwarm ? 2 : 1)) ? "pointer" : "default",
+                          opacity: fleet.onlineUnits < ((SCALE_UNITS[fleet.scaleRank] || 1) * (hasHoldingSwarm ? 2 : 1)) ? 1 : 0.3,
                           border: "none",
                         }}
                       >
@@ -1359,10 +1508,10 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                   const dist = TIER_RADII[tier - 1]
                   const x = dist * Math.cos(rad)
                   const y = dist * Math.sin(rad)
-                  const tierInfo = axisInfo.tiers[tier - 1]
+                  const tierInfo = getSkillTreeUpgradeInfo(fn, axis, tier)
                   const isResearched = currentRank >= tier
                   const isAvailable = currentRank === tier - 1
-                  const cost = UPGRADE_RANK_COSTS[tier - 1]
+                  const cost = getUpgradeRankCost(tier - 1, hasSyndicate)
                   const canAfford = state.cashCents >= cost
                   const isFocused =
                     selectedNode?.functionId === fn &&

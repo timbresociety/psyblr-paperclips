@@ -1,4 +1,17 @@
-import type { CustomerAccount, CustomerSegment, FunctionFleet, FunctionId, GameState, EvolutionTier, PodSocket, CodingPod, QualifiedOpportunity } from './types'
+import type {
+  CustomerAccount,
+  CustomerSegment,
+  FunctionFleet,
+  FunctionId,
+  GameState,
+  PodSocket,
+  CodingPod,
+  QualifiedOpportunity,
+  ProductActivation,
+  DemandSignal,
+  LuckVarianceResult,
+  ArrBridge,
+} from './types'
 import {
   SEGMENT_PROFILES,
   EVOLUTION_TIERS,
@@ -13,8 +26,19 @@ import {
   TICKS_PER_MONTH,
   SCALE_POD_LIMITS,
   CODING_POD_MODULES,
-  CRAFT_MULTIPLIERS,
+  LUCK_VARIANCE_CONFIG,
+  UPGRADE_RANK_COSTS,
+  ENGINE_ARCHETYPES,
+  FOUNDER_ACHIEVEMENTS_AND_RELICS,
 } from './constants'
+
+export function getUpgradeRankCost(
+  currentRank: number,
+  hasSyndicate: boolean = false
+): number {
+  const baseCost = UPGRADE_RANK_COSTS[currentRank] ?? 0
+  return hasSyndicate ? Math.round(baseCost * 0.65) : baseCost
+}
 
 export function clamp(val: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, val))
@@ -167,6 +191,135 @@ export function calculateCustomerConversion(
 }
 
 /**
+ * Calculates two-sided luck variance (+ / - outcome) for a given rank.
+ * Resolves to slightly positive Expected Value across Tiers 1-5:
+ * T1: +10% / -8%  (EV: +1.0%)
+ * T2: +20% / -12% (EV: +4.0%)
+ * T3: +30% / -10% (EV: +10.0%)
+ * T4: +40% / -5%  (EV: +17.5%)
+ * T5: +50% / -2%  (EV: +24.0%)
+ */
+export function calculateLuckVariance(luckRank: number, rngFloat?: number): LuckVarianceResult {
+  const clampedRank = clamp(Math.floor(luckRank || 0), 0, 5)
+  if (clampedRank === 0) {
+    return { multiplier: 1.0, delta: 0, isPeakPositive: false, isExtremeNegative: false }
+  }
+  const cfg = LUCK_VARIANCE_CONFIG[clampedRank] || LUCK_VARIANCE_CONFIG[0]
+  const roll = rngFloat !== undefined ? rngFloat : Math.random()
+  const delta = -cfg.maxPenalty + roll * (cfg.maxBonus + cfg.maxPenalty)
+  const multiplier = 1 + delta
+  const isPeakPositive = roll >= 0.88 // Top 12% percentile: catalyst / jackpot rolls
+  const isExtremeNegative = roll <= 0.10 // Bottom 10% percentile: high friction rolls
+  return { multiplier, delta, isPeakPositive, isExtremeNegative }
+}
+
+export interface DemandQualificationResult {
+  success: boolean
+  probability: number
+  failureReason?: string
+  effectiveCac: number
+  effectiveWtp: number
+  isLuckyWhale: boolean
+  luckVariance: LuckVarianceResult
+}
+
+/**
+ * Dynamic qualification calculation for Demand signals.
+ * Implements segment-specific qualification success rates:
+ * - Creator: 90% base (high volume, low friction)
+ * - Team: 70% base (departmental evaluation)
+ * - Enterprise: 40% base (high risk, strict RFP, security & compliance review)
+ * Adjusted dynamically by capability fit, Demand Craft, and Luck variance.
+ */
+export function calculateDemandQualification(
+  signal: DemandSignal,
+  capabilities: { speed: number; collaboration: number; control: number },
+  craftRank = 0,
+  luckRank = 0,
+  isFirstCustomer = false,
+  roll = Math.random(),
+  luckRoll = Math.random(),
+  isHyper = false
+): DemandQualificationResult {
+  const profile = SEGMENT_PROFILES[signal.segment] || SEGMENT_PROFILES.creator
+  const luck = calculateLuckVariance(luckRank, luckRoll)
+
+  // Craft CAC discount: 12% per rank up to 60%
+  const cacDiscount = Math.min(0.60, 0.12 * craftRank)
+  const rawAcqCost = (signal.acquisitionCostCents ?? 0) * (isHyper ? 2.0 : 1.0)
+
+  // Luck variance directly affects CAC: positive variance yields additional organic discounts,
+  // while negative variance increases ad spend overrun / acquisition friction.
+  const luckCacMult = Math.max(0.65, 1 - luck.delta)
+  const baseCac = Math.round(rawAcqCost * (1 - cacDiscount) * luckCacMult)
+
+  // Lucky Whale catalyst: procs on peak positive roll when luckRank > 0
+  const isLuckyWhale = luckRank > 0 && luck.isPeakPositive
+  const effectiveCac = isLuckyWhale ? (isHyper ? Math.round(baseCac * 0.25) : 0) : baseCac
+
+  // WTP scaling: Craft bonus + Luck variance multiplier (and Hyper / Whale multipliers)
+  const craftWtpMult = isHyper ? (1 + 0.25 * craftRank) : (1 + 0.20 * craftRank)
+  const hyperWtpMult = isHyper ? 2.0 : 1.0
+  const whaleWtpMult = isLuckyWhale ? (isHyper ? 1.5 : 2.5) : 1.0
+  const effectiveWtp = Math.round(
+    (signal.estimatedWtpCents ?? profile.baseWtpMonthlyCents) *
+    craftWtpMult *
+    hyperWtpMult *
+    whaleWtpMult *
+    luck.multiplier
+  )
+
+  // Base qualification rate from profile
+  const baseRate = profile.qualificationSuccessRate
+
+  // Capability Fit bonus: matching needs improves qualification
+  const fit = clamp(
+    profile.needSpeed * capabilities.speed +
+    profile.needCollaboration * capabilities.collaboration +
+    profile.needControl * capabilities.control,
+    0.05,
+    1.0
+  )
+  const fitBonus = (fit - 0.5) * 0.15 // -7.5% to +7.5%
+
+  // Demand Craft vetting bonus: +2% per rank
+  const craftBonus = craftRank * 0.02
+
+  // Luck variance swings qualification probability
+  const luckBonus = luck.delta
+
+  let probability = clamp(baseRate + fitBonus + craftBonus + luckBonus, 0.10, 0.98)
+
+  // Tutorial / Onboarding safeguard: The first customer lead always qualifies
+  if (isFirstCustomer) {
+    probability = 1.0
+  }
+
+  const success = roll <= probability
+
+  let failureReason: string | undefined
+  if (!success) {
+    if (signal.segment === 'enterprise') {
+      failureReason = 'Enterprise lead disqualified during procurement, SOC2 security and legal compliance review.'
+    } else if (signal.segment === 'team') {
+      failureReason = 'Team evaluation stalled; internal engineering roadmap deferred adoption.'
+    } else {
+      failureReason = 'Prospect dropped off before completing self-serve setup.'
+    }
+  }
+
+  return {
+    success,
+    probability,
+    failureReason,
+    effectiveCac,
+    effectiveWtp,
+    isLuckyWhale,
+    luckVariance: luck,
+  }
+}
+
+/**
  * Fleet coordination load, Ops capacity, and accumulated strain mechanics.
  */
 export function calculateOperationsMetrics(
@@ -292,20 +445,32 @@ export function calculateEconomicBurn(state: GameState): {
 
   // Opex includes tier-scaled overhead + cloud infrastructure compute in growth/ethereal tiers + agent upkeep across fleet + extra units
   const activeTier = getActiveEvolutionTier(state).tier
-  const tierOverhead = TIER_BASE_OVERHEAD_MONTHLY_CENTS[activeTier] ?? BASE_OVERHEAD_MONTHLY_CENTS
+  const hasFreeOverhead = (state.activeRelics || []).some(r => r.id === 'relic-immortal-balance')
+  const tierOverhead = hasFreeOverhead ? 0 : (TIER_BASE_OVERHEAD_MONTHLY_CENTS[activeTier] ?? BASE_OVERHEAD_MONTHLY_CENTS)
   const infraScaleCents = (activeTier === 'growth' || activeTier === 'ethereal')
     ? Math.round((state.eligibleArrCents * (activeTier === 'ethereal' ? 0.15 : 0.10)) / 12)
     : 0
   let opexMonthCents = tierOverhead + infraScaleCents
+  const hasGpuCluster = (state.activeRelics || []).some(r => r.id === 'relic-gpu-cluster')
   const functionKeys: FunctionId[] = ['demand', 'product', 'monetisation', 'retention', 'expansion', 'operations']
   for (const fn of functionKeys) {
     const f = state.fleet[fn]
-    if (f.automateRank > 0) {
+    if (f.automateRank > 0 && !hasGpuCluster) {
       opexMonthCents += AUTOMATE_UPKEEP_CENTS[f.automateRank] * f.onlineUnits
     }
     if (f.onlineUnits > 1) {
       opexMonthCents += (f.onlineUnits - 1) * EXTRA_UNIT_UPKEEP_CENTS
     }
+  }
+
+  // Apply OPEX discount from active archetype and equipped founder relic
+  const archetype = ENGINE_ARCHETYPES[state.activeArchetype || 'product_led_machine']
+  const equippedRelicEntry = FOUNDER_ACHIEVEMENTS_AND_RELICS.find(
+    a => a.relicId === state.founderHistory?.equippedFounderRelicId || a.id === state.founderHistory?.equippedFounderRelicId
+  )
+  const opexDiscount = Math.min(0.8, (archetype?.passiveEffects?.opexDiscount || 0) + (equippedRelicEntry?.unlockedRelic?.passiveEffects?.opexDiscount || 0))
+  if (opexDiscount > 0) {
+    opexMonthCents = Math.round(opexMonthCents * (1 - opexDiscount))
   }
 
   // Interest on debt facility (18% nominal APR amortized)
@@ -520,4 +685,104 @@ export function syncProductPods(
   }
 
   return pods
+}
+
+export interface MonetisationDealStats {
+  activeCount: number
+  queuedCount: number
+  totalCount: number
+  deskActivations: ProductActivation[]
+  queuedActivations: ProductActivation[]
+}
+
+/**
+ * Accurately calculates Monetisation deal statistics without double-counting
+ * activations that are simultaneously assigned to an active deal desk and present
+ * in the activationsQueue.
+ */
+export function getMonetisationDealStats(state: GameState): MonetisationDealStats {
+  const deskActivations: ProductActivation[] = []
+  const seenIds = new Set<string>()
+
+  const desks = state.activeDealDesks || []
+  for (const desk of desks) {
+    if (desk?.activation && !seenIds.has(desk.activation.id)) {
+      deskActivations.push(desk.activation)
+      seenIds.add(desk.activation.id)
+    }
+  }
+
+  // Fallback to state.currentActivation if desk 0 wasn't populated in activeDealDesks
+  if (state.currentActivation && !seenIds.has(state.currentActivation.id)) {
+    deskActivations.push(state.currentActivation)
+    seenIds.add(state.currentActivation.id)
+  }
+
+  // Queued activations are any activations in activationsQueue that are NOT currently active on any desk
+  const queuedActivations = (state.activationsQueue || []).filter(
+    (act) => act && !seenIds.has(act.id)
+  )
+
+  const activeCount = deskActivations.length
+  const queuedCount = queuedActivations.length
+  const totalCount = activeCount + queuedCount
+
+  return {
+    activeCount,
+    queuedCount,
+    totalCount,
+    deskActivations,
+    queuedActivations,
+  }
+}
+
+/**
+ * Resolves the audited ARR bridge for the completed quarter.
+ */
+export function reconcileQuarterBridge(state: GameState): ArrBridge {
+  if (state.auditedArrBridge) {
+    return state.auditedArrBridge
+  }
+
+  const currentBridge = state.arrBridge
+  const hasDeltas =
+    currentBridge.newArrCents > 0 ||
+    currentBridge.expansionArrCents > 0 ||
+    currentBridge.contractionArrCents > 0 ||
+    currentBridge.churnArrCents > 0 ||
+    currentBridge.delinquencyLossArrCents > 0 ||
+    currentBridge.restorationArrCents > 0
+
+  if (hasDeltas || currentBridge.openingArrCents !== state.eligibleArrCents) {
+    return currentBridge
+  }
+
+  let reconstructedNewArr = 0
+  let reconstructedExpansionArr = 0
+
+  for (const acc of state.accounts) {
+    if (acc.delinquent) continue
+    if (acc.ageTicks <= 1800) {
+      reconstructedNewArr += acc.baseMrrCents * 12
+      if (acc.addonMrrCents > 0) {
+        reconstructedExpansionArr += acc.addonMrrCents * 12
+      }
+    } else if (acc.addonMrrCents > 0) {
+      reconstructedExpansionArr += acc.addonMrrCents * 12
+    }
+  }
+
+  const totalGains = reconstructedNewArr + reconstructedExpansionArr
+  const openingEligible = Math.max(0, state.eligibleArrCents - totalGains)
+
+  return {
+    openingArrCents: openingEligible,
+    newArrCents: reconstructedNewArr,
+    expansionArrCents: reconstructedExpansionArr,
+    contractionArrCents: 0,
+    churnArrCents: 0,
+    delinquencyLossArrCents: 0,
+    restorationArrCents: 0,
+    closingArrCents: state.eligibleArrCents,
+  }
 }

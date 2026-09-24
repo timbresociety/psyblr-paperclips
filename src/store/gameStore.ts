@@ -1,5 +1,4 @@
 import { useEffect, useReducer, useRef, useCallback } from 'react'
-import type { GameState } from '../engine/types'
 import type { GameAction } from '../engine/actions'
 import { gameReducer } from '../engine/reducer'
 import { loadCheckpoint, saveCheckpoint } from '../engine/persistence'
@@ -8,7 +7,10 @@ import { TICKS_PER_SECOND } from '../engine/constants'
 export function useGameEngine() {
   const [state, dispatch] = useReducer(gameReducer, undefined, loadCheckpoint)
   const stateRef = useRef(state)
-  stateRef.current = state
+  
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
 
   // Periodic autosave (throttled every 4 seconds to prevent 10Hz/60Hz disk I/O thrashing)
   useEffect(() => {

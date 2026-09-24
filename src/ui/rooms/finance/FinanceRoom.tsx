@@ -37,6 +37,10 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
   const vcPreMoneyDollars = (state.eligibleArrCents * 4) / 100
   const vcRaiseDollars = vcPreMoneyDollars * 0.25
 
+  const nextBill = state.mandatoryBills?.[0]
+  const nextBillAmountCents = nextBill?.amountCents ?? (state.opexMonthCents + state.cogsMonthCents)
+  const isOnlyNextBillRemaining = state.cashCents <= nextBillAmountCents && nextBillAmountCents > 0
+
   // Desktop keyboard shortcuts for Finance
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -117,11 +121,30 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
           gap: '10px',
         }}
       >
-        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '12px', padding: '10px 14px', boxShadow: '0 2px 8px rgba(18, 22, 26, 0.04)' }}>
-          <div style={{ fontSize: '9.5px', color: 'var(--color-positive)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.06em' }}>
-            Liquid Cash
+        <div style={{ backgroundColor: '#FFFFFF', border: isOnlyNextBillRemaining ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-hairline)', borderRadius: '12px', padding: '10px 14px', boxShadow: '0 2px 8px rgba(18, 22, 26, 0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+            <div style={{ fontSize: '9.5px', color: isOnlyNextBillRemaining ? '#EF4444' : 'var(--color-positive)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.06em' }}>
+              Liquid Cash
+            </div>
+            {isOnlyNextBillRemaining && (
+              <span
+                className="font-mono animate-pulse-critical"
+                style={{
+                  fontSize: '8px',
+                  fontWeight: 800,
+                  color: '#EF4444',
+                  backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  padding: '1px 5px',
+                  borderRadius: '9999px',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                ⚠️ 1 BILL LEFT
+              </span>
+            )}
           </div>
-          <div className="font-mono font-display" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-ink)', marginTop: '2px', letterSpacing: '-0.03em' }}>
+          <div className="font-mono font-display" style={{ fontSize: '20px', fontWeight: 800, color: isOnlyNextBillRemaining ? '#EF4444' : 'var(--text-ink)', marginTop: '2px', letterSpacing: '-0.03em' }}>
             ${(state.cashCents / 100).toLocaleString()}
           </div>
           <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>

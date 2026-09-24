@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react"
-import type { GameState, CustomerAccount, MergeItem, ExpansionOrder } from "../../../engine/types"
+import type { GameState } from "../../../engine/types"
 import type { GameAction } from "../../../engine/actions"
 import {
-  EXPANSION_MATURITY_TICKS,
-  EXPANSION_MIN_HEALTH,
   MAX_ADDON_SLOTS,
-  ADDON_PRICE_FRACTION,
   EXPANSION_BAY_LIMITS,
   CRAFT_MULTIPLIERS,
   EXPANSION_GRID_SIZES,
@@ -59,6 +56,41 @@ const CHAIN_META: Record<string, ChainDetail> = {
     tierNames: EXTENDED_TIER_NAMES.security,
   },
 }
+
+const SPAWN_OPTIONS = [
+  {
+    chain: "random" as const,
+    label: "Random Chain",
+    assetPath: "/assets/2.5d/expansion_random.png",
+    color: "#7C3AED",
+    glow: "rgba(124, 58, 237, 0.4)",
+    bg: "rgba(124, 58, 237, 0.12)",
+  },
+  {
+    chain: "intelligence" as const,
+    label: "Intelligence Chain",
+    assetPath: "/assets/2.5d/expansion_intelligence.png",
+    color: CHAIN_META.intelligence.color,
+    glow: CHAIN_META.intelligence.glow,
+    bg: CHAIN_META.intelligence.bg,
+  },
+  {
+    chain: "infrastructure" as const,
+    label: "Infrastructure Chain",
+    assetPath: "/assets/2.5d/expansion_infrastructure.png",
+    color: CHAIN_META.infrastructure.color,
+    glow: CHAIN_META.infrastructure.glow,
+    bg: CHAIN_META.infrastructure.bg,
+  },
+  {
+    chain: "security" as const,
+    label: "Security Chain",
+    assetPath: "/assets/2.5d/expansion_security.png",
+    color: CHAIN_META.security.color,
+    glow: CHAIN_META.security.glow,
+    bg: CHAIN_META.security.bg,
+  },
+]
 
 export const ExpansionRoom: React.FC<ExpansionRoomProps> = ({ state, dispatch }) => {
   const scaleRank = state.fleet?.expansion?.scaleRank ?? 0
@@ -179,8 +211,6 @@ export const ExpansionRoom: React.FC<ExpansionRoomProps> = ({ state, dispatch })
         setSelectedCellIndex(null)
         return
       }
-
-      setSelectedCellIndex(null)
     },
     [grid, selectedCellIndex, dispatch]
   )
@@ -878,31 +908,53 @@ export const ExpansionRoom: React.FC<ExpansionRoomProps> = ({ state, dispatch })
                   Costs <span className="font-mono" style={{ color: "var(--color-positive)", fontWeight: 700 }}>$15</span> compute. Merge two identical features to upgrade tier.
                 </div>
 
-                {/* Chain Selector Buttons */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "12px" }}>
-                  {(["random", "intelligence", "infrastructure", "security"] as const).map((chain) => {
-                    const isPicked = spawnChain === chain
+                {/* Chain Selector Buttons (Assets) */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "12px" }}>
+                  {SPAWN_OPTIONS.map((opt) => {
+                    const isPicked = spawnChain === opt.chain
                     return (
                       <button
-                        key={chain}
-                        onClick={() => setSpawnChain(chain)}
+                        key={opt.chain}
+                        type="button"
+                        onClick={() => {
+                          sound.playSnap()
+                          setSpawnChain(opt.chain)
+                        }}
+                        title={opt.label}
+                        aria-label={opt.label}
                         style={{
-                          padding: "6px 8px",
-                          borderRadius: "6px",
-                          fontSize: "10.5px",
-                          fontWeight: 700,
-                          textTransform: "capitalize",
+                          padding: "6px 4px",
+                          height: "46px",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                           border: isPicked
-                            ? "1.5px solid var(--accent-expansion)"
+                            ? `1.5px solid ${opt.color}`
                             : "1px solid var(--border-hairline)",
                           backgroundColor: isPicked
-                            ? "rgba(217, 119, 6, 0.15)"
+                            ? opt.bg
                             : "var(--surface-work)",
-                          color: isPicked ? "var(--accent-expansion)" : "var(--text-muted)",
+                          boxShadow: isPicked ? `0 0 10px ${opt.glow}` : "none",
                           cursor: "pointer",
+                          transition: "all 140ms cubic-bezier(0.16, 1, 0.3, 1)",
+                          position: "relative",
                         }}
                       >
-                        {chain}
+                        <img
+                          src={opt.assetPath}
+                          alt={opt.label}
+                          style={{
+                            width: "32px",
+                            height: "32px",
+                            objectFit: "contain",
+                            filter: isPicked
+                              ? `drop-shadow(0 2px 5px ${opt.glow})`
+                              : "drop-shadow(0 1px 2px rgba(0,0,0,0.2))",
+                            transform: isPicked ? "scale(1.1)" : "scale(1)",
+                            transition: "transform 140ms ease",
+                          }}
+                        />
                       </button>
                     )
                   })}

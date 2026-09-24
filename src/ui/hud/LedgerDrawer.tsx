@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import type { LedgerEntry } from '../../engine/types'
 
 
@@ -12,12 +12,6 @@ export const LedgerDrawer: React.FC<LedgerDrawerProps> = ({ ledger, isOpen: cont
   const [internalIsOpen, setInternalIsOpen] = useState(false)
   const isControlled = controlledIsOpen !== undefined
   const isOpen = isControlled ? controlledIsOpen : internalIsOpen
-
-  useEffect(() => {
-    if (controlledIsOpen !== undefined) {
-      setInternalIsOpen(controlledIsOpen)
-    }
-  }, [controlledIsOpen])
 
   const handleToggle = () => {
     if (onToggle) {

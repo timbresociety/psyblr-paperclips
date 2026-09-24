@@ -9,11 +9,15 @@ interface UnicornVictoryProps {
 }
 
 export const UnicornVictoryModal: React.FC<UnicornVictoryProps> = ({ state, dispatch }) => {
-  if (state.runStatus !== 'unicorn_victory') return null
+  const isVisible = state.runStatus === 'unicorn_victory'
 
   useEffect(() => {
-    sound.playMilestone()
-  }, [])
+    if (isVisible) {
+      sound.playMilestone()
+    }
+  }, [isVisible])
+
+  if (!isVisible) return null
 
   const handleContinue = () => {
     sound.playClick()

@@ -59,6 +59,8 @@ describe('Autonomous Vibe Coding Pods Engine', () => {
 
     expect(state.activationsQueue.length).toBe(initialActivations + 1)
     expect(state.currentActivation).not.toBeNull()
+    expect(state.pipelineStage).toBe('monetisation')
+    expect(state.activeFunction).toBe('monetisation')
   })
 
   it('auto_fill_primitive targets the first open socket matching the primitive', () => {

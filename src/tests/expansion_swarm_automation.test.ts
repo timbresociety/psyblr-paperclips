@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { gameReducer } from '../engine/reducer'
 import { createInitialState } from '../engine/state'
-import type { ExpansionOrder, MergeItem } from '../engine/types'
+import type { ExpansionOrder } from '../engine/types'
 
 describe('Expansion Swarm Automation Engine', () => {
   it('autonomously fulfills matching expansion orders from merge grid during tick', () => {
@@ -56,8 +56,6 @@ describe('Expansion Swarm Automation Engine', () => {
     state.fleet.expansion.onlineUnits = 16
     state.fleet.operations.onlineUnits = 16
     state.cashCents = 500_000
-
-    const prevCash = state.cashCents
 
     // Run clock tick
     state = gameReducer(state, { type: 'clock.tick', dtTicks: 50 })

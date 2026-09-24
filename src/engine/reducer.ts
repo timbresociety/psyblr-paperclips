@@ -1,9 +1,8 @@
-import type { GameState, CustomerAccount, CustomerSegment, InvoiceSchedule, MandatoryBill, ProductActivation, DemandSignal, QualifiedOpportunity, FunctionId, DebtFacility, MergeItem, ExpansionOrder, CodingPod, AIPrimitiveType, PodSocket, ArrBridge, RetentionIncident, ScratchCard, ScratchPod, DealDeskState } from './types'
+import type { GameState, CustomerAccount, CustomerSegment, InvoiceSchedule, MandatoryBill, ProductActivation, DemandSignal, QualifiedOpportunity, FunctionId, DebtFacility, MergeItem, ExpansionOrder, CodingPod, ArrBridge, RetentionIncident, ScratchCard, DealDeskState, DemandTriageOutcome } from './types'
 import type { GameAction } from './actions'
 import {
   TICKS_PER_MONTH,
   TICKS_PER_QUARTER,
-  DELINQUENCY_GRACE_TICKS,
   CHURN_THREAT_TTL_TICKS,
   INITIAL_CUSTOMER_HEALTH,
   EXPANSION_MATURITY_TICKS,
@@ -22,7 +21,6 @@ import {
   FUNCTION_SPECS,
   BASE_OVERHEAD_MONTHLY_CENTS,
   TIER_BASE_OVERHEAD_MONTHLY_CENTS,
-  UPGRADE_RANK_COSTS,
   CRAFT_MULTIPLIERS,
   MONETISATION_CRAFT_MULTIPLIERS,
   SCALE_UNITS,
@@ -39,7 +37,6 @@ import {
   CONSUMABLE_PRICING,
   MAX_CONSUMABLE_SLOTS,
   QUARTER_REROLL_BASE_COST_CENTS,
-  SCALE_POD_LIMITS,
   CODING_POD_MODULES,
   ENGINE_ARCHETYPES,
   FOUNDER_ACHIEVEMENTS_AND_RELICS,
@@ -47,7 +44,6 @@ import {
   RETENTION_BAY_LIMITS,
   MONETISATION_DESK_LIMITS,
   EXPANSION_GRID_SIZES,
-  EXPANSION_GRID_DIMS,
   getMaxUnlockedSpeed,
   evaluateNewAchievements,
 } from './constants'
@@ -62,14 +58,16 @@ import {
   calculateCashForecast,
   calculateCustomerHealthDelta,
   calculateMonthlyChurn,
-  accrueService,
   clamp,
   getActiveEvolutionTier,
   syncProductPods,
   createSocketsForSegment,
+  calculateLuckVariance,
+  calculateDemandQualification,
+  getUpgradeRankCost,
 } from './formulas'
 import { DeterministicRNG } from './rng'
-import { createInitialDemandSignals, createDynamicDemandSignals, createInitialState, createDefaultScratchCard, createDiagnosticTicket } from './state'
+import { createDynamicDemandSignals, createInitialState, createDefaultScratchCard, createDiagnosticTicket } from './state'
 
 export function getActiveBuffs(state: GameState) {
   const archetype = ENGINE_ARCHETYPES[state.activeArchetype || 'product_led_machine']
@@ -425,7 +423,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       const targetConversion = calculateCustomerConversion(targetSegment, { speed: newSpeed, collaboration: newCollab, control: newControl }, 0)
       const defaultWtp = targetConversion.effectiveWtpMonthlyCents
-      const isFirstCustomer = state.accounts.length === 0
 
       return {
         ...state,
@@ -481,10 +478,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         idx === socketIndex ? { ...s, filled: true } : s
       )
 
-      // Luck roll: Critical 1-Shot Compile!
+      // Luck variance roll
       const rng = new DeterministicRNG(state.seed + state.elapsedTicks + socketIndex * 17)
-      const critChance = 0.04 + 0.08 * luckRank
-      const isCrit = rng.nextFloat() < critChance && updatedSockets.some(s => !s.filled)
+      const luck = calculateLuckVariance(luckRank, rng.nextFloat())
+      const isCrit = luckRank > 0 && luck.isPeakPositive && updatedSockets.some(s => !s.filled)
 
       const finalSockets = isCrit
         ? updatedSockets.map(s => ({ ...s, filled: true }))
@@ -497,12 +494,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         sockets: finalSockets,
         isVerified: allFilled,
         isReadyToShip: allFilled,
-        isAlphaFeature: pod.isAlphaFeature || (luckRank > 0 && rng.nextFloat() < (0.08 + 0.06 * luckRank)),
+        isAlphaFeature: pod.isAlphaFeature || (luckRank > 0 && (luck.isPeakPositive || (luck.delta > 0 && rng.nextFloat() < 0.15))),
       }
 
-      // Capability boost scaled by craftRank
+      // Capability boost scaled by craftRank, luck variance, and manual action multiplier
+      const activeBuffs = getActiveBuffs(state)
       const craftMult = CRAFT_MULTIPLIERS[craftRank] || 1
-      const capBoost = 0.012 * Math.min(craftMult, 3)
+      const manualMultiplier = activeBuffs.manualActionMultiplier || 1
+      const capBoost = 0.012 * Math.min(craftMult, 3) * luck.multiplier * manualMultiplier
       const newCaps = {
         speed: clamp(state.systemCapabilities.speed + (primitive === 'prompt' || primitive === 'deploy' ? capBoost : 0), 0, 1),
         collaboration: clamp(state.systemCapabilities.collaboration + (primitive === 'diff' ? capBoost : 0), 0, 1),
@@ -567,10 +566,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (!pod || !pod.isReadyToShip) return state
 
       const craftRank = state.fleet.product.craftRank || 0
+      const luckRank = state.fleet.product.luckRank || 0
       const craftMult = CRAFT_MULTIPLIERS[craftRank] || 1
       const activeBuffs = getActiveBuffs(state)
       const yieldMult = 1 + (activeBuffs.productYieldBonus || 0)
-      const bonusCap = 0.04 * Math.min(craftMult, 3) * yieldMult
+      const luck = calculateLuckVariance(luckRank)
+      const hasAutoCompiler = state.activeRelics.some(r => r.id === 'relic-auto-compiler')
+      const hasFeatureFlags = state.activeRelics.some(r => r.id === 'relic-feature-flags')
+      const compilerYield = hasAutoCompiler ? 1.20 : 1.0
+      const bonusCap = 0.04 * Math.min(craftMult, 3) * yieldMult * luck.multiplier * compilerYield
 
       const newCaps = {
         speed: clamp(state.systemCapabilities.speed + (pod.leadSegment === 'creator' ? bonusCap * 1.5 : bonusCap), 0, 1),
@@ -580,7 +584,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       const baseWtp = pod.isAlphaFeature ? pod.leadWtpCents * 2 : pod.leadWtpCents
       const defectReduction = activeBuffs.defectReduction || 0
-      const defectExposure = clamp((0.02 - 0.004 * craftRank) * (1 - defectReduction), 0.001, 0.05)
+      const defectExposure = clamp((0.02 - 0.004 * craftRank) * (1 - defectReduction) * (hasAutoCompiler ? 0.50 : 1.0) * (hasFeatureFlags ? 0.60 : 1.0) * Math.max(0.8, 1 - luck.delta), 0.001, 0.05)
 
       const activation: ProductActivation = {
         id: `act-${state.elapsedTicks}-${pod.id}`,
@@ -618,7 +622,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         moduleName: mod.moduleName,
         categoryTag: mod.categoryTag,
         codeSnippet: mod.codeSnippet,
-        linesAdded: Math.round(mod.baseLinesAdded * (1 + 0.25 * craftRank)),
+        linesAdded: Math.round(mod.baseLinesAdded * (1 + 0.25 * craftRank) * luck.multiplier),
         linesRemoved: mod.baseLinesRemoved,
         sockets: createSocketsForSegment(nextSegment),
         isVerified: false,
@@ -626,6 +630,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
 
       const updatedPods = pods.map(p => p.id === action.podId ? refilledPod : p)
+      const hasActiveOppsRemaining = remainingOpps.length > 0 || updatedPods.some(p => Boolean(p.opportunityId))
+      const shouldSwitchToMonetisation = !hasActiveOppsRemaining
 
       return {
         ...state,
@@ -636,6 +642,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         currentActivation: state.currentActivation ?? activation,
         postedPriceMonthlyCents: state.currentActivation ? state.postedPriceMonthlyCents : defaultWtp,
         pricingCursor: 0.5,
+        pipelineStage: shouldSwitchToMonetisation ? 'monetisation' : state.pipelineStage,
+        activeFunction: shouldSwitchToMonetisation ? 'monetisation' : state.activeFunction,
         lastProductShipTick: state.elapsedTicks,
         alerts: [
           ...state.alerts,
@@ -701,17 +709,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const account = state.accounts.find(a => a.id === action.accountId)
       if (!account || (!account.isThreatened && account.health >= 80)) return state
 
+      const activeBuffs = getActiveBuffs(state)
+      const manualMultiplier = activeBuffs.manualActionMultiplier || 1
       let costCents = 2_000 // $20
-      let healthBoost = 35
+      let healthBoost = Math.round(35 * manualMultiplier)
       let label = 'Emergency Hotfix'
 
       if (action.interventionType === 'founder_call') {
         costCents = 1_000 // $10 founder travel / coffee
-        healthBoost = 45
+        healthBoost = Math.round(45 * manualMultiplier)
         label = 'Founder 1-on-1 Call'
       } else if (action.interventionType === 'concession') {
         costCents = 5_000 // $50 concession credit
-        healthBoost = 60
+        healthBoost = Math.round(60 * manualMultiplier)
         label = 'SLA Concession & Billing Credit'
       }
 
@@ -875,6 +885,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
              (action.accountId && i.accountId === action.accountId)
       )
 
+      const isThreat = Boolean(
+        targetAccount?.isThreatened ||
+        (targetAccount && targetAccount.health < 65) ||
+        (targetIndex >= 0 && incidents[targetIndex]?.consequence === 'Contract Cancellation')
+      )
+
       let target: RetentionIncident
       if (targetIndex >= 0) {
         target = { ...incidents[targetIndex] }
@@ -883,27 +899,37 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           id: action.incidentId || (targetAccount ? `threat-${targetAccount.id}` : `threat-${state.elapsedTicks}`),
           accountId: targetAccount?.id ?? 'acc-0',
           accountName: targetAccount?.name ?? 'Customer Account',
-          title: targetAccount?.threatReason || (targetAccount && targetAccount.health < 50 ? 'Severe Latency Degradation' : 'Customer SLA Preventive Care'),
+          title: targetAccount?.threatReason || (targetAccount && targetAccount.health < 50 ? 'Severe Latency Degradation' : (isThreat ? 'Executive Churn Risk' : 'Customer SLA Preventive Care')),
           category: 'executive',
-          urgencyTicks: 120,
+          urgencyTicks: isThreat ? 120 : 0,
           maxUrgencyTicks: 120,
-          consequence: 'Contract Cancellation',
+          consequence: isThreat ? 'Contract Cancellation' : 'Customer Care',
           hp: 4,
           maxHp: 4,
           threatType: targetAccount && targetAccount.health < 50 ? 'bug' : 'piggy',
         }
-        incidents.push(target)
-        targetIndex = incidents.length - 1
+        if (isThreat) {
+          incidents.push(target)
+          targetIndex = incidents.length - 1
+        }
       }
 
+      // If target account is already at 100% SLA health with no active threat, no squash/care is needed
+      if (targetAccount && !targetAccount.isThreatened && targetAccount.health >= 100 && targetIndex < 0) {
+        return state
+      }
+
+      const activeBuffs = getActiveBuffs(state)
+      const manualMultiplier = activeBuffs.manualActionMultiplier || 1
       const retentionCraftRank = state.fleet?.retention?.craftRank ?? 0
       const retentionLuckRank = state.fleet?.retention?.luckRank ?? 0
+      const luck = calculateLuckVariance(retentionLuckRank)
       const currentHp = target.hp ?? 4
       const craftDamageMultiplier = 1 + (retentionCraftRank >= 2 ? 1 : 0)
-      const dmg = (action.damage ?? 1) * craftDamageMultiplier
-      const nextHp = currentHp - dmg
+      const dmg = Math.round((action.damage ?? 1) * craftDamageMultiplier * manualMultiplier)
+      const nextHp = isThreat ? currentHp - dmg : 0
       const newCombo = (state.retentionCombo ?? 0) + 1
-      const craftHealthBonus = Math.round(35 * (1 + 0.35 * retentionCraftRank))
+      const craftHealthBonus = Math.round(35 * (1 + 0.35 * retentionCraftRank) * luck.multiplier * manualMultiplier)
 
       if (nextHp <= 0) {
         // Fully squashed/shattered!
@@ -925,11 +951,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         const savedArr = targetAccount
           ? (targetAccount.baseMrrCents + targetAccount.addonMrrCents) * 12
           : 12_000
-        const comboBounty = Math.min(5000, newCombo * 250) // $2.50 to $50 combo reward
         const nextRetentionEvent = state.retentionEvent?.accountId === targetAccount?.id ? null : state.retentionEvent
 
         let viralSignals = state.demandSignals || []
-        const isViralAdvocate = retentionLuckRank > 0 && Math.random() < 0.12 * retentionLuckRank
+        const isViralAdvocate = retentionLuckRank > 0 && luck.isPeakPositive
         if (isViralAdvocate && targetAccount) {
           const viralSig: DemandSignal = {
             id: `sig-viral-${state.elapsedTicks}-${Math.floor(Math.random() * 1000)}`,
@@ -941,12 +966,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             acquisitionCostCents: 0,
             expiryTick: state.elapsedTicks + 400,
           }
-          viralSignals = [viralSig, ...viralSignals]
+          viralSignals = [...viralSignals, viralSig]
         }
 
         return {
           ...state,
-          cashCents: state.cashCents - toolCost + comboBounty,
+          cashCents: state.cashCents - toolCost,
           accounts: updatedAccounts,
           retentionIncidents: remainingIncidents,
           retentionCombo: newCombo,
@@ -999,6 +1024,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           accounts: updatedAccounts,
           retentionIncidents: [],
           retentionEvent: null,
+          activeThreatAccountId: null,
           retentionCombo: (state.retentionCombo ?? 0) + 3,
           alerts: [
             ...state.alerts.filter(al => !al.id.startsWith('threat-alert-')),
@@ -1181,7 +1207,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }
       }
 
-      const spawnCostCents = 1_500 // $15 compute
+      const hasZeroCopy = state.activeRelics.some(r => r.id === 'relic-sub-pod-buffer')
+      const spawnCostCents = hasZeroCopy ? 0 : 1_500 // $0 if Zero-Copy Micro-Pods active, else $15 compute
       if (state.cashCents < spawnCostCents) {
         return {
           ...state,
@@ -1198,11 +1225,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         }
       }
 
+      const hasQuantumAnnealing = state.activeRelics.some(r => r.id === 'relic-quantum-annealing')
       const chain = action.chain ?? (['intelligence', 'infrastructure', 'security'] as const)[Math.floor(Math.random() * 3)]
       const newItem: MergeItem = {
         id: `feat-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
         chain,
-        tier: 1,
+        tier: hasQuantumAnnealing ? 2 : 1,
       }
 
       const nextGrid = [...grid]
@@ -1299,13 +1327,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return state
       }
 
+      const activeBuffs = getActiveBuffs(state)
+      const manualMult = activeBuffs.manualActionMultiplier || 1
       const expansionCraftRank = state.fleet?.expansion?.craftRank ?? 0
       const expansionLuckRank = state.fleet?.expansion?.luckRank ?? 0
       const craftMult = CRAFT_MULTIPLIERS[expansionCraftRank] || 1
-      const isLuckyDouble = expansionLuckRank > 0 && Math.random() < 0.12 * expansionLuckRank
-      const rewardMultiplier = (1 + 0.20 * (craftMult - 1)) * (isLuckyDouble ? 2.0 : 1.0)
+      const luck = calculateLuckVariance(expansionLuckRank)
+      const isLuckyDouble = expansionLuckRank > 0 && luck.isPeakPositive
+      const rewardMultiplier = (1 + 0.20 * (craftMult - 1)) * luck.multiplier * (isLuckyDouble ? 2.0 : 1.0) * (1 + (activeBuffs.expansionBonus || 0)) * (1 + (manualMult - 1) * 0.25)
       const finalRewardArr = Math.round(order.rewardArrCents * rewardMultiplier)
-      const finalRewardCash = Math.round(order.rewardCashCents * (isLuckyDouble ? 2.0 : 1.0))
+      const finalRewardCash = Math.round(order.rewardCashCents * luck.multiplier * (isLuckyDouble ? 2.0 : 1.0) * manualMult)
 
       const updatedAccounts = state.accounts.map(a => {
         if (a.id === order.accountId) {
@@ -1342,11 +1373,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         nextExpansionOrders.push(newOrder)
       }
 
+      const hasNeuralDistillation = state.activeRelics.some(r => r.id === 'relic-neural-distillation')
+      const updatedCapabilities = hasNeuralDistillation ? {
+        speed: clamp(state.systemCapabilities.speed * 1.05, 0, 1),
+        collaboration: clamp(state.systemCapabilities.collaboration * 1.05, 0, 1),
+        control: clamp(state.systemCapabilities.control * 1.05, 0, 1),
+      } : state.systemCapabilities
+
       return {
         ...state,
         cashCents: state.cashCents + finalRewardCash,
         contractualArrCents: state.contractualArrCents + finalRewardArr,
         eligibleArrCents: state.eligibleArrCents + finalRewardArr,
+        systemCapabilities: updatedCapabilities,
         accounts: updatedAccounts,
         mergeGrid: nextGrid,
         expansionOrders: nextExpansionOrders,
@@ -1438,6 +1477,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             title: 'Incident Resolved',
             message: 'Root cause patched. Service reliability restored.',
             tick: state.elapsedTicks,
+            targetFunction: 'operations',
+            actionLabel: 'View Operations [6]',
           },
         ],
         ledger: [
@@ -1468,6 +1509,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             title: 'Coordination Backlog Drained',
             message: 'Refactored worker handoffs. System latency restored.',
             tick: state.elapsedTicks,
+            targetFunction: 'operations',
+            actionLabel: 'View Operations [6]',
           },
         ],
       }
@@ -1488,6 +1531,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             title: 'Context Rot Cleansed',
             message: 'Purged drifted prompt chains and re-seeded agent instructions.',
             tick: state.elapsedTicks,
+            targetFunction: 'operations',
+            actionLabel: 'View Operations [6]',
           },
         ],
       }
@@ -1628,6 +1673,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
               title: pod.symbol === 'skull' ? 'Circuit Breaker Tripped (Kernel Panic)!' : 'Thermal Fault Overload!',
               message: `Hit an overload trap: +${penaltyStrain} Strain${penaltyIncident ? ' & +1 Incident' : ''}! Banked recovery metrics were lost. Commit telemetry earlier next time!`,
               tick: state.elapsedTicks,
+              targetFunction: 'operations',
+              actionLabel: 'View Operations [6]',
             },
           ],
         }
@@ -1683,6 +1730,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             title: isGolden ? 'TPU Super Core Probed!' : 'Healthy Cluster Sector Probed!',
             message: `${pod.label}. Banked into telemetry patch. Click "Commit Recovery & Cash Out" to apply to infrastructure!`,
             tick: state.elapsedTicks,
+            targetFunction: 'operations',
+            actionLabel: 'View Operations [6]',
           },
         ],
       }
@@ -1697,10 +1746,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const incidentsCleared = card.pods.filter(p => p.isScratched && p.rewardType === 'incident' && !p.isNegative).length
 
       const opsCraftRank = state.fleet?.operations?.craftRank ?? 0
+      const opsLuckRank = state.fleet?.operations?.luckRank ?? 0
       const craftMultiplier = 1 + 0.25 * opsCraftRank
-      const finalCash = Math.round(cash * craftMultiplier)
-      const finalStrain = Math.round(strain * craftMultiplier)
-      const finalRot = Math.min(1, rot * craftMultiplier)
+      const luck = calculateLuckVariance(opsLuckRank)
+      const finalCash = Math.round(cash * craftMultiplier * luck.multiplier)
+      const finalStrain = Math.round(strain * craftMultiplier * luck.multiplier)
+      const finalRot = Math.min(1, rot * craftMultiplier * luck.multiplier)
 
       return {
         ...state,
@@ -1758,6 +1809,49 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
     }
 
+    case 'operations.reject_ticket': {
+      const luckRank = state.fleet?.operations?.luckRank ?? 0
+      const scaleRank = state.fleet?.operations?.scaleRank ?? 0
+      const maxRacks = OPERATIONS_RACK_LIMITS[scaleRank] || 1
+      let tickets = state.activeTickets ? [...state.activeTickets] : [createDiagnosticTicket(0, luckRank)]
+      while (tickets.length < maxRacks) {
+        tickets.push(createDiagnosticTicket(tickets.length, luckRank))
+      }
+      const ticketIndex = action.stationIndex ?? action.ticketIndex ?? 0
+      const ticket = tickets[ticketIndex]
+      if (!ticket) return state
+
+      const freshTicket = createDiagnosticTicket(ticketIndex, luckRank)
+      tickets[ticketIndex] = freshTicket
+
+      return {
+        ...state,
+        activeTickets: tickets,
+        activeScratchCard: ticketIndex === 0 ? freshTicket : (state.activeScratchCard ?? freshTicket),
+        alerts: [
+          ...state.alerts,
+          {
+            id: `ticket-reject-${state.elapsedTicks}-${ticketIndex}`,
+            tone: 'info',
+            title: `Rack 0${ticketIndex + 1} Ticket Rejected`,
+            message: 'Hazard telemetry safely discarded before activation. Fresh diagnostic ticket queued.',
+            tick: state.elapsedTicks,
+            targetFunction: 'operations',
+            actionLabel: 'View Operations [6]',
+          },
+        ],
+        ledger: [
+          ...state.ledger,
+          {
+            id: `led-reject-${state.elapsedTicks}-${ticketIndex}`,
+            tick: state.elapsedTicks,
+            category: 'ops',
+            message: `Founder rejected Rack 0${ticketIndex + 1} ticket before redemption. Zero penalty incurred.`,
+          },
+        ],
+      }
+    }
+
     case 'operations.scratch_ticket': {
       const luckRank = state.fleet?.operations?.luckRank ?? 0
       const scaleRank = state.fleet?.operations?.scaleRank ?? 0
@@ -1812,18 +1906,35 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             {
               id: `ticket-bust-${state.elapsedTicks}-${ticketIndex}`,
               tone: 'critical',
-              title: pod.symbol === 'skull' ? 'Circuit Breaker Tripped (Kernel Panic)!' : 'Thermal Fault Overload!',
-              message: `Rack 0${ticketIndex + 1} hit an overload fault: +${penaltyStrain} Strain${penaltyRot ? ` & +${Math.round(penaltyRot * 100)}% Rot` : ''}${penaltyIncident ? ' & +1 Incident' : ''}! Banked recovery metrics were lost. Claim telemetry earlier next time!`,
+              title: pod.symbol === 'skull'
+                ? 'Memory Leak Fault Tripped!'
+                : pod.symbol === 'panic'
+                ? 'Kernel Panic Overload Tripped!'
+                : 'Thermal Fault Overload!',
+              message: `Rack 0${ticketIndex + 1} tripped a fault: +${penaltyStrain} Strain${penaltyRot ? ` & +${Math.round(penaltyRot * 100)}% Rot` : ''}${penaltyIncident ? ' & +1 Incident' : ''}! Reject negative tickets before opening to avoid cluster faults.`,
               tick: state.elapsedTicks,
+              targetFunction: 'operations',
+              actionLabel: 'View Operations [6]',
+            },
+          ],
+          ledger: [
+            ...state.ledger,
+            {
+              id: `led-bust-${state.elapsedTicks}-${ticketIndex}`,
+              tick: state.elapsedTicks,
+              category: 'ops',
+              message: `Rack 0${ticketIndex + 1} overload fault: +${penaltyStrain} strain${penaltyIncident ? ', +1 incident' : ''}.`,
             },
           ],
         }
       }
 
       // Positive telemetry sector
-      const addedCash = pod.rewardType === 'cash' ? (pod.rewardValue as number) : (pod.symbol === 'golden_apple' ? 50_000 : 0)
-      const addedStrain = pod.rewardType === 'strain' ? (pod.rewardValue as number) : (pod.symbol === 'golden_apple' ? 15 : 0)
-      const addedRot = pod.rewardType === 'rot' ? (pod.rewardValue as number) : 0
+      const activeBuffs = getActiveBuffs(state)
+      const manualMult = activeBuffs.manualActionMultiplier || 1
+      const addedCash = Math.round((pod.rewardType === 'cash' ? (pod.rewardValue as number) : (pod.symbol === 'golden_apple' ? 50_000 : 0)) * manualMult)
+      const addedStrain = Math.round((pod.rewardType === 'strain' ? (pod.rewardValue as number) : (pod.symbol === 'golden_apple' ? 15 : 0)) * manualMult)
+      const addedRot = Number(((pod.rewardType === 'rot' ? (pod.rewardValue as number) : 0) * manualMult).toFixed(2))
       const addedLuck = pod.symbol === 'golden_apple' ? 10 : 5
       const isGolden = pod.symbol === 'golden_apple'
 
@@ -1863,9 +1974,22 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         },
         activeTickets: tickets,
         activeScratchCard: ticketIndex === 0 ? updatedTicket : (state.activeScratchCard ?? updatedTicket),
+        alerts: [
+          ...state.alerts,
+          {
+            id: `ticket-scratched-${state.elapsedTicks}-${ticketIndex}`,
+            tone: 'info',
+            title: isGolden ? 'TPU Supercore Probed!' : 'Diagnostic Sector Probed!',
+            message: `${pod.label}. Commit or claim to apply recovery telemetry to your cluster!`,
+            tick: state.elapsedTicks,
+            targetFunction: 'operations',
+            actionLabel: 'View Operations [6]',
+          },
+        ],
       }
     }
 
+    case 'operations.redeem_ticket':
     case 'operations.claim_ticket': {
       const luckRank = state.fleet?.operations?.luckRank ?? 0
       const scaleRank = state.fleet?.operations?.scaleRank ?? 0
@@ -1880,13 +2004,66 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       const freshTicket = createDiagnosticTicket(ticketIndex, luckRank)
 
-      // If ticket was busted or had no banked rewards, just issue fresh ticket to clear fault
-      if (ticket.isBusted || (!ticket.bankedCashCents && !ticket.bankedStrainRelief && !ticket.bankedRotRelief)) {
+      // If ticket was busted, just issue fresh ticket to clear fault
+      if (ticket.isBusted) {
         tickets[ticketIndex] = freshTicket
         return {
           ...state,
           activeTickets: tickets,
           activeScratchCard: ticketIndex === 0 ? freshTicket : (state.activeScratchCard ?? freshTicket),
+        }
+      }
+
+      // If ticket has not been scratched yet, redeem outcome directly
+      const outcome = ticket.pods[0]
+      if (outcome && !outcome.isScratched) {
+        outcome.isScratched = true
+        if (outcome.isNegative) {
+          // Fault tripped on direct redemption
+          const penaltyStrain = outcome.rewardType === 'penalty' ? (outcome.rewardValue as number) : (outcome.rewardType === 'strain' ? (outcome.rewardValue as number) : 6)
+          const penaltyRot = outcome.rewardType === 'rot' ? (outcome.rewardValue as number) : 0
+          const penaltyIncident = outcome.rewardType === 'incident' ? (outcome.rewardValue as number) : 0
+
+          tickets[ticketIndex] = {
+            ...ticket,
+            pods: [outcome],
+            isBusted: true,
+          }
+          return {
+            ...state,
+            operations: {
+              ...state.operations,
+              strainBacklog: state.operations.strainBacklog + penaltyStrain,
+              contextRot: Math.min(1.0, state.operations.contextRot + penaltyRot),
+              incidentsBacklog: state.operations.incidentsBacklog + penaltyIncident,
+            },
+            activeTickets: tickets,
+            activeScratchCard: ticketIndex === 0 ? tickets[ticketIndex] : (state.activeScratchCard ?? tickets[ticketIndex]),
+            alerts: [
+              ...state.alerts,
+              {
+                id: `ticket-bust-${state.elapsedTicks}-${ticketIndex}`,
+                tone: 'critical',
+                title: outcome.symbol === 'skull'
+                  ? 'Memory Leak Fault Tripped!'
+                  : outcome.symbol === 'panic'
+                  ? 'Kernel Panic Overload Tripped!'
+                  : 'Thermal Fault Overload!',
+                message: `Rack 0${ticketIndex + 1} tripped a fault: +${penaltyStrain} Strain${penaltyRot ? ` & +${Math.round(penaltyRot * 100)}% Rot` : ''}${penaltyIncident ? ' & +1 Incident' : ''}!`,
+                tick: state.elapsedTicks,
+                targetFunction: 'operations',
+                actionLabel: 'View Operations [6]',
+              },
+            ],
+          }
+        } else {
+          // Positive outcome directly redeemed
+          const addedCash = outcome.rewardType === 'cash' ? (outcome.rewardValue as number) : (outcome.symbol === 'golden_apple' ? 50_000 : 0)
+          const addedStrain = outcome.rewardType === 'strain' ? (outcome.rewardValue as number) : (outcome.symbol === 'golden_apple' ? 15 : 0)
+          const addedRot = outcome.rewardType === 'rot' ? (outcome.rewardValue as number) : 0
+          ticket.bankedCashCents = addedCash
+          ticket.bankedStrainRelief = addedStrain
+          ticket.bankedRotRelief = addedRot
         }
       }
 
@@ -1897,9 +2074,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       const opsCraftRank = state.fleet?.operations?.craftRank ?? 0
       const craftMultiplier = 1 + 0.25 * opsCraftRank
-      const finalCash = Math.round(cash * craftMultiplier)
-      const finalStrain = Math.round(strain * craftMultiplier)
-      const finalRot = Math.min(1, rot * craftMultiplier)
+      const luck = calculateLuckVariance(luckRank)
+      const finalCash = Math.round(cash * craftMultiplier * luck.multiplier)
+      const finalStrain = Math.round(strain * craftMultiplier * luck.multiplier)
+      const finalRot = Math.min(1, rot * craftMultiplier * luck.multiplier)
 
       tickets[ticketIndex] = freshTicket
 
@@ -1922,6 +2100,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             title: `Rack 0${ticketIndex + 1} Telemetry Banked!`,
             message: `Banked +$${(finalCash / 100).toLocaleString()} compute rebate, drained -${finalStrain} strain, and purged rot! Next ticket drawn.`,
             tick: state.elapsedTicks,
+            targetFunction: 'operations',
+            actionLabel: 'View Operations [6]',
           },
         ],
         ledger: [
@@ -1947,6 +2127,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       const opsCraftRank = state.fleet?.operations?.craftRank ?? 0
       const craftMultiplier = 1 + 0.25 * opsCraftRank
+      const luck = calculateLuckVariance(luckRank)
 
       let totalCash = 0
       let totalStrainRelief = 0
@@ -1969,7 +2150,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         for (const pod of t.pods) {
           if (pod.isNegative) {
             ticketBusted = true
-            const penaltyStrain = pod.rewardType === 'penalty' ? (pod.rewardValue as number) : 6
+            const penaltyStrain = pod.rewardType === 'penalty' ? (pod.rewardValue as number) : (pod.rewardType === 'strain' ? (pod.rewardValue as number) : 6)
             const penaltyRot = pod.rewardType === 'rot' ? (pod.rewardValue as number) : 0
             const penaltyIncident = pod.rewardType === 'incident' ? (pod.rewardValue as number) : 0
             addedPenaltyStrain += penaltyStrain
@@ -1995,9 +2176,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           }
         }
 
-        totalCash += Math.round(bankedCash * craftMultiplier)
-        totalStrainRelief += Math.round(bankedStrain * craftMultiplier)
-        totalRotRelief += Math.min(1, bankedRot * craftMultiplier)
+        totalCash += Math.round(bankedCash * craftMultiplier * luck.multiplier)
+        totalStrainRelief += Math.round(bankedStrain * craftMultiplier * luck.multiplier)
+        totalRotRelief += Math.min(1, bankedRot * craftMultiplier * luck.multiplier)
         totalIncidentsCleared += incidentsInTicket
 
         return createDiagnosticTicket(idx, luckRank)
@@ -2022,6 +2203,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             title: 'Batch Telemetry Scratched & Claimed!',
             message: `Processed ${tickets.length} diagnostic racks: +$${(totalCash / 100).toLocaleString()} cash, -${totalStrainRelief} strain${addedPenaltyStrain > 0 ? ` (${addedPenaltyStrain} penalty strain incurred)` : ''}.`,
             tick: state.elapsedTicks,
+            targetFunction: 'operations',
+            actionLabel: 'View Operations [6]',
           },
         ],
       }
@@ -2033,8 +2216,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       if (currentRank >= 5) return state
 
       const hasSyndicate = state.activeRelics.some(r => r.id === 'relic-syndicate')
-      const baseCost = UPGRADE_RANK_COSTS[currentRank]
-      const cost = hasSyndicate ? Math.round(baseCost * 0.65) : baseCost
+      const cost = getUpgradeRankCost(currentRank, hasSyndicate)
       if (state.cashCents < cost) {
         return {
           ...state,
@@ -2128,7 +2310,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'fleet.set_online_units': {
       const currentFleet = state.fleet[action.functionId]
-      const maxUnits = SCALE_UNITS[currentFleet.scaleRank]
+      const hasHoldingSwarm = state.activeRelics.some(r => r.id === 'relic-holding-swarm')
+      const maxUnits = SCALE_UNITS[currentFleet.scaleRank] * (hasHoldingSwarm ? 2 : 1)
       const targetUnits = clamp(action.units, 0, maxUnits)
 
       return {
@@ -2277,10 +2460,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'finance.accept_vc_mandate': {
       if (state.vc.accepted || state.eligibleArrCents < VC_MIN_ARR_CENTS) return state // $12k ARR min
 
-      const preMoney = state.eligibleArrCents * VC_PRE_MONEY_ARR_MULTIPLE
+      const hasPreIpo = state.activeRelics.some(r => r.id === 'relic-pre-ipo-distortion')
+      const hasVotingProxy = state.founderHistory?.equippedFounderRelicId === 'founder_voting_proxy'
+      const vcMultiple = (hasPreIpo ? 8 : VC_PRE_MONEY_ARR_MULTIPLE) * (hasVotingProxy ? 1.35 : 1.0)
+      const preMoney = Math.round(state.eligibleArrCents * vcMultiple)
       const raise = Math.round(preMoney * VC_MAX_RAISE_FRACTION)
       const postMoney = preMoney + raise
-      const newOwnership = state.vc.founderOwnershipRatio * (preMoney / postMoney)
+      const rawDilution = 1 - (preMoney / postMoney)
+      const shieldedDilution = rawDilution * (hasVotingProxy ? 0.30 : 1.0)
+      const newOwnership = state.vc.founderOwnershipRatio * (1 - shieldedDilution)
       const targetArr = Math.round(state.eligibleArrCents * (1 + VC_GROWTH_TARGET_RATIO)) // +50% growth required
 
       return {
@@ -2364,12 +2552,21 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const remainingAvailable = state.availableQuarterRelics.filter(r => r.id !== action.relicId)
       const remainingLocked = (state.lockedQuarterRelicIds || []).filter(id => id !== action.relicId)
 
+      let nextCaps = state.systemCapabilities
+      if (relic.id === 'relic-dark-fiber') {
+        nextCaps = {
+          ...nextCaps,
+          speed: Math.min(1.0, nextCaps.speed + 0.40),
+        }
+      }
+
       return {
         ...state,
         cashCents: state.cashCents - cost,
         activeRelics: [...state.activeRelics, relic],
         availableQuarterRelics: remainingAvailable,
         lockedQuarterRelicIds: remainingLocked,
+        systemCapabilities: nextCaps,
         alerts: [
           ...state.alerts,
           {
@@ -2583,6 +2780,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           nextState = {
             ...nextState,
             warRoomTicksRemaining: 300, // 30s
+            warRoomSpeedMultiplier: 4.0,
             alerts: [
               ...nextState.alerts,
               {
@@ -2790,6 +2988,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           nextState = {
             ...nextState,
             warRoomTicksRemaining: 250, // 25s
+            warRoomSpeedMultiplier: 5.0, // 5x all swarm actions
             alerts: [
               ...nextState.alerts,
               {
@@ -2806,6 +3005,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         case 'patent_shield': {
           nextState = {
             ...nextState,
+            patentShieldTicksRemaining: 450, // 45s
             retentionIncidents: [],
             activeThreatAccountId: null,
             alerts: [
@@ -2814,7 +3014,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
                 id: `alert-shield-${t}`,
                 tone: 'info',
                 title: 'Patent Shield Deployed',
-                message: 'All current incidents neutralized and legal liabilities deflected.',
+                message: 'All current incidents neutralized and legal liabilities deflected for 45s.',
                 tick: t,
               },
             ],
@@ -2842,13 +3042,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         case 'bullseye_lock': {
           nextState = {
             ...nextState,
+            bullseyeStrikesRemaining: (nextState.bullseyeStrikesRemaining || 0) + 5,
             alerts: [
               ...nextState.alerts,
               {
                 id: `alert-bullseye-${t}`,
                 tone: 'info',
                 title: 'Pricing Engine Calibrated',
-                message: 'Pricing intelligence locked. Maximum WTP conversion guaranteed.',
+                message: 'Next 5 Monetisation deal closures are guaranteed 100% Bullseye strikes (+50% ARR).',
                 tick: t,
               },
             ],
@@ -3012,13 +3213,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           nextState = {
             ...nextState,
             valuationCents: nextState.valuationCents + valBump,
+            quarterValuationBoostMultiple: (nextState.quarterValuationBoostMultiple || 0) + 5.0,
             alerts: [
               ...nextState.alerts,
               {
                 id: `alert-val-pump-${t}`,
                 tone: 'info',
                 title: 'Wall Street Research Upgrade',
-                message: 'Pre-money valuation upgraded by +$25,000,000!',
+                message: 'Pre-money valuation upgraded by +$25,000,000 and granted +5.0x Growth Multiple boost on next review!',
                 tick: t,
               },
             ],
@@ -3241,18 +3443,29 @@ function handleDemandTriage(state: GameState, signalId: string, decision: 'quali
     }
   }
 
-  // Qualify decision with Craft and Luck increments
+  // Qualify decision with Segment Profile Success Rate, Craft, and Luck Variance
   const demandCraftRank = state.fleet?.demand?.craftRank ?? 0
   const demandLuckRank = state.fleet?.demand?.luckRank ?? 0
-  const cacDiscount = Math.min(0.60, 0.12 * demandCraftRank)
-  const rawAcqCost = signal.acquisitionCostCents ?? 0
-  const baseCac = Math.round(rawAcqCost * (1 - cacDiscount))
+  const isFirstCustomer = (state.accounts.length === 0 && state.signalsTriagedCount === 0)
 
-  // Luck roll: Chance for Golden Whale Signal ($0 CAC & 2.5x WTP)
-  const isLuckyWhale = demandLuckRank > 0 && Math.random() < 0.10 * demandLuckRank
-  const effectiveCac = isLuckyWhale ? 0 : baseCac
-  const wtpMultiplier = (1 + 0.20 * demandCraftRank) * (isLuckyWhale ? 2.5 : 1.0)
-  const effectiveWtp = Math.round((signal.estimatedWtpCents ?? 10000) * wtpMultiplier)
+  const rng = new DeterministicRNG(state.seed + state.elapsedTicks * 31 + state.signalsTriagedCount * 17)
+  const roll = rng.nextFloat()
+  const luckRoll = rng.nextFloat()
+
+  const qual = calculateDemandQualification(
+    signal,
+    state.systemCapabilities,
+    demandCraftRank,
+    demandLuckRank,
+    isFirstCustomer,
+    roll,
+    luckRoll,
+    false
+  )
+
+  const activeBuffs = getActiveBuffs(state)
+  const cacDiscount = Math.min(0.5, activeBuffs.acquisitionCostDiscount || 0)
+  const effectiveCac = Math.round(qual.effectiveCac * (1 - cacDiscount))
 
   if (state.cashCents < effectiveCac) {
     return {
@@ -3272,13 +3485,66 @@ function handleDemandTriage(state: GameState, signalId: string, decision: 'quali
 
   const remainingCash = state.cashCents - effectiveCac
   const signalSegment = signal.segment || 'creator'
+
+  if (!qual.success) {
+    // Qualification Failed! Discard signal, deduct CAC, alert user.
+    const failOutcome: DemandTriageOutcome = {
+      id: `outcome-${state.elapsedTicks}-${signal.id}`,
+      signalId: signal.id,
+      title: signal.title || 'Prospect',
+      segment: signalSegment,
+      success: false,
+      probability: qual.probability,
+      failureReason: qual.failureReason,
+      effectiveCac: effectiveCac,
+      effectiveWtp: qual.effectiveWtp,
+      isHyper: false,
+      isLuckyWhale: qual.isLuckyWhale,
+      luckVariancePct: Math.round(qual.luckVariance.delta * 100),
+      tick: state.elapsedTicks,
+    }
+
+    return {
+      ...state,
+      lastDemandTriageTick: state.elapsedTicks,
+      lastTriageOutcome: failOutcome,
+      cashCents: remainingCash,
+      demandSignals: remaining,
+      activeSignalId: remaining.length > 0 ? remaining[0].id : null,
+      signalsTriagedCount: state.signalsTriagedCount + 1,
+      alerts: [
+        ...state.alerts,
+        {
+          id: `triage-fail-${state.elapsedTicks}`,
+          tone: 'warning',
+          title: `${signalSegment.toUpperCase()} Lead Disqualified`,
+          message: qual.failureReason || `Lead failed qualification (${Math.round(qual.probability * 100)}% chance). Lost $${(effectiveCac / 100).toFixed(0)} CAC.`,
+          tick: state.elapsedTicks,
+        },
+      ],
+      ledger: [
+        ...state.ledger,
+        {
+          id: `led-disqual-${state.elapsedTicks}`,
+          tick: state.elapsedTicks,
+          category: 'demand',
+          message: `Disqualified ${signalSegment.toUpperCase()} lead (${signal.title || 'Prospect'}). Lost $${(effectiveCac / 100).toFixed(0)} CAC.`,
+          deltaCashCents: -effectiveCac,
+        },
+      ],
+    }
+  }
+
+  // Qualification Succeeded!
+  const manualMult = activeBuffs.manualActionMultiplier || 1
+  const boostedWtp = Math.round(qual.effectiveWtp * (1 + (manualMult - 1) * 0.25))
   const newOpp: QualifiedOpportunity = {
     id: `opp-${state.elapsedTicks}-${signal.id}`,
     signalId: signal.id,
     segment: signalSegment,
-    title: isLuckyWhale ? `[WHALE INBOUND] ${signal.title || 'Prospect'}` : (signal.title || 'Prospect'),
+    title: qual.isLuckyWhale ? `[WHALE INBOUND] ${signal.title || 'Prospect'}` : (signal.title || 'Prospect'),
     quote: signal.quote || signal.signalRationale || 'High potential lead',
-    estimatedWtpCents: effectiveWtp,
+    estimatedWtpCents: boostedWtp,
     qualifiedTick: state.elapsedTicks,
   }
 
@@ -3287,9 +3553,28 @@ function handleDemandTriage(state: GameState, signalId: string, decision: 'quali
   const craftRank = state.fleet.product.craftRank || 0
   const pods = syncProductPods(state.productPods, allOpps, scaleRank, craftRank)
 
+  const luckVariancePct = Math.round(qual.luckVariance.delta * 100)
+  const luckText = luckVariancePct !== 0 ? ` (${luckVariancePct > 0 ? `+${luckVariancePct}%` : `${luckVariancePct}%`} Luck Variance)` : ''
+
+  const successOutcome: DemandTriageOutcome = {
+    id: `outcome-${state.elapsedTicks}-${signal.id}`,
+    signalId: signal.id,
+    title: signal.title || 'Prospect',
+    segment: signalSegment,
+    success: true,
+    probability: qual.probability,
+    effectiveCac: qual.effectiveCac,
+    effectiveWtp: qual.effectiveWtp,
+    isHyper: false,
+    isLuckyWhale: qual.isLuckyWhale,
+    luckVariancePct,
+    tick: state.elapsedTicks,
+  }
+
   return {
     ...state,
     lastDemandTriageTick: state.elapsedTicks,
+    lastTriageOutcome: successOutcome,
     cashCents: remainingCash,
     qualifiedOpportunities: allOpps,
     productPods: pods,
@@ -3303,10 +3588,10 @@ function handleDemandTriage(state: GameState, signalId: string, decision: 'quali
       {
         id: `triage-qual-${state.elapsedTicks}`,
         tone: 'info',
-        title: isLuckyWhale ? '🐋 Lucky Whale Signal Qualified ($0 CAC)!' : 'Opportunity Qualified',
-        message: isLuckyWhale
-          ? `Lucky catalyst! Captured $${Math.round(effectiveWtp / 100)}/mo Whale opportunity at $0 CAC!`
-          : `Spent $${(effectiveCac / 100).toFixed(0)} CAC${demandCraftRank > 0 ? ` (${Math.round(cacDiscount * 100)}% Craft Discount)` : ''}. Opportunity queued for Product assembly.`,
+        title: qual.isLuckyWhale ? '🐋 Lucky Whale Signal Qualified ($0 CAC)!' : 'Opportunity Qualified',
+        message: qual.isLuckyWhale
+          ? `Lucky catalyst! Captured $${Math.round(qual.effectiveWtp / 100)}/mo Whale opportunity at $0 CAC!`
+          : `Spent $${(qual.effectiveCac / 100).toFixed(0)} CAC (${Math.round(qual.probability * 100)}% Success Rate${luckText}). Opportunity queued for Product assembly.`,
         tick: state.elapsedTicks,
       },
     ],
@@ -3317,7 +3602,7 @@ function handleDemandTriage(state: GameState, signalId: string, decision: 'quali
         tick: state.elapsedTicks,
         category: 'demand',
         message: `Qualified ${signalSegment.toUpperCase()} signal (${signal.title || 'Prospect'}).`,
-        deltaCashCents: -effectiveCac,
+        deltaCashCents: -qual.effectiveCac,
       },
     ],
   }
@@ -3329,13 +3614,24 @@ function handleDemandHyperTriage(state: GameState, signalId: string): GameState 
 
   const demandCraftRank = state.fleet?.demand?.craftRank ?? 0
   const demandLuckRank = state.fleet?.demand?.luckRank ?? 0
-  const cacDiscount = Math.min(0.60, 0.12 * demandCraftRank)
-  const baseHyperCac = Math.round(signal.acquisitionCostCents * 2.5 * (1 - cacDiscount))
-  const isLuckyWhale = demandLuckRank > 0 && Math.random() < 0.12 * demandLuckRank
-  const effectiveHyperCac = isLuckyWhale ? Math.round(baseHyperCac * 0.5) : baseHyperCac
-  const boostedWtp = Math.round(signal.estimatedWtpCents * 2.0 * (1 + 0.25 * demandCraftRank) * (isLuckyWhale ? 1.5 : 1.0))
+  const isFirstCustomer = (state.accounts.length === 0 && state.signalsTriagedCount === 0)
 
-  if (state.cashCents < effectiveHyperCac) {
+  const rng = new DeterministicRNG(state.seed + state.elapsedTicks * 7 + state.signalsTriagedCount)
+  const roll = rng.nextFloat()
+  const luckRoll = rng.nextFloat()
+
+  const qual = calculateDemandQualification(
+    signal,
+    state.systemCapabilities,
+    demandCraftRank,
+    demandLuckRank,
+    isFirstCustomer,
+    roll,
+    luckRoll,
+    true // isHyper
+  )
+
+  if (state.cashCents < qual.effectiveCac) {
     return {
       ...state,
       alerts: [
@@ -3344,7 +3640,7 @@ function handleDemandHyperTriage(state: GameState, signalId: string): GameState 
           id: `hyper-cac-fail-${state.elapsedTicks}`,
           tone: 'warning',
           title: 'Insufficient Cash for Hyper 2X',
-          message: `Hyper 2X requires $${Math.round(effectiveHyperCac / 100)} liquid cash.`,
+          message: `Hyper 2X requires $${Math.round(qual.effectiveCac / 100)} liquid cash.`,
           tick: state.elapsedTicks,
         },
       ],
@@ -3352,13 +3648,63 @@ function handleDemandHyperTriage(state: GameState, signalId: string): GameState 
   }
 
   const remaining = state.demandSignals.filter(s => s.id !== signalId)
+  const signalSegment = signal.segment || 'creator'
+
+  if (!qual.success) {
+    const failOutcome: DemandTriageOutcome = {
+      id: `outcome-${state.elapsedTicks}-${signal.id}`,
+      signalId: signal.id,
+      title: signal.title || 'Prospect',
+      segment: signalSegment,
+      success: false,
+      probability: qual.probability,
+      failureReason: qual.failureReason,
+      effectiveCac: qual.effectiveCac,
+      effectiveWtp: qual.effectiveWtp,
+      isHyper: true,
+      isLuckyWhale: qual.isLuckyWhale,
+      luckVariancePct: Math.round(qual.luckVariance.delta * 100),
+      tick: state.elapsedTicks,
+    }
+
+    return {
+      ...state,
+      lastDemandTriageTick: state.elapsedTicks,
+      lastTriageOutcome: failOutcome,
+      cashCents: state.cashCents - qual.effectiveCac,
+      demandSignals: remaining,
+      activeSignalId: remaining.length > 0 ? remaining[0].id : null,
+      signalsTriagedCount: state.signalsTriagedCount + 1,
+      alerts: [
+        ...state.alerts,
+        {
+          id: `hyper-triage-fail-${state.elapsedTicks}`,
+          tone: 'warning',
+          title: `${signalSegment.toUpperCase()} Hyper 2X Disqualified`,
+          message: qual.failureReason || `Hyper 2X lead failed qualification (${Math.round(qual.probability * 100)}% chance). Lost $${Math.round(qual.effectiveCac / 100)} CAC.`,
+          tick: state.elapsedTicks,
+        },
+      ],
+      ledger: [
+        ...state.ledger,
+        {
+          id: `led-hyper-fail-${state.elapsedTicks}`,
+          tick: state.elapsedTicks,
+          category: 'demand',
+          message: `Disqualified Hyper 2X ${signalSegment.toUpperCase()} lead (${signal.title}). Lost $${Math.round(qual.effectiveCac / 100)} CAC.`,
+          deltaCashCents: -qual.effectiveCac,
+        },
+      ],
+    }
+  }
+
   const newOpp: QualifiedOpportunity = {
     id: `opp-hyper-${state.elapsedTicks}-${signal.id}`,
     signalId: signal.id,
     segment: signal.segment,
-    title: isLuckyWhale ? `[HYPER WHALE 3X] ${signal.title}` : `[HYPER 2X] ${signal.title}`,
+    title: qual.isLuckyWhale ? `[HYPER WHALE 3X] ${signal.title}` : `[HYPER 2X] ${signal.title}`,
     quote: signal.quote || signal.signalRationale,
-    estimatedWtpCents: boostedWtp,
+    estimatedWtpCents: qual.effectiveWtp,
     qualifiedTick: state.elapsedTicks,
   }
 
@@ -3367,10 +3713,26 @@ function handleDemandHyperTriage(state: GameState, signalId: string): GameState 
   const craftRank = state.fleet.product.craftRank || 0
   const pods = syncProductPods(state.productPods, allOpps, scaleRank, craftRank)
 
+  const successOutcome: DemandTriageOutcome = {
+    id: `outcome-${state.elapsedTicks}-${signal.id}`,
+    signalId: signal.id,
+    title: signal.title || 'Prospect',
+    segment: signalSegment,
+    success: true,
+    probability: qual.probability,
+    effectiveCac: qual.effectiveCac,
+    effectiveWtp: qual.effectiveWtp,
+    isHyper: true,
+    isLuckyWhale: qual.isLuckyWhale,
+    luckVariancePct: Math.round(qual.luckVariance.delta * 100),
+    tick: state.elapsedTicks,
+  }
+
   return {
     ...state,
     lastDemandTriageTick: state.elapsedTicks,
-    cashCents: state.cashCents - effectiveHyperCac,
+    lastTriageOutcome: successOutcome,
+    cashCents: state.cashCents - qual.effectiveCac,
     qualifiedOpportunities: allOpps,
     productPods: pods,
     demandSignals: remaining,
@@ -3383,8 +3745,8 @@ function handleDemandHyperTriage(state: GameState, signalId: string): GameState 
       {
         id: `triage-hyper-${state.elapsedTicks}`,
         tone: 'info',
-        title: isLuckyWhale ? '🚀 HYPER WHALE 3X Activated!' : 'HYPER 2X Activated!',
-        message: `Invested $${Math.round(effectiveHyperCac / 100)} CAC. Supercharged lead ($${Math.round(boostedWtp / 100)}/mo WTP) routed to Product!`,
+        title: qual.isLuckyWhale ? '🚀 HYPER WHALE 3X Activated!' : 'HYPER 2X Activated!',
+        message: `Invested $${Math.round(qual.effectiveCac / 100)} CAC (${Math.round(qual.probability * 100)}% Success Rate). Supercharged lead ($${Math.round(qual.effectiveWtp / 100)}/mo WTP) routed to Product!`,
         tick: state.elapsedTicks,
       },
     ],
@@ -3394,8 +3756,8 @@ function handleDemandHyperTriage(state: GameState, signalId: string): GameState 
         id: `led-hyper-${state.elapsedTicks}`,
         tick: state.elapsedTicks,
         category: 'demand',
-        message: `Hyper 2X qualified ${signal.title} ($${Math.round(boostedWtp / 100)}/mo WTP).`,
-        deltaCashCents: -effectiveHyperCac,
+        message: `Hyper 2X qualified ${signal.title} ($${Math.round(qual.effectiveWtp / 100)}/mo WTP).`,
+        deltaCashCents: -qual.effectiveCac,
       },
     ],
   }
@@ -3510,8 +3872,14 @@ function handleMonetisationCommit(
   const roll = rng.nextFloat()
   const isFirstCustomer = state.accounts.length === 0
 
-  const isPerfect = action?.rating === 'perfect' || (state.pricingCursor >= 0.55 && state.pricingCursor <= 0.72)
+  const hasBullseyeLock = (state.bullseyeStrikesRemaining || 0) > 0
+  const isPerfect = hasBullseyeLock || action?.rating === 'perfect' || (state.pricingCursor >= 0.55 && state.pricingCursor <= 0.72)
   const isGood = action?.rating === 'good' || (state.pricingCursor >= 0.35 && state.pricingCursor < 0.55)
+
+  const hasSoc2 = state.activeRelics.some(r => r.id === 'relic-soc2-fasttrack')
+  const enterpriseConvProb = (hasSoc2 && activation.targetSegment === 'enterprise')
+    ? Math.min(1.0, conversionResult.conversionProbability * 3)
+    : conversionResult.conversionProbability
 
   const dealSucceeded = isPerfect
     ? true // Perfect Bullseye timing guarantees conversion!
@@ -3519,7 +3887,7 @@ function handleMonetisationCommit(
     ? (roll <= 0.95) // Good timing succeeds 95% of the time!
     : isFirstCustomer
     ? (postedPrice <= effectiveExpectedWtp * 1.6 || roll <= 0.85)
-    : (hasAlgoPricing ? (postedPrice <= effectiveExpectedWtp * 1.2 || roll <= 0.95) : (roll <= conversionResult.conversionProbability))
+    : (hasAlgoPricing ? (postedPrice <= effectiveExpectedWtp * 1.2 || roll <= 0.95) : (roll <= enterpriseConvProb))
 
   // Dequeue this activation and prepare the next one in queue
   const rawQueue = state.activationsQueue.filter(a => a.id !== activation.id)
@@ -3590,11 +3958,16 @@ function handleMonetisationCommit(
 
   // Apply Craft multiplier to contract packaging & multi-seat yield, plus bonus on perfect strike
   const craftMultiplier = MONETISATION_CRAFT_MULTIPLIERS[state.fleet.monetisation?.craftRank ?? 0] || 1.0
-  const bonusMultiplier = isPerfect ? 1.20 : 1.0
+  const enterpriseACVMultiplier = (hasSoc2 && activation.targetSegment === 'enterprise') ? 1.50 : 1.0
+  const bonusMultiplier = (hasBullseyeLock ? 1.50 : (isPerfect ? 1.20 : 1.0)) * enterpriseACVMultiplier
   const monetisationLuckRank = state.fleet.monetisation?.luckRank ?? 0
-  const isLuckyWhaleContract = monetisationLuckRank > 0 && Math.random() < 0.10 * monetisationLuckRank
-  const luckMultiplier = isLuckyWhaleContract ? 1.50 : 1.0
-  const scaledPrice = Math.round(targetBasePrice * craftMultiplier * bonusMultiplier * luckMultiplier)
+  const luck = calculateLuckVariance(monetisationLuckRank, rng.nextFloat())
+  const isLuckyWhaleContract = monetisationLuckRank > 0 && luck.isPeakPositive
+  const whaleMultiplier = isLuckyWhaleContract ? 1.35 : 1.0
+  const activeBuffs = getActiveBuffs(state)
+  const manualMult = (action?.normalizedCursor !== undefined || action?.rating) ? (activeBuffs.manualActionMultiplier || 1) : 1
+  const manualCommitBoost = 1 + (manualMult - 1) * 0.20
+  const scaledPrice = Math.round(targetBasePrice * craftMultiplier * bonusMultiplier * luck.multiplier * whaleMultiplier * manualCommitBoost)
   const upfrontAdvanceCents = isLuckyWhaleContract ? Math.round(scaledPrice * 6) : 0
 
   const newAccount: CustomerAccount = {
@@ -3623,7 +3996,13 @@ function handleMonetisationCommit(
   const newArr = scaledPrice * 12
 
   // Schedule first monthly invoice collection in arrears
-  const delayTicks = SEGMENT_PROFILES[activation.targetSegment].collectionDelayTicks
+  const hasStealthMoat = state.activeRelics.some(r => r.id === 'relic-stealth-moat')
+  const hasZkProofs = state.activeRelics.some(r => r.id === 'relic-zk-proofs')
+  let delayTicks = SEGMENT_PROFILES[activation.targetSegment].collectionDelayTicks
+  if (activation.targetSegment === 'enterprise') {
+    if (hasStealthMoat) delayTicks = 60 // 6s instead of 24s
+    if (hasZkProofs) delayTicks = Math.max(10, Math.round(delayTicks / 4)) // 4x faster
+  }
   const initialInvoice: InvoiceSchedule = {
     id: `inv-${state.elapsedTicks}-${newAccount.id}`,
     accountId: newAccount.id,
@@ -3670,6 +4049,7 @@ function handleMonetisationCommit(
     currentActivation: nextCurrentActivation,
     postedPriceMonthlyCents: nextPostedPrice,
     pricingCursor: 0.5,
+    bullseyeStrikesRemaining: hasBullseyeLock ? Math.max(0, (state.bullseyeStrikesRemaining || 0) - 1) : state.bullseyeStrikesRemaining,
     pipelineStage: nextCurrentActivation ? 'monetisation' : (state.qualifiedOpportunities.length > 0 ? 'product' : 'demand'),
     activeFunction: nextCurrentActivation ? 'monetisation' : (state.qualifiedOpportunities.length > 0 ? 'product' : 'demand'),
     lastSignedContract: {
@@ -3687,7 +4067,7 @@ function handleMonetisationCommit(
       {
         id: `deal-signed-${state.elapsedTicks}-${deskIndex}`,
         tone: 'info',
-        title: isPerfect ? '🎯 Bullseye Contract Signed (+20% ARR Bonus)!' : (deskIndex > 0 ? `Desk 0${deskIndex + 1} Contract Signed!` : 'Annual Contract Signed!'),
+        title: hasBullseyeLock ? '🎯 Guaranteed Bullseye Strike (+50% ARR Bonus)!' : (isPerfect ? '🎯 Bullseye Contract Signed (+20% ARR Bonus)!' : (deskIndex > 0 ? `Desk 0${deskIndex + 1} Contract Signed!` : 'Annual Contract Signed!')),
         message: `${customerName} signed at $${(scaledPrice / 100).toLocaleString()}/mo (+$${(newArr / 100).toLocaleString()}/yr ARR). Cash collects in ${delayTicks / 10}s.`,
         tick: state.elapsedTicks,
       },
@@ -3739,6 +4119,13 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
   let lockedQuarterConsumableIds = state.lockedQuarterConsumableIds ? [...state.lockedQuarterConsumableIds] : []
   let quarterReviewRerolls = state.quarterReviewRerolls || 0
   let warRoomTicksRemaining = Math.max(0, (state.warRoomTicksRemaining || 0) - dtTicks)
+  let warRoomSpeedMultiplier = warRoomTicksRemaining > 0 ? (state.warRoomSpeedMultiplier || 4.0) : 1.0
+  let patentShieldTicksRemaining = Math.max(0, (state.patentShieldTicksRemaining || 0) - dtTicks)
+  let bullseyeStrikesRemaining = state.bullseyeStrikesRemaining || 0
+  let quarterValuationBoostMultiple = state.quarterValuationBoostMultiple || 0
+  let contextRot = state.operations.contextRot
+  let strainBacklog = state.operations.strainBacklog
+  let incidents = state.operations.incidentsBacklog
   let retentionEvent = state.retentionEvent
   let expansionEvent = state.expansionEvent
   let operationsEvent = state.operationsEvent
@@ -3749,6 +4136,11 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
   let lastDemandReplenishTick = state.lastDemandReplenishTick ?? 0
   let activeThreatId = state.activeThreatAccountId
   let expansionOrders = state.expansionOrders ? [...state.expansionOrders] : []
+  let retentionSavedArrCents = state.retentionSavedArrCents || 0
+  let currentIncidents = (state.retentionIncidents ?? []).map(i => ({
+    ...i,
+    urgencyTicks: Math.max(0, i.urgencyTicks - dtTicks),
+  }))
 
   const opsScale = state.fleet.operations?.scaleRank ?? 0
   const opsLuck = state.fleet.operations?.luckRank ?? 0
@@ -3759,6 +4151,20 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
   }
   if (currentTickets.length > maxRacks) {
     currentTickets = currentTickets.slice(0, maxRacks)
+  }
+
+  // relic-ops-telemetry: reveals 1 negative hazard pod safely
+  if (state.activeRelics.some(r => r.id === 'relic-ops-telemetry')) {
+    currentTickets = currentTickets.map(ticket => {
+      const hazardPod = ticket.pods.find(p => p.isNegative && !p.isScratched)
+      if (hazardPod && !ticket.isBusted) {
+        return {
+          ...ticket,
+          pods: ticket.pods.map(p => p.id === hazardPod.id ? { ...p, isScratched: true, label: `[Telemetry Safe Deflect] ${p.label}` } : p)
+        }
+      }
+      return ticket
+    })
   }
 
   const monScale = state.fleet.monetisation?.scaleRank ?? 0
@@ -3920,21 +4326,57 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
     monthInQuarter += 1
     const nextDueTick = newElapsed
 
-    // Enqueue Base Overhead Bill (scaled by evolution tier) for upcoming month
+    // relic-debt-arbitrage: 12% annualized yield on unspent cash reserves every month (1% per month)
+    if (state.activeRelics.some(r => r.id === 'relic-debt-arbitrage') && newCash > 0) {
+      const monthlyYield = Math.round(newCash * 0.01)
+      if (monthlyYield > 0) {
+        newCash += monthlyYield
+        ledger.push({
+          id: `led-debt-arb-${newElapsed}-${monthInQuarter}`,
+          tick: newElapsed,
+          category: 'finance',
+          message: `Treasury Arbitrage Yield: +$${(monthlyYield / 100).toLocaleString()} (1% monthly yield).`,
+          deltaCashCents: monthlyYield,
+        })
+      }
+    }
+
+    // Founder Relic / Archetype Treasury Yield on unspent cash reserves every month
+    if ((activeBuffs.cashYieldBonus ?? 0) > 0 && newCash > 0) {
+      const monthlyYield = Math.round((newCash * activeBuffs.cashYieldBonus) / 12)
+      if (monthlyYield > 0) {
+        newCash += monthlyYield
+        ledger.push({
+          id: `led-treasury-yield-${newElapsed}-${monthInQuarter}`,
+          tick: newElapsed,
+          category: 'finance',
+          message: `Founder Treasury Yield: +$${(monthlyYield / 100).toLocaleString()} (${Math.round(activeBuffs.cashYieldBonus * 100)}% annualized yield).`,
+          deltaCashCents: monthlyYield,
+        })
+      }
+    }
+
+    const opexDiscountMult = 1 - Math.min(0.8, activeBuffs.opexDiscount || 0)
+
+    // Enqueue Base Overhead Bill (scaled by evolution tier & OPEX discount) for upcoming month
     const activeTier = getActiveEvolutionTier(state).tier
-    const tierOverhead = TIER_BASE_OVERHEAD_MONTHLY_CENTS[activeTier] ?? BASE_OVERHEAD_MONTHLY_CENTS
-    mandatoryBills.push({
-      id: `bill-overhead-${newElapsed}-${monthInQuarter}`,
-      category: 'base_overhead',
-      amountCents: tierOverhead,
-      dueTick: nextDueTick,
-      label: `Monthly Fixed Overhead (${activeTier.toUpperCase()} Tier)`,
-    })
+    const hasFreeOverhead = state.activeRelics.some(r => r.id === 'relic-immortal-balance')
+    const rawTierOverhead = hasFreeOverhead ? 0 : (TIER_BASE_OVERHEAD_MONTHLY_CENTS[activeTier] ?? BASE_OVERHEAD_MONTHLY_CENTS)
+    const tierOverhead = Math.round(rawTierOverhead * opexDiscountMult)
+    if (tierOverhead > 0) {
+      mandatoryBills.push({
+        id: `bill-overhead-${newElapsed}-${monthInQuarter}`,
+        category: 'base_overhead',
+        amountCents: tierOverhead,
+        dueTick: nextDueTick,
+        label: `Monthly Fixed Overhead (${activeTier.toUpperCase()} Tier)${opexDiscountMult < 1 ? ` (${Math.round((1 - opexDiscountMult) * 100)}% OPEX discount)` : ''}`,
+      })
+    }
 
     // Enqueue Cloud Infrastructure & Model Inference COGS in Growth/Ethereal tiers
     if (activeTier === 'growth' || activeTier === 'ethereal') {
       const cogsFraction = activeTier === 'ethereal' ? 0.15 : 0.10
-      const infraComputeCents = Math.round((state.eligibleArrCents * cogsFraction) / 12)
+      const infraComputeCents = Math.round(((state.eligibleArrCents * cogsFraction) / 12) * opexDiscountMult)
       if (infraComputeCents > 0) {
         mandatoryBills.push({
           id: `bill-cogs-${newElapsed}-${monthInQuarter}`,
@@ -3946,11 +4388,12 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
       }
     }
 
-    // Enqueue Agent Compute Upkeep Bills
+    // Enqueue Agent Compute Upkeep Bills (relic-gpu-cluster waives automate upkeep)
+    const hasGpuCluster = state.activeRelics.some(r => r.id === 'relic-gpu-cluster')
     let totalAgentUpkeep = 0
     for (const fn of ['demand', 'product', 'monetisation', 'retention', 'expansion', 'operations'] as const) {
       const f = state.fleet[fn]
-      if (f.automateRank > 0) {
+      if (f.automateRank > 0 && !hasGpuCluster) {
         totalAgentUpkeep += AUTOMATE_UPKEEP_CENTS[f.automateRank] * f.onlineUnits
       }
       if (f.onlineUnits > 1) {
@@ -3958,12 +4401,13 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
       }
     }
     if (totalAgentUpkeep > 0) {
+      const discountedAgentUpkeep = Math.round(totalAgentUpkeep * opexDiscountMult)
       mandatoryBills.push({
         id: `bill-compute-${newElapsed}-${monthInQuarter}`,
         category: 'agent_compute',
-        amountCents: totalAgentUpkeep,
+        amountCents: discountedAgentUpkeep,
         dueTick: nextDueTick,
-        label: 'Autonomous Agent Cluster Compute & Tokens',
+        label: `Autonomous Agent Cluster Compute & Tokens${opexDiscountMult < 1 ? ` (${Math.round((1 - opexDiscountMult) * 100)}% OPEX discount)` : ''}`,
       })
     }
 
@@ -4103,6 +4547,68 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
         })
       }
 
+      // Classified Defense Exclusivity relic: +$250,000 recurring grant
+      if (state.activeRelics.some(r => r.id === 'relic-defense-monopoly')) {
+        const defenseGrant = 25_000_000 // $250,000
+        newCash += defenseGrant
+        alerts.push({
+          id: `defense-grant-${newElapsed}`,
+          tone: 'info',
+          title: 'Classified Defense Exclusivity Grant',
+          message: '+$250,000 recurring government AI research grant wired to company treasury!',
+          tick: newElapsed,
+        })
+        ledger.push({
+          id: `led-def-grant-${newElapsed}`,
+          tick: newElapsed,
+          category: 'finance',
+          message: 'Classified Defense Exclusivity: +$250,000 research grant received.',
+          deltaCashCents: defenseGrant,
+        })
+      }
+
+      // Self-Healing Architecture relic: auto-heal 1 incident per quarter
+      if (state.activeRelics.some(r => r.id === 'relic-circuit-breaker')) {
+        incidents = Math.max(0, incidents - 1)
+        alerts.push({
+          id: `cb-heal-${newElapsed}`,
+          tone: 'info',
+          title: 'Circuit Breaker Auto-Heal',
+          message: 'Self-healing watchdog daemon automatically resolved 1 operational incident!',
+          tick: newElapsed,
+        })
+      }
+
+      // Viral Flywheel Monolith relic: Every 10 active customers compound ARR by +3%
+      if (state.activeRelics.some(r => r.id === 'relic-viral-monolith')) {
+        const activeCount = accounts.filter(a => !a.delinquent).length
+        const viralBonus = Math.floor(activeCount / 10) * 0.03
+        if (viralBonus > 0) {
+          let compoundArr = 0
+          accounts = accounts.map(a => {
+            if (!a.delinquent) {
+              const extraMrr = Math.round(a.baseMrrCents * viralBonus)
+              compoundArr += extraMrr * 12
+              return { ...a, baseMrrCents: a.baseMrrCents + extraMrr }
+            }
+            return a
+          })
+          if (compoundArr > 0) {
+            arrBridgeExpansion += compoundArr
+            alerts.push({
+              id: `viral-mono-${newElapsed}`,
+              tone: 'info',
+              title: 'Viral Flywheel Monolith Compounding!',
+              message: `+${(viralBonus * 100).toFixed(0)}% ARR compounding added $${(compoundArr / 100).toLocaleString()}/yr ARR across active accounts!`,
+              tick: newElapsed,
+            })
+          }
+        }
+      }
+
+      // Reset consumable quarter valuation boost multiple after review is generated
+      quarterValuationBoostMultiple = 0
+
       // Negative Net Churn relic: +5% ARR expansion on healthy accounts
       if (state.activeRelics.some(r => r.id === 'relic-negative-churn')) {
         let expansionSum = 0
@@ -4216,10 +4722,6 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
   }
 
   // 4. UPDATE OPERATIONS & STRAIN MECHANICS
-  let contextRot = state.operations.contextRot
-  let strainBacklog = state.operations.strainBacklog
-  let incidents = state.operations.incidentsBacklog
-
   const hasSelfHealing = state.activeRelics.some(r => r.id === 'relic-circuit-breaker')
   const opsMetrics = calculateOperationsMetrics(
     state.fleet,
@@ -4229,25 +4731,76 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
   )
 
   // Strain accumulation if coordination load exceeds capacity
+  // relic-hyper-concurrency: Operations cluster strain generation reduced by 60% across all functions
+  const hasHyperConcurrency = state.activeRelics.some(r => r.id === 'relic-hyper-concurrency')
+  const strainReductionMult = (hasHyperConcurrency ? 0.40 : 1.0) * (1 - Math.min(0.8, activeBuffs.strainReduction || 0))
   if (opsMetrics.instantOverload > 0) {
-    strainBacklog += (((opsMetrics.coordinationLoad - opsMetrics.opsCapacity) / 600) * dtTicks) * (1 - Math.min(0.8, activeBuffs.strainReduction || 0))
+    strainBacklog += (((opsMetrics.coordinationLoad - opsMetrics.opsCapacity) / 600) * dtTicks) * strainReductionMult
   }
 
   // 4b. ORGANIC INBOUND DEMAND REPLENISHMENT
   const demandSpeedBoost = (1 + 0.3 * (state.fleet.demand.automateRank || 0)) * (1 + (activeBuffs.demandRateBonus || 0))
   const replenishInterval = Math.round(DEMAND_REPLENISH_INTERVAL_TICKS / demandSpeedBoost)
+  const hasColdOutreach = state.activeRelics.some(r => r.id === 'relic-cold-outreach')
+  const maxDemandSignals = hasColdOutreach ? 8 : 6
   if (newElapsed - lastDemandReplenishTick >= replenishInterval) {
-    if (demandSignals.length < 6) {
-      const fresh = createDynamicDemandSignals(state.valuationCents, newElapsed)
-      const needed = 6 - demandSignals.length
+    if (demandSignals.length < maxDemandSignals) {
+      let fresh = createDynamicDemandSignals(state.valuationCents, newElapsed)
+      if (state.activeRelics.some(r => r.id === 'relic-tam-expansion')) {
+        fresh = fresh.map(s => ({ ...s, estimatedWtpCents: Math.round(s.estimatedWtpCents * 1.25) }))
+      }
+      const needed = maxDemandSignals - demandSignals.length
       const existingTitles = new Set(demandSignals.map(s => s.title))
       const available = fresh.filter(s => !existingTitles.has(s.title))
       const pool = available.length > 0 ? available : fresh
       const rng = new DeterministicRNG(state.seed + newElapsed * 31)
       const shuffled = [...pool].sort(() => rng.nextFloat() - 0.5)
-      const toAdd = shuffled.slice(0, Math.min(needed, 3))
+      const toAdd = shuffled.slice(0, Math.min(needed, hasColdOutreach ? 5 : 3))
       demandSignals = [...demandSignals, ...toAdd]
       lastDemandReplenishTick = newElapsed
+    }
+  }
+
+  // relic-open-source: 1 free pre-qualified lead every 150 ticks (15s) at $0 CAC
+  if (state.activeRelics.some(r => r.id === 'relic-open-source') && newElapsed % 150 < dtTicks && qualifiedOpportunities.length < 50) {
+    qualifiedOpportunities.push({
+      id: `oss-lead-${newElapsed}`,
+      signalId: `sig-oss-${newElapsed}`,
+      segment: 'creator',
+      title: '[GitHub Trending] Viral Open Source Inbound Lead',
+      quote: 'Found project on GitHub trending repo (24k stars). Direct developer adoption.',
+      estimatedWtpCents: 15_000,
+      qualifiedTick: newElapsed,
+    })
+    alerts.push({
+      id: `alert-oss-${newElapsed}`,
+      tone: 'info',
+      title: 'Organic Open Source Lead Arrived',
+      message: 'Viral GitHub repo delivered 1 pre-qualified opportunity at $0 CAC!',
+      tick: newElapsed,
+    })
+  }
+
+  // relic-customer-advocacy: Every 20 active paying customers organically delivers 1 pre-qualified lead every 200 ticks (20s)
+  if (state.activeRelics.some(r => r.id === 'relic-customer-advocacy') && newElapsed % 200 < dtTicks && qualifiedOpportunities.length < 50) {
+    const activePayingCount = accounts.filter(a => !a.delinquent).length
+    if (activePayingCount >= 20) {
+      qualifiedOpportunities.push({
+        id: `advocacy-lead-${newElapsed}`,
+        signalId: `sig-adv-${newElapsed}`,
+        segment: 'team',
+        title: '[Advocacy Viral Loop] Customer Community Referral',
+        quote: 'Recommended in private developer Discord by active enterprise customer.',
+        estimatedWtpCents: 45_000,
+        qualifiedTick: newElapsed,
+      })
+      alerts.push({
+        id: `alert-adv-${newElapsed}`,
+        tone: 'info',
+        title: 'Net Promoter Lead Inbound',
+        message: 'Active paying accounts generated an organic peer recommendation at $0 CAC!',
+        tick: newElapsed,
+      })
     }
   }
 
@@ -4280,13 +4833,21 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
   let systemCapabilities = { ...state.systemCapabilities }
   let productPods = state.productPods ? [...state.productPods] : undefined
 
+  const hasShadowFleet = state.activeRelics.some(r => r.id === 'relic-shadow-fleet')
+  const economicBurnCurrent = calculateEconomicBurn(state)
+  const isSurvivalMode = hasShadowFleet && economicBurnCurrent.economicDeficitMonthCents > 0 && (newCash / economicBurnCurrent.economicDeficitMonthCents) < 6
+
   const functionKeys: FunctionId[] = ['demand', 'product', 'monetisation', 'retention', 'expansion', 'operations']
   for (const fn of functionKeys) {
     const f = { ...updatedFleet[fn] }
     if (f.automateRank > 0 && f.onlineUnits > 0) {
       const baseSpeed = AUTOMATE_SPEEDS[f.automateRank]
-      const relicBoost = (state.activeRelics.some(r => r.id === 'relic-gpu-cluster') ? 1.25 : 1.0) * (1 + (activeBuffs.automateSpeedBonus || 0))
-      const warRoomMult = warRoomTicksRemaining > 0 ? 4.0 : 1.0
+      const hasSingularity = state.activeRelics.some(r => r.id === 'relic-singularity-supercore')
+      const relicBoost = (state.activeRelics.some(r => r.id === 'relic-gpu-cluster') ? 1.25 : 1.0)
+        * (hasSingularity ? 2.0 : 1.0)
+        * (isSurvivalMode ? 2.5 : 1.0)
+        * (1 + (activeBuffs.automateSpeedBonus || 0))
+      const warRoomMult = warRoomTicksRemaining > 0 ? warRoomSpeedMultiplier : 1.0
       // Synergy: Clean Cluster Sub-Millisecond Synchrony (+30% velocity when cluster is pristine)
       const cleanClusterMult = (contextRot < 0.05 && strainBacklog <= 0.1) ? 1.30 : 1.0
       const effectiveSpeed = baseSpeed * relicBoost * opsMetrics.speedFactor * warRoomMult * cleanClusterMult
@@ -4305,57 +4866,94 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
 
         if (fn === 'operations') {
           // Ops maintenance output: drains strain and cleanses rot
-          strainBacklog = Math.max(0, strainBacklog - attempts * 0.5)
-          contextRot = Math.max(0, contextRot - attempts * 0.008)
+          strainBacklog = Math.max(0, strainBacklog - attempts * 5.0)
+          contextRot = Math.max(0, contextRot - attempts * 0.05)
           if (incidents > 0 && rng.nextFloat() < 0.3 * attempts) {
             incidents = Math.max(0, incidents - 1)
           }
 
-          // Queue automations: auto-scratch & auto-claim tickets across all active rack stations
+          // Queue automations: agents blindly open and redeem tickets across active rack stations regardless of outcome
           const opsCraftRank = f.craftRank || 0
           const craftMultiplier = 1 + 0.25 * opsCraftRank
-          for (let tIdx = 0; tIdx < currentTickets.length; tIdx++) {
+          const luck = calculateLuckVariance(f.luckRank, rng.nextFloat())
+          const stationsToProcess = Math.min(attempts, currentTickets.length)
+          for (let s = 0; s < stationsToProcess; s++) {
+            const tIdx = s % currentTickets.length
             const ticket = currentTickets[tIdx]
             if (ticket.isBusted) {
               currentTickets[tIdx] = createDiagnosticTicket(tIdx, opsLuck)
               continue
             }
-            const unscratchedIdx = ticket.pods.findIndex(p => !p.isScratched)
-            if (unscratchedIdx !== -1) {
-              const pod = ticket.pods[unscratchedIdx]
-              const updatedPods = ticket.pods.map((p, pIdx) => pIdx === unscratchedIdx ? { ...p, isScratched: true } : p)
+            const pod = ticket.pods[0]
+            if (pod) {
               if (pod.isNegative) {
-                // Automated daemon isolates faulty sector safely without tripping overload
-                currentTickets[tIdx] = {
-                  ...ticket,
-                  pods: updatedPods,
+                if (patentShieldTicksRemaining > 0) {
+                  alerts.push({
+                    id: `ticket-deflect-daemon-${newElapsed}-${tIdx}`,
+                    tone: 'info',
+                    title: 'Patent Shield Deflected Fault!',
+                    message: `Autonomous diagnostic agent deflected negative hazard in Rack 0${tIdx + 1}!`,
+                    tick: newElapsed,
+                  })
+                } else {
+                  // Autonomous daemons blindly process tickets without inspecting: trips fault overload!
+                  const penaltyStrain = (pod.rewardType === 'penalty' ? (pod.rewardValue as number) : (pod.rewardType === 'strain' ? (pod.rewardValue as number) : 6)) * (hasHyperConcurrency ? 0.40 : 1.0)
+                  const penaltyRot = pod.rewardType === 'rot' ? (pod.rewardValue as number) : 0
+                  const penaltyIncident = pod.rewardType === 'incident' ? (pod.rewardValue as number) : 0
+
+                  strainBacklog += penaltyStrain
+                  contextRot = clamp(contextRot + penaltyRot, 0, 1)
+                  incidents += penaltyIncident
+
+                  alerts.push({
+                    id: `ticket-bust-daemon-${newElapsed}-${tIdx}`,
+                    tone: 'critical',
+                    title: pod.symbol === 'skull'
+                      ? 'Daemon Tripped Memory Leak!'
+                      : pod.symbol === 'panic'
+                      ? 'Daemon Tripped Kernel Panic!'
+                      : 'Daemon Tripped Thermal Overload!',
+                    message: `Diagnostic agent in Rack 0${tIdx + 1} opened a negative hazard ticket without inspecting: +${penaltyStrain} Strain${penaltyRot ? ` & +${Math.round(penaltyRot * 100)}% Rot` : ''}${penaltyIncident ? ' & +1 Incident' : ''}! Upgrade Luck to purge hazards from ticket stream.`,
+                    tick: newElapsed,
+                    targetFunction: 'operations',
+                    actionLabel: 'View Operations [6]',
+                  })
                 }
               } else {
+                // Positive telemetry ticket successfully redeemed by agent
                 const addedCash = pod.rewardType === 'cash' ? (pod.rewardValue as number) : (pod.symbol === 'golden_apple' ? 50_000 : 0)
                 const addedStrain = pod.rewardType === 'strain' ? (pod.rewardValue as number) : (pod.symbol === 'golden_apple' ? 15 : 0)
                 const addedRot = pod.rewardType === 'rot' ? (pod.rewardValue as number) : 0
-                currentTickets[tIdx] = {
-                  ...ticket,
-                  pods: updatedPods,
-                  bankedCashCents: (ticket.bankedCashCents ?? 0) + addedCash,
-                  bankedStrainRelief: (ticket.bankedStrainRelief ?? 0) + addedStrain,
-                  bankedRotRelief: (ticket.bankedRotRelief ?? 0) + addedRot,
+                const finalCash = Math.round(addedCash * craftMultiplier * luck.multiplier)
+                const finalStrain = Math.round(addedStrain * craftMultiplier * luck.multiplier)
+                const finalRot = Math.min(1, addedRot * craftMultiplier * luck.multiplier)
+
+                newCash += finalCash
+                strainBacklog = Math.max(0, strainBacklog - finalStrain)
+                contextRot = Math.max(0, contextRot - finalRot)
+
+                if (pod.symbol === 'golden_apple' && productPods && productPods.length > 0) {
+                  productPods = productPods.map((p, pIdx) => {
+                    if (pIdx === 0) {
+                      const filledSockets = p.sockets.map(s => ({ ...s, filled: true }))
+                      return { ...p, sockets: filledSockets, isVerified: true, isReadyToShip: true }
+                    }
+                    return p
+                  })
                 }
               }
-            } else if (!ticket.claimed && ((ticket.bankedCashCents ?? 0) > 0 || (ticket.bankedStrainRelief ?? 0) > 0 || (ticket.bankedRotRelief ?? 0) > 0)) {
-              const finalCash = Math.round((ticket.bankedCashCents ?? 0) * craftMultiplier)
-              const finalStrain = Math.round((ticket.bankedStrainRelief ?? 0) * craftMultiplier)
-              const finalRot = Math.min(1, (ticket.bankedRotRelief ?? 0) * craftMultiplier)
-              newCash += finalCash
-              strainBacklog = Math.max(0, strainBacklog - finalStrain)
-              contextRot = Math.max(0, contextRot - finalRot)
+              // Draw next fresh ticket into this rack
               currentTickets[tIdx] = createDiagnosticTicket(tIdx, opsLuck)
             }
           }
         } else if (fn === 'product') {
-          // Product capability gain: +0.02 per output
+          // Product capability gain: +0.02 per output scaled by craft and luck variance
           const craftMult = CRAFT_MULTIPLIERS[f.craftRank] || 1
-          const capGain = 0.02 * attempts * (craftMult > 2 ? 1.5 : 1)
+          const luck = calculateLuckVariance(f.luckRank, rng.nextFloat())
+          const hasAutoCompiler = state.activeRelics.some(r => r.id === 'relic-auto-compiler')
+          const hasFeatureFlags = state.activeRelics.some(r => r.id === 'relic-feature-flags')
+          const compilerMult = hasAutoCompiler ? 1.20 : 1.0
+          const capGain = 0.02 * attempts * (craftMult > 2 ? 1.5 : 1) * luck.multiplier * compilerMult
           systemCapabilities = {
             speed: clamp(systemCapabilities.speed + capGain, 0, 1),
             collaboration: clamp(systemCapabilities.collaboration + capGain, 0, 1),
@@ -4403,7 +5001,7 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
                   collabFit: systemCapabilities.collaboration,
                   controlFit: systemCapabilities.control,
                   overallFit: (systemCapabilities.speed + systemCapabilities.collaboration + systemCapabilities.control) / 3,
-                  defectExposure: clamp(0.02 - 0.004 * f.craftRank, 0.001, 0.05),
+                  defectExposure: clamp((0.02 - 0.004 * f.craftRank) * (hasAutoCompiler ? 0.50 : 1.0) * (hasFeatureFlags ? 0.60 : 1.0), 0.001, 0.05),
                   timestampTick: newElapsed,
                   customWtpMonthlyCents: pod.leadWtpCents,
                 }
@@ -4447,26 +5045,47 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
           // Automated demand fleet qualifies signals
           const craftMult = CRAFT_MULTIPLIERS[f.craftRank] || 1
           const signalsToProcess = Math.min(attempts * craftMult, demandSignals.length, 3)
+          const hasSiliconMafia = state.activeRelics.some(r => r.id === 'relic-silicon-mafia') && f.onlineUnits >= 16
           for (let s = 0; s < signalsToProcess; s++) {
             const signal = demandSignals[0]
-            if (signal && newCash >= signal.acquisitionCostCents + 10_000) {
-              newCash -= signal.acquisitionCostCents
-              qualifiedOpportunities.push({
-                id: `opp-auto-${newElapsed}-${signal.id}`,
-                signalId: signal.id,
-                segment: signal.segment,
-                title: signal.title,
-                quote: signal.quote || signal.signalRationale,
-                estimatedWtpCents: signal.estimatedWtpCents,
-                qualifiedTick: newElapsed,
-              })
-              demandSignals.shift()
+            if (signal) {
+              const qual = calculateDemandQualification(
+                signal,
+                systemCapabilities,
+                f.craftRank || 0,
+                f.luckRank || 0,
+                false,
+                rng.nextFloat(),
+                rng.nextFloat(),
+                false
+              )
+              if (newCash >= qual.effectiveCac + 10_000) {
+                newCash -= qual.effectiveCac
+                demandSignals.shift()
+                if (qual.success) {
+                  const oppCount = hasSiliconMafia ? 2 : 1
+                  for (let i = 0; i < oppCount; i++) {
+                    qualifiedOpportunities.push({
+                      id: `opp-auto-${newElapsed}-${signal.id}-${i}`,
+                      signalId: signal.id,
+                      segment: signal.segment,
+                      title: qual.isLuckyWhale ? `[WHALE INBOUND] ${signal.title}` : signal.title,
+                      quote: signal.quote || signal.signalRationale,
+                      estimatedWtpCents: qual.effectiveWtp,
+                      qualifiedTick: newElapsed,
+                    })
+                  }
+                }
+              }
             }
           }
         } else if (fn === 'monetisation') {
-          // Automated monetisation closes activations across deal desks
+          // Automated monetisation closes activations across deal desks with luck variance
           const craftMult = MONETISATION_CRAFT_MULTIPLIERS[f.craftRank] || 1.0
+          const luck = calculateLuckVariance(f.luckRank, rng.nextFloat())
           const deskDealsToClose = Math.min(attempts, currentDesks.length)
+          const hasAlgoPricing = state.activeRelics.some(r => r.id === 'relic-algo-pricing')
+          const hasSoc2 = state.activeRelics.some(r => r.id === 'relic-soc2-fasttrack')
           let closedThisTick = 0
           for (let d = 0; d < currentDesks.length && closedThisTick < deskDealsToClose; d++) {
             const desk = currentDesks[d]
@@ -4474,8 +5093,10 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
             if (act) {
               closedThisTick++
               const conv = calculateCustomerConversion(act.targetSegment, systemCapabilities, 0, competitionFactor)
-              const unitPrice = act.customWtpMonthlyCents ? Math.round(act.customWtpMonthlyCents * conv.fit) : conv.effectiveWtpMonthlyCents
-              const scaledMonthly = Math.round(unitPrice * craftMult)
+              let unitPrice = act.customWtpMonthlyCents ? Math.round(act.customWtpMonthlyCents * conv.fit) : conv.effectiveWtpMonthlyCents
+              if (hasAlgoPricing) unitPrice = Math.round(unitPrice * 1.35)
+              if (hasSoc2 && act.targetSegment === 'enterprise') unitPrice = Math.round(unitPrice * 1.50)
+              const scaledMonthly = Math.round(unitPrice * craftMult * luck.multiplier)
               const annualArr = scaledMonthly * 12
 
               const names: Record<string, string[]> = {
@@ -4509,7 +5130,14 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
               accounts.push(autoAccount)
               arrBridgeNew += annualArr
 
-              const delay = SEGMENT_PROFILES[act.targetSegment].collectionDelayTicks
+              let delay = SEGMENT_PROFILES[act.targetSegment].collectionDelayTicks
+              if (act.targetSegment === 'enterprise') {
+                if (state.activeRelics.some(r => r.id === 'relic-zk-proofs')) {
+                  delay = Math.round(delay / 4)
+                } else if (state.activeRelics.some(r => r.id === 'relic-stealth-moat')) {
+                  delay = 60
+                }
+              }
               updatedInvoices.push({
                 id: `inv-auto-${newElapsed}-${autoAccount.id}`,
                 accountId: autoAccount.id,
@@ -4532,9 +5160,10 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
           }
           currentActivation = currentDesks[0]?.activation ?? null
         } else if (fn === 'retention') {
-          // Automated retention protects threatened accounts across shelf bays
+          // Automated retention protects threatened accounts across shelf bays with luck variance
           const maxBays = RETENTION_BAY_LIMITS[f.scaleRank || 0] || 1
           const craftMult = 1 + 0.35 * (f.craftRank || 0)
+          const luck = calculateLuckVariance(f.luckRank, rng.nextFloat())
           let interventionsDone = 0
           for (let aIdx = 0; aIdx < accounts.length && interventionsDone < maxBays; aIdx++) {
             const acc = accounts[aIdx]
@@ -4543,13 +5172,19 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
               interventionsDone++
               accounts[aIdx] = {
                 ...acc,
-                health: Math.min(100, acc.health + Math.round(45 * craftMult)),
+                health: Math.min(100, acc.health + Math.round(45 * craftMult * luck.multiplier)),
                 isThreatened: false,
                 threatDeadlineTick: null,
                 threatReason: null,
               }
               if (activeThreatId === acc.id) activeThreatId = null
               const savedArr = (acc.baseMrrCents + acc.addonMrrCents) * 12
+              retentionSavedArrCents += savedArr
+              if (retentionEvent?.accountId === acc.id) {
+                retentionEvent = null
+              }
+              currentIncidents = currentIncidents.filter(i => i.accountId !== acc.id && i.id !== `threat-${acc.id}`)
+              alerts = alerts.filter(al => !(al.id.startsWith('threat-alert-') && (al.id.includes(acc.id) || al.message.includes(acc.name))))
               alerts.push({
                 id: `auto-ret-${newElapsed}-${acc.id}`,
                 tone: 'info',
@@ -4560,8 +5195,9 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
             }
           }
         } else if (fn === 'expansion') {
-          // Autonomous Merge & Supply Engine
+          // Autonomous Merge & Supply Engine with luck variance
           const craftMult = CRAFT_MULTIPLIERS[f.craftRank] || 1
+          const luck = calculateLuckVariance(f.luckRank, rng.nextFloat())
 
           // 1. Swarm fulfills matching customer supply demands on the matrix
           if (expansionOrders.length > 0) {
@@ -4570,8 +5206,8 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
               const matchIdx = mergeGrid.findIndex(item => item && item.chain === order.chain && item.tier >= order.targetTier)
               if (matchIdx !== -1) {
                 mergeGrid[matchIdx] = null
-                const rewardArr = Math.round(order.rewardArrCents * (1 + 0.15 * (craftMult - 1)))
-                newCash += order.rewardCashCents
+                const rewardArr = Math.round(order.rewardArrCents * (1 + 0.15 * (craftMult - 1)) * luck.multiplier)
+                newCash += Math.round(order.rewardCashCents * luck.multiplier)
                 arrBridgeExpansion += rewardArr
 
                 const targetAcc = accounts.find(a => a.id === order.accountId)
@@ -4582,6 +5218,14 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
                     addonSlotsUsed: Math.min(2, a.addonSlotsUsed + 1),
                     health: Math.min(100, a.health + 10),
                   } : a)
+                }
+
+                if (state.activeRelics.some(r => r.id === 'relic-neural-distillation')) {
+                  systemCapabilities = {
+                    speed: clamp(systemCapabilities.speed * 1.05, 0, 1),
+                    collaboration: clamp(systemCapabilities.collaboration * 1.05, 0, 1),
+                    control: clamp(systemCapabilities.control * 1.05, 0, 1),
+                  }
                 }
 
                 alerts.push({
@@ -4646,7 +5290,7 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
               const pack = state.expansionAddonPacks[Math.min(acc.addonSlotsUsed, state.expansionAddonPacks.length - 1)]
               if (pack && newCash >= pack.costCents + 25_000) {
                 newCash -= pack.costCents
-                const addonMrr = Math.round(pack.addonMrrCents * craftMult)
+                const addonMrr = Math.round(pack.addonMrrCents * craftMult * luck.multiplier)
                 accounts[aIdx] = {
                   ...acc,
                   addonSlotsUsed: acc.addonSlotsUsed + 1,
@@ -4665,10 +5309,6 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
 
   // 6. HEALTH & CHURN TRACKING
   let comboReset = false
-  let currentIncidents = (state.retentionIncidents ?? []).map(i => ({
-    ...i,
-    urgencyTicks: Math.max(0, i.urgencyTicks - dtTicks),
-  }))
   const updatedAccountsFinal = accounts.map(a => {
     const fit = a.fit ?? 0.6
     const overpricing = a.overpricing ?? 0
@@ -4681,11 +5321,36 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
     let threatDeadline = a.threatDeadlineTick
     let threatReason = a.threatReason
 
-    // Churn threat evaluation
+    // relic-algorithmic-upsell: Accounts with health < 60% automatically receive +20 health triage without founder cost
+    if (state.activeRelics.some(r => r.id === 'relic-algorithmic-upsell') && health < 60 && !a.delinquent) {
+      health = Math.min(100, health + 20)
+    }
+
+    // Auto-cure if customer health is restored to nominal (health >= 65)
+    if (isThreatened && health >= 65) {
+      isThreatened = false
+      threatDeadline = null
+      threatReason = null
+      if (activeThreatId === a.id) {
+        activeThreatId = null
+      }
+      currentIncidents = currentIncidents.filter(i => i.accountId !== a.id && i.id !== `threat-${a.id}`)
+      if (retentionEvent?.accountId === a.id) {
+        retentionEvent = null
+      }
+      alerts = alerts.filter(al => !(al.id.startsWith('threat-alert-') && (al.id.includes(a.id) || al.message.includes(a.name))))
+    }
+
+    // Churn threat evaluation:
+    // Only compromised accounts (health < 65) face churn threats.
+    // Critical degradation (health < 40) triggers immediate churn threat.
+    // Moderate degradation (health < 65) faces probabilistic churn threat based on monthly churn curve.
+    // Healthy accounts (health >= 65, including 100%) NEVER face churn threats.
+    // Patent shield deflections suppress all churn threats!
     const monthlyChurn = calculateMonthlyChurn(health, overpricing, defects, competitionFactor) * (1 - Math.min(0.8, activeBuffs.churnResistance || 0))
     const tickChurnProb = 1 - Math.pow(1 - monthlyChurn, dtTicks / 600)
 
-    if (!isThreatened && (health < 40 || rng.nextFloat() < tickChurnProb)) {
+    if (patentShieldTicksRemaining <= 0 && !isThreatened && health < 65 && (health < 40 || rng.nextFloat() < tickChurnProb)) {
       isThreatened = true
       threatDeadline = newElapsed + CHURN_THREAT_TTL_TICKS // 120 ticks = 12s
       threatReason = health < 40 ? 'Severe defect exposure & latency' : 'Competitive pressure & pricing mismatch'
@@ -4717,7 +5382,7 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
     }
 
     // Check threat expiration -> churn!
-    const expiredIncident = currentIncidents.find(i => (i.accountId === a.id || i.id === a.id) && i.urgencyTicks <= 0)
+    const expiredIncident = currentIncidents.find(i => (i.accountId === a.id || i.id === a.id) && i.urgencyTicks <= 0 && i.consequence !== 'Customer Care')
     if ((isThreatened && threatDeadline && newElapsed >= threatDeadline) || (isThreatened && expiredIncident)) {
       isThreatened = false
       threatDeadline = null
@@ -4831,7 +5496,7 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
   }
 
   const timeSinceFailover = newElapsed - (state.operations.lastFailoverTick ?? -9999)
-  if (!operationsEvent && timeSinceFailover > 450 && (strainBacklog > 18.0 || contextRot > 0.75 || incidents > 2)) {
+  if (patentShieldTicksRemaining <= 0 && !operationsEvent && timeSinceFailover > 450 && (strainBacklog > 18.0 || contextRot > 0.75 || incidents > 2)) {
     operationsEvent = {
       active: true,
       title: strainBacklog > 18.0 ? 'Cluster Thermal Throttling' : 'Context Drift Advisory',
@@ -4908,7 +5573,9 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
   const cashForecast = calculateCashForecast(tempState)
   const capitalQuality = calculateCapitalQualityFactor(economicBurn.burnRatio, cashForecast.shortfallFraction)
 
-  const relicDistortion = state.activeRelics.some(r => r.id === 'relic-anisotropic-sheen') ? 0.4 : 0
+  const isSolopreneurLean = Object.values(state.fleet).reduce((sum, f) => sum + f.onlineUnits, 0) <= 3
+  const solopreneurBoost = (state.founderHistory?.equippedFounderRelicId === 'founder_solopreneur_monolith' && isSolopreneurLean) ? 0.35 : 0
+  const relicDistortion = (state.activeRelics.some(r => r.id === 'relic-anisotropic-sheen') ? 0.4 : 0) + quarterValuationBoostMultiple + solopreneurBoost
   const growthMultiple = calculateGrowthMultiple(
     openingArr,
     contractualArrCents,
@@ -4965,6 +5632,10 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
     lockedQuarterConsumableIds,
     quarterReviewRerolls,
     warRoomTicksRemaining,
+    warRoomSpeedMultiplier,
+    patentShieldTicksRemaining,
+    bullseyeStrikesRemaining,
+    quarterValuationBoostMultiple,
     retentionEvent,
     expansionEvent,
     operationsEvent,
@@ -4976,6 +5647,7 @@ function handleClockTick(state: GameState, dtTicks: number): GameState {
     mandatoryBills: remainingBills,
     activeThreatAccountId: activeThreatId,
     retentionIncidents: currentIncidents,
+    retentionSavedArrCents,
     retentionCombo: comboReset ? 0 : (state.retentionCombo ?? 0),
     contractualArrCents,
     eligibleArrCents,

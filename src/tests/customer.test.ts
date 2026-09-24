@@ -5,7 +5,6 @@ import {
   calculateCustomerConversion,
   calculateCustomerHealthDelta,
   calculateMonthlyChurn,
-  calculateArrTotals,
 } from '../engine/formulas'
 import {
   CHURN_THREAT_TTL_TICKS,
@@ -227,5 +226,171 @@ describe('Customer Lifecycle, Health Dynamics & Expansion Balance', () => {
     })
     expect(state.accounts[0].addonSlotsUsed).toBe(MAX_ADDON_SLOTS)
     expect(state.accounts[0].addonMrrCents).toBe(expectedAddonMrr * 2)
+  })
+
+  it('guarantees accounts with 100% health never trigger churn threats', () => {
+    let state = createInitialState(42)
+    state.accounts = [
+      {
+        id: 'acc-healthy-1',
+        name: 'Novartis GenSec',
+        segment: 'enterprise',
+        baseMrrCents: 96_000,
+        addonMrrCents: 0,
+        addonSlotsUsed: 0,
+        health: 100, // 100% health!
+        ageTicks: 1000,
+        fit: 0.9,
+        overpricing: 0,
+        defects: 0,
+        delinquent: false,
+        unpaidGraceTicks: 0,
+        isThreatened: false,
+        threatDeadlineTick: null,
+        threatReason: null,
+        lastCollectionAttemptTick: null,
+        serviceRemainderCents: 0,
+      },
+    ]
+
+    // Advance 600 ticks (1 full month of simulation)
+    for (let t = 0; t < 60; t++) {
+      state = gameReducer(state, { type: 'clock.tick', dtTicks: 10 })
+    }
+
+    expect(state.accounts[0].isThreatened).toBe(false)
+    expect(state.accounts[0].threatDeadlineTick).toBeNull()
+    expect(state.retentionEvent).toBeNull()
+    expect(state.retentionIncidents?.length ?? 0).toBe(0)
+  })
+
+  it('automatically cures churn threats when account health is restored to >= 65%', () => {
+    let state = createInitialState(1)
+    state.accounts = [
+      {
+        id: 'acc-curing',
+        name: 'Recovering Co',
+        segment: 'team',
+        baseMrrCents: 20_000,
+        addonMrrCents: 0,
+        addonSlotsUsed: 0,
+        health: 35,
+        ageTicks: 500,
+        fit: 0.8,
+        overpricing: 0,
+        defects: 0,
+        delinquent: false,
+        unpaidGraceTicks: 0,
+        isThreatened: true,
+        threatDeadlineTick: 200,
+        threatReason: 'Severe defect exposure & latency',
+        lastCollectionAttemptTick: null,
+        serviceRemainderCents: 0,
+      },
+    ]
+    state.retentionEvent = {
+      active: true,
+      accountId: 'acc-curing',
+      accountName: 'Recovering Co',
+      reason: 'Severe defect exposure & latency',
+      deadlineTick: 200,
+      savedArrCents: 240_000,
+    }
+
+    // Now restore health to 70%
+    state.accounts[0].health = 70
+
+    // Advance clock tick
+    state = gameReducer(state, { type: 'clock.tick', dtTicks: 10 })
+
+    // Threat should be auto-cured!
+    expect(state.accounts[0].isThreatened).toBe(false)
+    expect(state.accounts[0].threatDeadlineTick).toBeNull()
+    expect(state.retentionEvent).toBeNull()
+    expect(state.activeThreatAccountId).toBeNull()
+  })
+
+  it('applies preventive care on healthy accounts without creating a cancellation threat', () => {
+    let state = createInitialState(1)
+    state.accounts = [
+      {
+        id: 'acc-care',
+        name: 'Thriving Startup',
+        segment: 'creator',
+        baseMrrCents: 4_000,
+        addonMrrCents: 0,
+        addonSlotsUsed: 0,
+        health: 75,
+        ageTicks: 300,
+        fit: 0.9,
+        overpricing: 0,
+        defects: 0,
+        delinquent: false,
+        unpaidGraceTicks: 0,
+        isThreatened: false,
+        threatDeadlineTick: null,
+        threatReason: null,
+        lastCollectionAttemptTick: null,
+        serviceRemainderCents: 0,
+      },
+    ]
+
+    // Quick slap for care
+    state = gameReducer(state, {
+      type: 'retention.squash_hit',
+      incidentId: 'threat-acc-care',
+      accountId: 'acc-care',
+      damage: 1,
+    })
+
+    expect(state.accounts[0].health).toBeGreaterThanOrEqual(100)
+    expect(state.accounts[0].isThreatened).toBe(false)
+    expect(state.retentionIncidents?.length ?? 0).toBe(0)
+    expect(state.alerts.some(a => a.id.startsWith('threat-alert-'))).toBe(false)
+  })
+
+  it('autonomous CS swarm defends threatened account, clears incidents, and tracks saved ARR', () => {
+    let state = createInitialState(1)
+    state.fleet.retention.automateRank = 1
+    state.fleet.retention.onlineUnits = 16
+    state.cashCents = 100_000
+    state.accounts = [
+      {
+        id: 'acc-swarm-target',
+        name: 'At Risk Enterprise',
+        segment: 'enterprise',
+        baseMrrCents: 50_000,
+        addonMrrCents: 0,
+        addonSlotsUsed: 0,
+        health: 30,
+        ageTicks: 400,
+        fit: 0.7,
+        overpricing: 0,
+        defects: 0,
+        delinquent: false,
+        unpaidGraceTicks: 0,
+        isThreatened: true,
+        threatDeadlineTick: 150,
+        threatReason: 'Severe defect exposure & latency',
+        lastCollectionAttemptTick: null,
+        serviceRemainderCents: 0,
+      },
+    ]
+    state.retentionEvent = {
+      active: true,
+      accountId: 'acc-swarm-target',
+      accountName: 'At Risk Enterprise',
+      reason: 'Severe defect exposure & latency',
+      deadlineTick: 150,
+      savedArrCents: 600_000,
+    }
+
+    state = gameReducer(state, { type: 'clock.tick', dtTicks: 50 })
+
+    expect(state.accounts[0].isThreatened).toBe(false)
+    expect(state.accounts[0].health).toBeGreaterThan(65)
+    expect(state.retentionEvent).toBeNull()
+    expect(state.retentionSavedArrCents).toBe(50_000 * 12)
+    expect(state.retentionIncidents?.length ?? 0).toBe(0)
   })
 })

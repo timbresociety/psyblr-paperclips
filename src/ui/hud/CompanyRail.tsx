@@ -2,7 +2,7 @@ import React from 'react'
 import type { GameState } from '../../engine/types'
 import type { GameAction } from '../../engine/actions'
 import { MAX_CONSUMABLE_SLOTS, ENGINE_ARCHETYPES, FOUNDER_ACHIEVEMENTS_AND_RELICS } from '../../engine/constants'
-import { calculateOperationsMetrics, getActiveEvolutionTier } from '../../engine/formulas'
+import { calculateOperationsMetrics, getActiveEvolutionTier, getMonetisationDealStats } from '../../engine/formulas'
 import {
   getMilestoneUpgradeAsset,
   getConsumableAsset,
@@ -58,6 +58,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
   const secondsUntilBill = Math.floor(ticksUntilBill / 10)
   const billMins = Math.floor(secondsUntilBill / 60)
   const billSecs = secondsUntilBill % 60
+  const isOnlyNextBillRemaining = state.cashCents <= nextBillAmountCents && nextBillAmountCents > 0
 
   const formatDollars = (cents: number) => {
     const dollars = Math.round(cents / 100)
@@ -75,7 +76,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
   }
 
   const qualifiedPipelineCount = state.qualifiedOpportunities?.length ?? 0
-  const activatedTrialsCount = state.activationsQueue?.length ?? 0
+  const activatedTrialsCount = getMonetisationDealStats(state).totalCount
 
   return (
     <aside
@@ -356,9 +357,30 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
           </span>
         </div>
 
-        <div className="font-display" style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>
+        <div className="font-display" style={{ fontSize: '18px', fontWeight: 800, color: isOnlyNextBillRemaining ? '#E11D48' : '#0F172A' }}>
           ~{formatDollars(nextBillAmountCents)}
         </div>
+
+        {isOnlyNextBillRemaining && (
+          <div
+            className="font-mono animate-pulse-critical"
+            style={{
+              fontSize: '8.5px',
+              fontWeight: 800,
+              color: '#EF4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              padding: '2px 7px',
+              borderRadius: '9999px',
+              width: 'fit-content',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            ⚠️ 1 BILL REMAINING IN TREASURY
+          </div>
+        )}
 
         <span className="font-mono" style={{ fontSize: '9.5px', color: '#64748B' }}>
           Due in {billMins}:{billSecs.toString().padStart(2, '0')} · cash {formatDollars(state.cashCents)}

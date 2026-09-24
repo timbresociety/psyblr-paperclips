@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react"
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import type { GameState, ScratchPod, ScratchCard } from "../../../engine/types"
 import type { GameAction } from "../../../engine/actions"
 import { calculateOperationsMetrics } from "../../../engine/formulas"
@@ -36,6 +36,19 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
   }, [state.activeTickets, maxRacks, luckRank])
 
   const [hoveredPodKey, setHoveredPodKey] = useState<string | null>(null)
+  const [scratchProgress, setScratchProgress] = useState<Record<string, number>>({})
+  const [isScratchingKey, setIsScratchingKey] = useState<string | null>(null)
+  const [particles, setParticles] = useState<{ id: number; x: number; y: number; text: string; color: string }[]>([])
+  const activeDragRef = useRef<{ podKey: string; lastX: number; lastY: number; accumDist: number } | null>(null)
+  const poppedPodsRef = useRef<Set<string>>(new Set())
+
+  const spawnParticle = (x: number, y: number, text: string, color: string) => {
+    const pId = Date.now() + Math.random()
+    setParticles(prev => [...prev.slice(-12), { id: pId, x, y, text, color }])
+    setTimeout(() => {
+      setParticles(prev => prev.filter(p => p.id !== pId))
+    }, 550)
+  }
 
   // Calculate causal metrics
   const opsMetrics = useMemo(() => {
@@ -53,7 +66,7 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
 
   // Scratch single sector on a specific ticket station
   const handleScratchSector = useCallback(
-    (ticketIndex: number, podIndex: number, pod: ScratchPod) => {
+    (ticketIndex: number, pod: ScratchPod) => {
       if (pod.isScratched) return
       const ticket = activeTickets[ticketIndex]
       if (!ticket || ticket.isBusted || ticket.claimed) return
@@ -68,22 +81,59 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
       dispatch({
         type: "operations.scratch_ticket",
         ticketIndex,
-        podIndex,
+        podIndex: 0,
       })
     },
     [activeTickets, dispatch]
   )
 
-  // Claim single ticket station
+  // Discard / Reject single ticket station harmlessly before full redemption
+  const handleRejectTicket = useCallback(
+    (ticketIndex: number) => {
+      const ticket = activeTickets[ticketIndex]
+      if (!ticket) return
+      sound.playSnap()
+      setScratchProgress(prev => {
+        const next = { ...prev }
+        Object.keys(next).forEach(k => {
+          if (k.startsWith(`${ticket.id}-`) || k.startsWith(`rack-${ticketIndex}-`)) {
+            delete next[k]
+          }
+        })
+        return next
+      })
+      poppedPodsRef.current.clear()
+      dispatch({
+        type: "operations.reject_ticket",
+        ticketIndex,
+      })
+    },
+    [activeTickets, dispatch]
+  )
+
+  // Claim or redeem single ticket station
   const handleClaimTicket = useCallback(
     (ticketIndex: number) => {
       const ticket = activeTickets[ticketIndex]
       if (!ticket) return
-      if ((ticket.bankedCashCents ?? 0) > 0 || (ticket.bankedStrainRelief ?? 0) > 0) {
-        sound.playCashTick()
-      } else {
+      const pod = ticket.pods[0] || ticket.outcome
+      if (ticket.isBusted) {
         sound.playSnap()
+      } else if (pod?.isNegative && (!ticket.bankedCashCents && !ticket.bankedStrainRelief)) {
+        sound.playRottenBuzzer()
+      } else {
+        sound.playCashTick()
       }
+      setScratchProgress(prev => {
+        const next = { ...prev }
+        Object.keys(next).forEach(k => {
+          if (k.startsWith(`${ticket.id}-`) || k.startsWith(`rack-${ticketIndex}-`)) {
+            delete next[k]
+          }
+        })
+        return next
+      })
+      poppedPodsRef.current.clear()
       dispatch({
         type: "operations.claim_ticket",
         ticketIndex,
@@ -91,6 +141,94 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
     },
     [activeTickets, dispatch]
   )
+
+  // Gentle peek: reveals 30% so user can inspect outcome without triggering full redemption
+  const handlePeekTicket = useCallback(
+    (ticketIndex: number) => {
+      const ticket = activeTickets[ticketIndex]
+      if (!ticket || ticket.isBusted) return
+      const podKey = `${ticket.id || ticketIndex}-0`
+      setScratchProgress(prev => ({
+        ...prev,
+        [podKey]: Math.max(prev[podKey] || 0, 32),
+      }))
+      sound.playScratch()
+    },
+    [activeTickets]
+  )
+
+  // Interactive Scratch-to-Open Pointer Drag Handlers
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent, tIdx: number, pod: ScratchPod, podKey: string) => {
+      const ticket = activeTickets[tIdx]
+      if (pod.isScratched || ticket?.isBusted || ticket?.claimed || poppedPodsRef.current.has(podKey)) return
+
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+      } catch {
+        // ignore
+      }
+
+      activeDragRef.current = { podKey, lastX: e.clientX, lastY: e.clientY, accumDist: 0 }
+      setIsScratchingKey(podKey)
+      sound.playScratch()
+    },
+    [activeTickets]
+  )
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent, tIdx: number, pod: ScratchPod, podKey: string) => {
+      if (!activeDragRef.current || activeDragRef.current.podKey !== podKey) return
+      if (pod.isScratched || poppedPodsRef.current.has(podKey)) return
+
+      const dx = e.clientX - activeDragRef.current.lastX
+      const dy = e.clientY - activeDragRef.current.lastY
+      const dist = Math.hypot(dx, dy)
+      if (dist < 3) return
+
+      activeDragRef.current.lastX = e.clientX
+      activeDragRef.current.lastY = e.clientY
+      activeDragRef.current.accumDist += dist
+
+      if (Math.random() < 0.35) {
+        sound.playScratch()
+      }
+
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+      spawnParticle(
+        e.clientX - rect.left,
+        e.clientY - rect.top,
+        pod.isNegative ? "⚡" : "✦",
+        pod.isNegative ? "#EF4444" : "#10B981"
+      )
+
+      setScratchProgress(prev => {
+        const cur = prev[podKey] || 0
+        const added = Math.min(18, Math.max(3, Math.round(dist * 0.45)))
+        const next = Math.min(100, cur + added)
+
+        // Threshold trigger: 70% opens and commits the single outcome
+        if (next >= 70 && !poppedPodsRef.current.has(podKey)) {
+          poppedPodsRef.current.add(podKey)
+          handleScratchSector(tIdx, pod)
+        }
+        return { ...prev, [podKey]: next }
+      })
+    },
+    [handleScratchSector]
+  )
+
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    try {
+      if ((e.currentTarget as HTMLElement).hasPointerCapture?.(e.pointerId)) {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+      }
+    } catch {
+      // ignore
+    }
+    activeDragRef.current = null
+    setIsScratchingKey(null)
+  }, [])
 
   // Batch scratch & claim all stations
   const handleBatchScratchAll = useCallback(() => {
@@ -105,6 +243,11 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
     dispatch({ type: "operations.resolve_incident" })
   }, [incidentsBacklog, dispatch])
 
+  const handleExecuteFailover = useCallback(() => {
+    sound.playPowerUp()
+    dispatch({ type: "event.resolve_operations" })
+  }, [dispatch])
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -113,6 +256,15 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
       if ((e.key === "h" || e.key === "H") && incidentsBacklog > 0) {
         e.preventDefault()
         handleResolveIncident()
+      } else if (e.key === "x" || e.key === "X") {
+        e.preventDefault()
+        handleRejectTicket(0)
+      } else if (e.key === "r" || e.key === "R") {
+        e.preventDefault()
+        handleClaimTicket(0)
+      } else if (e.key === "p" || e.key === "P") {
+        e.preventDefault()
+        handlePeekTicket(0)
       } else if (e.key === " ") {
         e.preventDefault()
         handleBatchScratchAll()
@@ -121,10 +273,11 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
 
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [handleBatchScratchAll, incidentsBacklog, handleResolveIncident])
+  }, [handleBatchScratchAll, incidentsBacklog, handleResolveIncident, handleRejectTicket, handleClaimTicket, handlePeekTicket])
 
   const isOverCapacity = coordinationLoad > opsCapacity
   const rotColor = contextRot > 0.4 ? "var(--color-critical)" : contextRot > 0.15 ? "var(--color-warning)" : "var(--color-positive)"
+  const estimatedHazardRate = Math.max(5, Math.round((0.38 - 0.07 * luckRank) * 100))
 
   return (
     <div className="room-stage-container" style={{ maxWidth: "860px", width: "100%", paddingBottom: "16px" }}>
@@ -144,7 +297,7 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
               Autonomous Cluster Telemetry Racks
             </h2>
             <p className="room-subtitle" style={{ fontSize: "11px", color: "var(--text-secondary)", lineHeight: 1.4, margin: "0 0 4px 0" }}>
-              Diagnostic scratch tickets stream live node telemetry. Probe compute, memory, and cluster health sectors to drain strain and purge rot.
+              Diagnostic scratch tickets stream live node telemetry. Scratch to peek: reject hazard tickets before redemption to avoid faults, while daemons blindly redeem all.
             </p>
             <div style={{ fontSize: "10.5px", color: "var(--text-secondary)", display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
               <span>
@@ -152,20 +305,16 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
               </span>
               <span>·</span>
               <span>
-                Craft Yield: <strong>+{Math.round((craftRecoveryMultiplier - 1) * 100)}% Telemetry Yield</strong> (Rank {craftRank})
+                Craft Yield: <strong>+{Math.round((craftRecoveryMultiplier - 1) * 100)}% Yield</strong> (Rank {craftRank})
               </span>
               <span>·</span>
               <span style={{ color: automateRank > 0 ? "var(--color-positive)" : "var(--text-secondary)" }}>
-                Automate: <strong>{automateRank > 0 ? `Rank ${automateRank} Autonomous Diagnostic Daemons` : "Manual Probe"}</strong>
+                Automate: <strong>{automateRank > 0 ? `Rank ${automateRank} Daemons (Blind Open)` : "Manual Probe"}</strong>
               </span>
-              {luckRank > 0 && (
-                <>
-                  <span>·</span>
-                  <span style={{ color: "#A855F7" }}>
-                    Luck: <strong>+{luckRank * 15}% Supercore Odds</strong> (Rank {luckRank})
-                  </span>
-                </>
-              )}
+              <span>·</span>
+              <span style={{ color: luckRank > 0 ? "#A855F7" : "var(--text-secondary)" }}>
+                Luck: <strong>{luckRank > 0 ? `+${luckRank * 15}% Supercore Odds · ${estimatedHazardRate}% Hazard Rate` : "Rank 0 (38% Hazard Rate)"}</strong>
+              </span>
             </div>
           </div>
         </div>
@@ -180,12 +329,72 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
             whiteSpace: "nowrap",
             flexShrink: 0,
           }}
-          title="Batch scratch all active tickets and claim safe recovery telemetry in parallel"
+          title="Batch open and redeem all active station tickets simultaneously"
         >
           <span>Batch Resolve All</span>
           <kbd className="btn-kbd" style={{ background: "rgba(255,255,255,0.25)", color: "#fff", fontSize: "9px" }}>Space</kbd>
         </button>
       </div>
+
+      {/* EMERGENCY CRISIS ADVISORY BANNER (WHEN CLUSTER EVENT OR INCIDENT IS ACTIVE) */}
+      {state.operationsEvent?.active && (
+        <div
+          className="animate-slide-up"
+          style={{
+            marginBottom: "12px",
+            padding: "12px 14px",
+            borderRadius: "10px",
+            backgroundColor: "rgba(239, 68, 68, 0.08)",
+            border: "1.5px solid rgba(239, 68, 68, 0.45)",
+            boxShadow: "0 4px 14px rgba(239, 68, 68, 0.12)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "22px" }}>🚨</span>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <strong style={{ fontSize: "12px", color: "var(--color-critical)" }}>
+                  {state.operationsEvent.title || "OPERATIONAL CRISIS ADVISORY"}
+                </strong>
+                <span
+                  className="font-mono"
+                  style={{
+                    fontSize: "8.5px",
+                    fontWeight: 800,
+                    padding: "1px 5px",
+                    borderRadius: "3px",
+                    backgroundColor: "rgba(239, 68, 68, 0.2)",
+                    color: "var(--color-critical)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  HIGH IMPACT
+                </span>
+              </div>
+              <div style={{ fontSize: "10px", color: "var(--text-secondary)", marginTop: "2px", lineHeight: 1.3 }}>
+                Cluster is throttled. Execute emergency cluster failover to purge 75% strain, defrag context rot, and restore nominal pipeline speed.
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleExecuteFailover}
+            className="cred-3d-button cred-3d-button-danger"
+            style={{
+              padding: "6px 12px",
+              fontSize: "11px",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            <span>Execute Failover</span>
+          </button>
+        </div>
+      )}
 
       {/* 4 OPERATIONAL HEALTH TELEMETRY METRIC CARDS */}
       <div
@@ -297,11 +506,21 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
         {activeTickets.map((ticket, tIdx) => {
           const isBusted = ticket.isBusted
           const isGolden = ticket.severity === "golden"
-          const bankedCash = ticket.bankedCashCents ?? 0
-          const bankedStrain = ticket.bankedStrainRelief ?? 0
-          const bankedRot = ticket.bankedRotRelief ?? 0
-          const hasBanked = bankedCash > 0 || bankedStrain > 0 || bankedRot > 0
-          const unscratchedCount = ticket.pods.filter(p => !p.isScratched).length
+          const pod = ticket.pods[0] || ticket.outcome || {
+            id: 0,
+            symbol: "coin",
+            rewardType: "cash",
+            rewardValue: 20000,
+            label: "Compute Credit: +$200 Rebate",
+            isScratched: false,
+            isNegative: false,
+          }
+          const isHazard = pod.isNegative
+          const isScratched = pod.isScratched
+          const podKey = `${ticket.id || tIdx}-0`
+          const progress = scratchProgress[podKey] || (isScratched ? 100 : 0)
+          const isPeeking = progress >= 25 && !isScratched
+          const isHovered = hoveredPodKey === podKey
 
           return (
             <div
@@ -348,15 +567,23 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
                         ? "rgba(239, 68, 68, 0.15)"
                         : isGolden
                         ? "rgba(245, 158, 11, 0.15)"
-                        : unscratchedCount === 0
+                        : isScratched
                         ? "rgba(16, 185, 129, 0.15)"
+                        : isPeeking
+                        ? isHazard
+                          ? "rgba(239, 68, 68, 0.15)"
+                          : "rgba(16, 185, 129, 0.15)"
                         : "rgba(0, 0, 0, 0.06)",
                       color: isBusted
                         ? "var(--color-critical)"
                         : isGolden
                         ? "#D97706"
-                        : unscratchedCount === 0
+                        : isScratched
                         ? "var(--color-positive)"
+                        : isPeeking
+                        ? isHazard
+                          ? "var(--color-critical)"
+                          : "var(--color-positive)"
                         : "var(--text-secondary)",
                     }}
                   >
@@ -364,179 +591,254 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
                       ? "FAULT OVERLOAD"
                       : isGolden
                       ? "TPU SUPERCORE"
-                      : unscratchedCount === 0
-                      ? "READY TO CLAIM"
-                      : `${3 - unscratchedCount}/3 PROBED`}
+                      : isScratched
+                      ? "COMMITTED"
+                      : isPeeking
+                      ? isHazard
+                        ? "HAZARD DETECTED"
+                        : "PEEKED: REWARD"
+                      : "UNPROBED TICKET"}
                   </span>
                 </div>
 
-                <div style={{ fontSize: "9.5px", color: "var(--text-muted)", marginBottom: "8px", lineHeight: 1.2 }}>
-                  {ticket.subtitle || "Live Diagnostic & Recovery Telemetry"}
-                </div>
-
-                {/* Banked Metrics Pill */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    backgroundColor: "var(--surface-work)",
-                    border: "1px solid var(--border-hairline)",
-                    fontSize: "9px",
-                  }}
-                >
-                  <div>
-                    <span style={{ color: "var(--text-muted)", textTransform: "uppercase" }}>Rebate: </span>
-                    <strong className="font-mono" style={{ color: "#D97706" }}>+${Math.round(bankedCash / 100)}</strong>
-                  </div>
-                  <div>
-                    <span style={{ color: "var(--text-muted)", textTransform: "uppercase" }}>Strain: </span>
-                    <strong className="font-mono" style={{ color: "var(--color-positive)" }}>-{bankedStrain}</strong>
-                  </div>
-                  <div>
-                    <span style={{ color: "var(--text-muted)", textTransform: "uppercase" }}>Rot: </span>
-                    <strong className="font-mono" style={{ color: "#7C3AED" }}>-{Math.round(bankedRot * 100)}%</strong>
-                  </div>
+                <div style={{ fontSize: "9.5px", color: "var(--text-muted)", marginBottom: "4px", lineHeight: 1.2 }}>
+                  {ticket.subtitle || "Live Single-Outcome Diagnostic Telemetry"}
                 </div>
               </div>
 
-              {/* 3 Sectors Scratch Grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px" }}>
-                {ticket.pods.map((pod, pIdx) => {
-                  const podKey = `${tIdx}-${pIdx}`
-                  const isHovered = hoveredPodKey === podKey
-                  const isScratched = pod.isScratched
-                  const isRotten = pod.isNegative
-                  const isPodGolden = pod.symbol === "golden_apple"
+              {/* SINGLE OUTCOME TICKET SCRATCH CANVAS / FOIL AREA */}
+              <div
+                onMouseEnter={() => setHoveredPodKey(podKey)}
+                onMouseLeave={() => setHoveredPodKey(null)}
+                onPointerDown={e => handlePointerDown(e, tIdx, pod, podKey)}
+                onPointerMove={e => handlePointerMove(e, tIdx, pod, podKey)}
+                onPointerUp={e => handlePointerUp(e)}
+                onPointerCancel={e => handlePointerUp(e)}
+                style={{
+                  position: "relative",
+                  overflow: "hidden",
+                  padding: "14px 10px",
+                  borderRadius: "10px",
+                  textAlign: "center",
+                  cursor: isScratched || isBusted ? "default" : "grab",
+                  userSelect: "none",
+                  touchAction: "none",
+                  minHeight: "100px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: "4px",
+                  backgroundColor: isScratched
+                    ? isHazard
+                      ? "rgba(239, 68, 68, 0.08)"
+                      : isGolden
+                      ? "rgba(245, 158, 11, 0.1)"
+                      : "rgba(16, 185, 129, 0.08)"
+                    : isPeeking
+                    ? isHazard
+                      ? "rgba(239, 68, 68, 0.12)"
+                      : "rgba(16, 185, 129, 0.1)"
+                    : isHovered
+                    ? "var(--surface-raised)"
+                    : "var(--surface-work)",
+                  border: isScratched
+                    ? isHazard
+                      ? "1.5px solid rgba(239, 68, 68, 0.5)"
+                      : isGolden
+                      ? "1.5px solid rgba(245, 158, 11, 0.5)"
+                      : "1.5px solid rgba(16, 185, 129, 0.4)"
+                    : isPeeking
+                    ? isHazard
+                      ? "1.5px dashed #EF4444"
+                      : "1.5px dashed #10B981"
+                    : isHovered
+                    ? "1.5px solid var(--accent-operations)"
+                    : "1px solid var(--border-hairline)",
+                  transition: isScratchingKey === podKey ? "none" : "all 120ms ease",
+                }}
+              >
+                {/* 1. Underlying Revealed/Peeking Content */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", width: "100%" }}>
+                  <div style={{ fontSize: "22px" }}>
+                    {pod.symbol === "rotten"
+                      ? "🔥"
+                      : pod.symbol === "skull"
+                      ? "💀"
+                      : pod.symbol === "panic"
+                      ? "🚨"
+                      : pod.symbol === "golden_apple"
+                      ? "🌟"
+                      : pod.symbol === "coin"
+                      ? "🪙"
+                      : pod.symbol === "shield"
+                      ? "🛡️"
+                      : "🧹"}
+                  </div>
+                  <div
+                    className="font-mono"
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 800,
+                      color: isHazard
+                        ? "var(--color-critical)"
+                        : isGolden
+                        ? "#D97706"
+                        : "var(--color-positive)",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {pod.label.split(":")[0]}
+                  </div>
+                  <div style={{ fontSize: "9px", color: "var(--text-secondary)", lineHeight: 1.1, maxWidth: "220px" }}>
+                    {pod.label.split(":")[1] ? pod.label.split(":")[1].trim() : pod.label}
+                  </div>
 
-                  return (
+                  {/* Peeking Advisory Badge */}
+                  {isPeeking && !isScratched && (
                     <div
-                      key={pod.id}
-                      onClick={() => handleScratchSector(tIdx, pIdx, pod)}
-                      onMouseEnter={() => setHoveredPodKey(podKey)}
-                      onMouseLeave={() => setHoveredPodKey(null)}
                       style={{
-                        padding: "8px 4px",
-                        borderRadius: "8px",
-                        textAlign: "center",
-                        cursor: isScratched || isBusted ? "default" : "pointer",
-                        userSelect: "none",
-                        backgroundColor: isScratched
-                          ? isRotten
-                            ? "rgba(239, 68, 68, 0.1)"
-                            : isPodGolden
-                            ? "rgba(245, 158, 11, 0.12)"
-                            : "rgba(16, 185, 129, 0.08)"
-                          : isHovered
-                          ? "var(--surface-raised)"
-                          : "var(--surface-work)",
-                        border: isScratched
-                          ? isRotten
-                            ? "1.5px solid rgba(239, 68, 68, 0.4)"
-                            : isPodGolden
-                            ? "1.5px solid rgba(245, 158, 11, 0.4)"
-                            : "1.5px solid rgba(16, 185, 129, 0.35)"
-                          : isHovered
-                          ? "1.5px solid var(--accent-operations)"
-                          : "1px solid var(--border-hairline)",
-                        transition: "all 120ms ease",
-                        minHeight: "78px",
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        gap: "2px",
+                        marginTop: "4px",
+                        fontSize: "8px",
+                        fontWeight: 800,
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        textTransform: "uppercase",
+                        backgroundColor: isHazard ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.2)",
+                        color: isHazard ? "#EF4444" : "#059669",
+                        border: `1px solid ${isHazard ? "#EF4444" : "#10B981"}`,
+                        letterSpacing: "0.04em",
                       }}
                     >
-                      {isScratched ? (
-                        <>
-                          <div style={{ fontSize: "16px" }}>
-                            {isRotten ? "💥" : isPodGolden ? "🌟" : pIdx === 0 ? "🪙" : pIdx === 1 ? "🧹" : "🛡️"}
-                          </div>
-                          <div
-                            className="font-mono"
-                            style={{
-                              fontSize: "8.5px",
-                              fontWeight: 800,
-                              color: isRotten
-                                ? "var(--color-critical)"
-                                : isPodGolden
-                                ? "#D97706"
-                                : "var(--color-positive)",
-                              lineHeight: 1.1,
-                            }}
-                          >
-                            {pod.label.split(":")[0]}
-                          </div>
-                          <div style={{ fontSize: "7.5px", color: "var(--text-secondary)", lineHeight: 1 }}>
-                            {pod.label.split(":")[1] || ""}
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div
-                            className="font-mono"
-                            style={{
-                              fontSize: "9px",
-                              fontWeight: 800,
-                              color: isHovered ? "var(--accent-operations)" : "var(--text-muted)",
-                            }}
-                          >
-                            S-0{pIdx + 1}
-                          </div>
-                          <div style={{ fontSize: "8.5px", fontWeight: 700, color: "var(--text-ink)" }}>
-                            {pIdx === 0 ? "Compute" : pIdx === 1 ? "Memory" : "Sentry"}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "7.5px",
-                              color: isHovered ? "#166534" : "var(--text-secondary)",
-                              fontWeight: 600,
-                              textTransform: "uppercase",
-                              marginTop: "2px",
-                            }}
-                          >
-                            {isHovered ? "Click Probe" : "Unscratched"}
-                          </div>
-                        </>
-                      )}
+                      {isHazard ? "⚠️ HAZARD DETECTED · REJECT [X] TO AVOID!" : `✨ REWARD READY · COMMIT OR DRAG (${Math.round(progress)}%)`}
                     </div>
-                  )
-                })}
+                  )}
+                </div>
+
+                {/* 2. Protective Metallic Foil Overlay (Peels away as player scratches) */}
+                {!isScratched && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      pointerEvents: "none",
+                      opacity: Math.max(0, 1 - progress / 70),
+                      background: "linear-gradient(135deg, #1E293B 0%, #334155 50%, #0F172A 100%)",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      padding: "6px",
+                      transition: isScratchingKey === podKey ? "none" : "opacity 120ms ease",
+                    }}
+                  >
+                    <div
+                      className="font-mono"
+                      style={{
+                        fontSize: "9.5px",
+                        fontWeight: 800,
+                        color: "#94A3B8",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      TELEMETRY FOIL // S-01
+                    </div>
+                    <div style={{ fontSize: "9px", fontWeight: 700, color: "#F8FAFC", marginTop: "2px" }}>
+                      {isGolden ? "★ TPU Supercore Encrypted" : "Live Diagnostic Outcome"}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "7.5px",
+                        color: "#38BDF8",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        marginTop: "4px",
+                      }}
+                    >
+                      {progress > 0 ? `Uncovering ${Math.round(progress)}%...` : "🖐️ Drag to Scratch · Peek [P]"}
+                    </div>
+                    {/* Mini Progress Gauge */}
+                    {progress > 0 && (
+                      <div
+                        style={{
+                          width: "70%",
+                          height: "3px",
+                          backgroundColor: "rgba(255,255,255,0.2)",
+                          borderRadius: "2px",
+                          marginTop: "4px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${Math.min(100, (progress / 70) * 100)}%`,
+                            height: "100%",
+                            backgroundColor: isHazard ? "#EF4444" : "#10B981",
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Station Action Footer */}
+              {/* Station Action Footer: Reject vs Redeem Affordances */}
               <div>
                 {isBusted ? (
                   <button
                     onClick={() => handleClaimTicket(tIdx)}
                     className="cred-3d-button cred-3d-button-danger"
-                    style={{ width: "100%", padding: "5px 8px", fontSize: "10px" }}
+                    style={{ width: "100%", padding: "6px 8px", fontSize: "10.5px" }}
                   >
                     <span>Clear Fault · Draw Next Ticket</span>
                   </button>
-                ) : hasBanked || unscratchedCount === 0 ? (
-                  <button
-                    onClick={() => handleClaimTicket(tIdx)}
-                    className="cred-3d-button cred-3d-button-emerald"
-                    style={{ width: "100%", padding: "5px 8px", fontSize: "10px" }}
-                  >
-                    <span>Commit Recovery (+${Math.round(bankedCash / 100)})</span>
-                  </button>
                 ) : (
-                  <button
-                    onClick={() => {
-                      const nextUnscratched = ticket.pods.findIndex(p => !p.isScratched)
-                      if (nextUnscratched !== -1) {
-                        handleScratchSector(tIdx, nextUnscratched, ticket.pods[nextUnscratched])
-                      }
-                    }}
-                    className="cred-3d-button cred-3d-button-light"
-                    style={{ width: "100%", padding: "5px 8px", fontSize: "10px" }}
-                  >
-                    <span>Probe Next Sector</span>
-                  </button>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    {/* Manual Reject Button: Discard negative tickets before redemption */}
+                    <button
+                      onClick={() => handleRejectTicket(tIdx)}
+                      className="cred-3d-button cred-3d-button-amber"
+                      style={{
+                        flex: 1,
+                        padding: "5px 6px",
+                        fontSize: "9.5px",
+                        fontWeight: 700,
+                      }}
+                      title="Safely discard this ticket without penalty and draw a fresh ticket"
+                    >
+                      <span>Reject Ticket [X]</span>
+                    </button>
+
+                    {/* Manual Commit / Peek Button */}
+                    {isPeeking || isScratched ? (
+                      <button
+                        onClick={() => handleClaimTicket(tIdx)}
+                        className={`cred-3d-button ${isHazard ? "cred-3d-button-danger" : "cred-3d-button-emerald"}`}
+                        style={{
+                          flex: 1.3,
+                          padding: "5px 8px",
+                          fontSize: "9.5px",
+                          fontWeight: 700,
+                        }}
+                      >
+                        <span>{isHazard ? "Commit Hazard" : "Redeem Telemetry [R]"}</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handlePeekTicket(tIdx)}
+                        className="cred-3d-button cred-3d-button-light"
+                        style={{
+                          flex: 1.3,
+                          padding: "5px 8px",
+                          fontSize: "9.5px",
+                          fontWeight: 700,
+                        }}
+                        title="Peek the underlying outcome without committing"
+                      >
+                        <span>Peek Ticket [P]</span>
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -581,8 +883,8 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
           style={{
             padding: "8px 14px",
             borderRadius: "10px",
-            backgroundColor: "rgba(16, 185, 129, 0.06)",
-            border: "1px solid rgba(16, 185, 129, 0.25)",
+            backgroundColor: luckRank === 0 ? "rgba(239, 68, 68, 0.06)" : "rgba(16, 185, 129, 0.06)",
+            border: `1px solid ${luckRank === 0 ? "rgba(239, 68, 68, 0.25)" : "rgba(16, 185, 129, 0.25)"}`,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -590,13 +892,15 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "14px" }}>🤖</span>
+            <span style={{ fontSize: "14px" }}>{luckRank === 0 ? "⚠️" : "🤖"}</span>
             <div>
-              <strong style={{ color: "var(--color-positive)" }}>
+              <strong style={{ color: luckRank === 0 ? "var(--color-critical)" : "var(--color-positive)" }}>
                 Autonomous Diagnostic Daemons Active (Rank {automateRank})
               </strong>
               <div style={{ fontSize: "9.5px", color: "var(--text-secondary)" }}>
-                Daemons continuously probe open ticket queues, safely isolate hardware anomalies, and bank cluster telemetry.
+                {luckRank === 0
+                  ? "Daemons blindly open all incoming tickets without inspecting. At Luck 0, hazard rate is 38%! Upgrade Luck to purge hazard tickets from queue."
+                  : `Daemons blindly open all incoming tickets. Luck Rank ${luckRank} suppresses hazard rate to ${estimatedHazardRate}% with +${luckRank * 15}% Supercore odds.`}
               </div>
             </div>
           </div>
@@ -607,14 +911,35 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
               fontWeight: 800,
               padding: "2px 6px",
               borderRadius: "4px",
-              backgroundColor: "rgba(16, 185, 129, 0.2)",
-              color: "#047857",
+              backgroundColor: luckRank === 0 ? "rgba(239, 68, 68, 0.15)" : "rgba(16, 185, 129, 0.2)",
+              color: luckRank === 0 ? "#DC2626" : "#047857",
             }}
           >
-            ACTIVE DAEMON
+            {luckRank === 0 ? "HIGH HAZARD RISK" : "LUCK SHIELDED"}
           </span>
         </div>
       )}
+
+      {/* FLOATING SCRATCH PARTICLES */}
+      {particles.map(p => (
+        <div
+          key={p.id}
+          style={{
+            position: "absolute",
+            left: p.x,
+            top: p.y,
+            pointerEvents: "none",
+            fontSize: "13px",
+            fontWeight: 800,
+            color: p.color,
+            zIndex: 9999,
+            transform: "translate(-50%, -50%)",
+            animation: "float-fade-up 550ms ease-out forwards",
+          }}
+        >
+          {p.text}
+        </div>
+      ))}
     </div>
   )
 }

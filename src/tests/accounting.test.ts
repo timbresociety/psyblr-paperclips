@@ -2,15 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { createInitialState } from '../engine/state'
 import { gameReducer } from '../engine/reducer'
 import {
-  calculateArrTotals,
-  calculateGrowthMultiple,
   calculateCapitalQualityFactor,
-  calculateValuationCents,
   calculateEconomicBurn,
   calculateCashForecast,
+  reconcileQuarterBridge,
 } from '../engine/formulas'
 import type { CustomerAccount, InvoiceSchedule } from '../engine/types'
-import { reconcileQuarterBridge } from '../ui/management/QuarterReviewModal'
 
 describe('Accounting & Capital Facilities Invariants', () => {
   it('verifies exact ARR bridge arithmetic', () => {

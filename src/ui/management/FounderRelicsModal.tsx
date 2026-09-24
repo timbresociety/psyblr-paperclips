@@ -24,17 +24,31 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
+  const [activeTab, setActiveTab] = React.useState<'all' | 'easy' | 'effort'>('all')
+
   const unlockedIds = new Set(state.founderHistory?.unlockedAchievementIds || [])
   const equippedId = state.founderHistory?.equippedFounderRelicId
   const maxSpeed = getMaxUnlockedSpeed(state.founderHistory)
   const totalUnlocked = FOUNDER_ACHIEVEMENTS_AND_RELICS.filter(
     a => unlockedIds.has(a.id) || unlockedIds.has(a.relicId)
   ).length
+  const easyUnlocked = FOUNDER_ACHIEVEMENTS_AND_RELICS.filter(
+    a => a.difficulty === 'easy' && (unlockedIds.has(a.id) || unlockedIds.has(a.relicId))
+  ).length
+  const effortUnlocked = FOUNDER_ACHIEVEMENTS_AND_RELICS.filter(
+    a => a.difficulty === 'effort' && (unlockedIds.has(a.id) || unlockedIds.has(a.relicId))
+  ).length
 
   const handleEquip = (relicId: string) => {
     sound.playCashCascade()
     dispatch({ type: 'founder.equip_relic', relicId })
   }
+
+  const displayedRelics = FOUNDER_ACHIEVEMENTS_AND_RELICS.filter(item => {
+    if (activeTab === 'easy') return item.difficulty === 'easy'
+    if (activeTab === 'effort') return item.difficulty === 'effort'
+    return true
+  })
 
   return (
     <div
@@ -194,6 +208,74 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
           </div>
         </div>
 
+        {/* Difficulty Filter Tabs */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => setActiveTab('all')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                border: activeTab === 'all' ? '1px solid #0284C7' : '1px solid #E2E8F0',
+                backgroundColor: activeTab === 'all' ? '#0284C7' : '#F8FAFC',
+                color: activeTab === 'all' ? '#FFFFFF' : '#475569',
+                cursor: 'pointer',
+                transition: 'all 120ms ease',
+              }}
+            >
+              All Relics ({FOUNDER_ACHIEVEMENTS_AND_RELICS.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('easy')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                border: activeTab === 'easy' ? '1px solid #059669' : '1px solid #E2E8F0',
+                backgroundColor: activeTab === 'easy' ? '#059669' : '#F8FAFC',
+                color: activeTab === 'easy' ? '#FFFFFF' : '#475569',
+                cursor: 'pointer',
+                transition: 'all 120ms ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <span>🌱 Founder Essentials ({easyUnlocked}/6)</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('effort')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                border: activeTab === 'effort' ? '1px solid #D97706' : '1px solid #E2E8F0',
+                backgroundColor: activeTab === 'effort' ? '#D97706' : '#F8FAFC',
+                color: activeTab === 'effort' ? '#FFFFFF' : '#475569',
+                cursor: 'pointer',
+                transition: 'all 120ms ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <span>👑 Legendary Pinnacles ({effortUnlocked}/6)</span>
+            </button>
+          </div>
+
+          <div className="font-mono" style={{ fontSize: '10px', color: '#64748B' }}>
+            {activeTab === 'easy'
+              ? 'Easy to unlock // Solid starter operational buffs'
+              : activeTab === 'effort'
+              ? 'Genuine effort // Transcendent founder power'
+              : 'Half Essentials • Half High-Effort Pinnacles'}
+          </div>
+        </div>
+
         {/* 12 Relic Grid */}
         <div
           style={{
@@ -205,9 +287,11 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
             paddingRight: '4px',
           }}
         >
-          {FOUNDER_ACHIEVEMENTS_AND_RELICS.map((item, idx) => {
+          {displayedRelics.map((item, idx) => {
             const isUnlocked = unlockedIds.has(item.id) || unlockedIds.has(item.relicId)
             const isEquipped = equippedId === item.relicId || (!equippedId && idx === 0 && isUnlocked)
+            const isEffort = item.difficulty === 'effort'
+            const isMonolith = item.id === 'ach_solopreneur_monolith'
 
             return (
               <div
@@ -216,8 +300,12 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                   backgroundColor: isUnlocked ? '#FFFFFF' : '#F8FAFC',
                   border: isEquipped
                     ? '1.5px solid #0284C7'
+                    : isMonolith
+                    ? '1.5px solid #F59E0B'
                     : isUnlocked
-                    ? '1px solid rgba(15, 23, 42, 0.1)'
+                    ? isEffort
+                      ? '1px solid rgba(217, 119, 6, 0.25)'
+                      : '1px solid rgba(15, 23, 42, 0.1)'
                     : '1px dashed #CBD5E1',
                   borderRadius: '12px',
                   padding: '14px',
@@ -228,7 +316,9 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                   opacity: isUnlocked ? 1 : 0.65,
                   position: 'relative',
                   boxShadow: isEquipped
-                    ? '0 4px 12px rgba(2, 132, 199, 0.12)'
+                    ? '0 4px 12px rgba(2, 132, 199, 0.14)'
+                    : isMonolith
+                    ? '0 4px 16px rgba(245, 158, 11, 0.12)'
                     : isUnlocked
                     ? '0 1px 3px rgba(15, 23, 42, 0.04)'
                     : 'none',
@@ -236,15 +326,15 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                 }}
               >
                 <div>
-                  {/* Card Header: Icon & Tier */}
+                  {/* Card Header: Icon & Difficulty Badges */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <div
                       style={{
                         width: '38px',
                         height: '38px',
                         borderRadius: '8px',
-                        backgroundColor: '#F1F5F9',
-                        border: '1px solid rgba(15, 23, 42, 0.08)',
+                        backgroundColor: isEffort ? 'rgba(217, 119, 6, 0.06)' : '#F1F5F9',
+                        border: isEffort ? '1px solid rgba(217, 119, 6, 0.15)' : '1px solid rgba(15, 23, 42, 0.08)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -259,7 +349,23 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                       />
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      <span
+                        className="font-mono"
+                        style={{
+                          fontSize: '8px',
+                          fontWeight: 800,
+                          padding: '1px 5px',
+                          borderRadius: '4px',
+                          backgroundColor: isEffort ? 'rgba(217, 119, 6, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                          color: isEffort ? '#D97706' : '#059669',
+                          border: isEffort ? '1px solid rgba(217, 119, 6, 0.25)' : '1px solid rgba(16, 185, 129, 0.25)',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {isMonolith ? '🔥 HERO MONOLITH' : isEffort ? '👑 GENUINE EFFORT' : '🌱 ESSENTIAL'}
+                      </span>
+
                       {item.unlockedRelic.speedBonus && (
                         <span
                           className="font-mono"
@@ -302,7 +408,7 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                     className="font-mono"
                     style={{
                       fontSize: '9px',
-                      color: 'var(--accent-monetisation, #D97706)',
+                      color: isEffort ? 'var(--accent-monetisation, #D97706)' : '#64748B',
                       marginTop: '2px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.04em',
@@ -317,13 +423,13 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                     className="font-mono"
                     style={{
                       fontSize: '9.5px',
-                      color: '#1E293B',
+                      color: isEffort ? '#0F172A' : '#1E293B',
                       marginTop: '6px',
                       lineHeight: 1.35,
-                      backgroundColor: '#F8FAFC',
+                      backgroundColor: isEffort ? '#FFFBEB' : '#F8FAFC',
                       padding: '6px 8px',
                       borderRadius: '6px',
-                      border: '1px solid rgba(15, 23, 42, 0.06)',
+                      border: isEffort ? '1px solid rgba(245, 158, 11, 0.2)' : '1px solid rgba(15, 23, 42, 0.06)',
                     }}
                   >
                     {item.unlockedRelic.effectSummary}
@@ -341,7 +447,7 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                     <button
                       onClick={() => handleEquip(item.relicId)}
                       disabled={isEquipped}
-                      className={`cred-3d-button ${isEquipped ? 'cred-3d-button-cyan' : 'cred-3d-button-light'}`}
+                      className={`cred-3d-button ${isEquipped ? 'cred-3d-button-cyan' : isEffort ? 'cred-3d-button-amber' : 'cred-3d-button-light'}`}
                       style={{
                         width: '100%',
                         padding: '5px 10px',
@@ -358,12 +464,12 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                       className="font-mono"
                       style={{
                         fontSize: '9px',
-                        color: '#94A3B8',
+                        color: isEffort ? '#B45309' : '#94A3B8',
                         textAlign: 'center',
                         padding: '4px',
                       }}
                     >
-                      🔒 Complete requirement in run to unlock
+                      🔒 {isEffort ? 'Requires genuine effort in run to unlock' : 'Complete requirement in run to unlock'}
                     </div>
                   )}
                 </div>

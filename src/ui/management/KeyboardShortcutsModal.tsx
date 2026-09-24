@@ -28,21 +28,22 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     title: '01 / Demand Room',
     items: [
-      { key: '→ or D or Enter', description: 'Pursue / Qualify signal (spend CAC, ship to Product)' },
-      { key: '← or A or Esc', description: 'Pass / Discard signal (keep capital)' },
-      { key: 'Tab', description: 'Cycle segment filter (All, Creators, Teams, Enterprise)' },
+      { key: 'D or →', description: 'Pursue / Qualify signal (spend CAC, ship to Product)' },
+      { key: 'A or ←', description: 'Pass / Discard signal (keep capital)' },
+      { key: 'Space', description: 'Hyper 2× lead (invest 2× CAC for 2× monthly ARR)' },
+      { key: 'Enter', description: 'Batch qualify all active inbound channel signals' },
       { key: 'R', description: 'Sweep market channels for fresh prospects' },
-      { key: 'Finger Swipe', description: 'Swipe right to pursue, swipe left to pass' },
+      { key: 'Tab or ↑ / ↓', description: 'Switch active channel workstation' },
     ],
   },
   {
     title: '02 / Product Room',
     items: [
-      { key: '1 – 2', description: 'Toggle Speed architecture modules' },
-      { key: '3 – 4', description: 'Toggle Collaboration architecture modules' },
-      { key: '5 – 6', description: 'Toggle Control architecture modules' },
-      { key: 'V', description: 'Run integrity verification' },
-      { key: 'S or Enter', description: 'Ship verified architecture to Monetisation' },
+      { key: 'Z', description: 'Auto-fill Prompt specification primitive across pods' },
+      { key: 'X', description: 'Auto-fill Diff AST synthesizer primitive across pods' },
+      { key: 'C', description: 'Auto-fill Test CI/CD primitive across pods' },
+      { key: 'V', description: 'Auto-fill Deploy rollout primitive across pods' },
+      { key: 'Enter', description: 'Ship ready release build to Monetisation' },
     ],
   },
   {
@@ -55,7 +56,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
   {
     title: '04 / Retention Room',
     items: [
-      { key: 'Space', description: 'Smash and rescue high-risk churn account' },
+      { key: 'Space', description: 'Defend SLA on threatened account / apply customer care' },
       { key: '1 or H', description: 'Deploy Hotfix ($25) on top critical account' },
       { key: '2 or F', description: 'Founder Call ($50) on top critical account' },
       { key: '3 or C', description: 'Grant Concession ($100) on top critical account' },

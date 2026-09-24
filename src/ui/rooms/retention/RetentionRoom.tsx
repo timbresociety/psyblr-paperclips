@@ -28,9 +28,7 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
 
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
   const [squashingId, setSquashingId] = useState<string | null>(null)
-  const [isScreenShaking, setIsScreenShaking] = useState(false)
   const [particles, setParticles] = useState<FloatingParticle[]>([])
-  const [activeTool, setActiveTool] = useState<'slap' | 'mallet' | 'coffee'>('slap')
 
   // Priority queue: accounts needing immediate attention auto-spotlight to top shelf
   const prioritizedAccounts: CustomerAccount[] = useMemo(() => {
@@ -90,16 +88,21 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
     }, 600)
   }
 
-  // Squashing action (Bills Must Be Paid mechanic)
+  // SLA Defense / Customer Care action
   const handleSquash = useCallback(
     (incident: RetentionIncident, accountId?: string, e?: React.MouseEvent) => {
-      const damage = activeTool === 'mallet' ? 5 : 1
-      const cost = activeTool === 'mallet' ? 1000 : 0
-      if (cost > 0 && state.cashCents < cost) return
+      const targetAcc = state.accounts.find(a => a.id === (accountId || incident.accountId))
+      const isThreat = Boolean(
+        targetAcc?.isThreatened ||
+        (targetAcc && targetAcc.health < 65) ||
+        incident.consequence === 'Contract Cancellation'
+      )
+      if (targetAcc && !isThreat && targetAcc.health >= 100) {
+        return
+      }
 
       sound.playSquash()
       setSquashingId(incident.id)
-      setIsScreenShaking(true)
 
       const rect = (e?.currentTarget as HTMLElement)?.getBoundingClientRect?.()
       const clickX = rect ? rect.width / 2 : 50
@@ -107,38 +110,30 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
       spawnParticle(
         clickX + (Math.random() * 20 - 10),
         clickY,
-        damage > 1 ? `-${damage} CRUSH!` : '-1 SQUASH',
-        damage > 1 ? '#F59E0B' : '#EF4444'
+        isThreat ? '-1 THREAT SHIELD' : '+SLA CARE',
+        isThreat ? '#EF4444' : '#0284C7'
       )
 
       setTimeout(() => {
         setSquashingId(null)
-        setIsScreenShaking(false)
       }, 240)
 
       dispatch({
         type: 'retention.squash_hit',
         incidentId: incident.id,
         accountId: accountId || incident.accountId,
-        damage,
-        costCents: cost,
+        damage: 1,
+        costCents: 0,
       })
 
-      if ((incident.hp ?? 4) - damage <= 0) {
+      if ((incident.hp ?? 4) - 1 <= 0) {
         sound.playCombo(combo + 1)
       }
     },
-    [activeTool, state.cashCents, combo, dispatch]
+    [combo, dispatch, state.accounts]
   )
 
-  const handleCoffeeSurge = useCallback(() => {
-    if (state.cashCents < 2000) return
-    sound.playMilestone()
-    dispatch({ type: 'retention.tool_surge', tool: 'coffee' })
-    spawnParticle(120, 40, 'COFFEE SURGE CLEARED ALL!', '#10B981')
-  }, [state.cashCents, dispatch])
-
-  // Desktop keyboard shortcuts: Space/Enter = smash active, 1 = Slap, 2 = Sledge, 3 = Coffee
+  // Desktop keyboard shortcuts: Space/Enter = defend SLA on active/threatened account
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return
@@ -146,16 +141,17 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
       if (e.key === ' ' || e.key === 'Enter') {
         if (state.accounts.length > 0) {
           e.preventDefault()
-          const threatened = liveIncidents.find(i => (i.hp ?? 4) > 0) || liveIncidents[0]
-          if (threatened) {
-            handleSquash(threatened, threatened.accountId)
-          } else {
-            const firstAcc = activeTarget || state.accounts[0]
-            handleSquash({
-              id: `threat-${firstAcc.id}`,
-              accountId: firstAcc.id,
-              accountName: firstAcc.name,
-              title: 'Customer SLA Defense',
+          let targetIncident: RetentionIncident | undefined
+          let targetAccId: string | undefined
+
+          // 1. If critical churn escalation active, prioritize defending it
+          if (state.retentionEvent?.active && state.retentionEvent.accountId) {
+            targetAccId = state.retentionEvent.accountId
+            targetIncident = liveIncidents.find(i => i.accountId === targetAccId) || {
+              id: `threat-${targetAccId}`,
+              accountId: targetAccId,
+              accountName: state.retentionEvent.accountName,
+              title: state.retentionEvent.reason,
               category: 'executive',
               urgencyTicks: 120,
               maxUrgencyTicks: 120,
@@ -163,30 +159,82 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
               hp: 4,
               maxHp: 4,
               threatType: 'piggy',
-            }, firstAcc.id)
+            }
+          } else if (selectedAccountId) {
+            const selectedAcc = state.accounts.find(a => a.id === selectedAccountId)
+            const isThreat = Boolean(selectedAcc?.isThreatened || (selectedAcc && selectedAcc.health < 65))
+            if (isThreat || (selectedAcc && selectedAcc.health < 100)) {
+              targetAccId = selectedAccountId
+              targetIncident = liveIncidents.find(i => i.accountId === selectedAccountId) || {
+                id: `threat-${selectedAccountId}`,
+                accountId: selectedAccountId,
+                accountName: selectedAcc?.name ?? 'Customer',
+                title: isThreat ? 'Customer SLA Defense' : 'Customer SLA Preventive Care',
+                category: 'executive',
+                urgencyTicks: isThreat ? 120 : 0,
+                maxUrgencyTicks: 120,
+                consequence: isThreat ? 'Contract Retention' : 'Customer Care',
+                hp: 4,
+                maxHp: 4,
+                threatType: 'piggy',
+              }
+            }
+          }
+
+          if (!targetIncident) {
+            const threatened = liveIncidents.find(i => (i.hp ?? 4) > 0)
+            const threatenedAcc = state.accounts.find(a => a.isThreatened || a.health < 65)
+            if (threatened) {
+              targetIncident = threatened
+              targetAccId = threatened.accountId
+            } else if (threatenedAcc) {
+              targetAccId = threatenedAcc.id
+              targetIncident = {
+                id: `threat-${threatenedAcc.id}`,
+                accountId: threatenedAcc.id,
+                accountName: threatenedAcc.name,
+                title: threatenedAcc.threatReason || 'Customer SLA Defense',
+                category: 'executive',
+                urgencyTicks: 120,
+                maxUrgencyTicks: 120,
+                consequence: 'Contract Retention',
+                hp: 4,
+                maxHp: 4,
+                threatType: 'piggy',
+              }
+            } else {
+              // Only target accounts with health < 100 for preventive care
+              const needsCareAcc = state.accounts.find(a => a.health < 100)
+              if (needsCareAcc) {
+                targetAccId = needsCareAcc.id
+                targetIncident = {
+                  id: `threat-${needsCareAcc.id}`,
+                  accountId: needsCareAcc.id,
+                  accountName: needsCareAcc.name,
+                  title: 'Customer SLA Preventive Care',
+                  category: 'executive',
+                  urgencyTicks: 0,
+                  maxUrgencyTicks: 120,
+                  consequence: 'Customer Care',
+                  hp: 4,
+                  maxHp: 4,
+                  threatType: 'piggy',
+                }
+              }
+            }
+          }
+
+          if (targetIncident && targetAccId) {
+            handleSquash(targetIncident, targetAccId)
           }
           return
         }
-      }
-
-      const k = e.key.toLowerCase()
-      if (k === 'q') {
-        e.preventDefault()
-        setActiveTool('slap')
-        sound.playClick()
-      } else if (k === 'w') {
-        e.preventDefault()
-        setActiveTool('mallet')
-        sound.playClick()
-      } else if (k === 'e') {
-        e.preventDefault()
-        handleCoffeeSurge()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [state.paused, state.accounts, liveIncidents, activeTarget, handleSquash, handleCoffeeSurge])
+  }, [state.paused, state.accounts, state.retentionEvent, selectedAccountId, liveIncidents, activeTarget, handleSquash])
 
   if (state.accounts.length === 0) {
     return (
@@ -257,10 +305,6 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
     )
   }
 
-  const activeArrDollars = activeTarget
-    ? (((activeTarget.baseMrrCents + activeTarget.addonMrrCents) * 12) / 100).toLocaleString()
-    : '11,520'
-
   // Shelf items strictly mapped from actual live customer accounts (up to maxBays priority accounts)
   const activeShelfAccounts = prioritizedAccounts.slice(0, maxBays)
 
@@ -269,6 +313,7 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
       liveIncidents.find(i => i.accountId === account.id || i.id === `threat-${account.id}`)
     const arrProtected = Math.round(((account.baseMrrCents + account.addonMrrCents) * 12) / 100)
     const isThreatened = account.isThreatened || account.health < 65
+    const isMaxHealth = account.health >= 100 && !isThreatened
     const effectiveHp = incident?.hp ?? 4
     const isDamaged = effectiveHp < 4 || squashingId === (incident?.id || `threat-${account.id}`) || isThreatened
     const threatTitle = incident?.title || account.threatReason || (account.health < 50 ? 'Severe Latency Degradation' : 'Executive Churn Risk')
@@ -293,11 +338,12 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
       arrProtected,
       isDamaged,
       isThreatened,
+      isMaxHealth,
       effectiveHp,
       threatTitle,
       subtitle: isThreatened
         ? `⚠️ At Risk: ${threatTitle}`
-        : '✔ SLA Nominal · Contract Stable',
+        : (isMaxHealth ? '✔ Peak SLA Health · Contract Stable' : '✔ SLA Nominal · Contract Stable'),
     }
   })
 
@@ -463,22 +509,28 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
             return (
               <div
                 key={slot.index}
-                onClick={(e) => handleSquash(slot.incident, slot.account?.id, e)}
+                onClick={(e) => { if (!slot.isMaxHealth) handleSquash(slot.incident, slot.account?.id, e) }}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   textAlign: 'center',
-                  cursor: 'pointer',
+                  cursor: slot.isMaxHealth ? 'default' : 'pointer',
                   padding: '10px 8px 12px 8px',
                   borderRadius: '12px',
-                  backgroundColor: slot.isThreatened ? 'rgba(239, 68, 68, 0.04)' : 'rgba(255, 255, 255, 0.55)',
-                  border: slot.isThreatened ? '1.5px solid rgba(239, 68, 68, 0.35)' : '1px solid var(--border-subtle)',
+                  backgroundColor: slot.isThreatened
+                    ? 'rgba(239, 68, 68, 0.04)'
+                    : slot.isMaxHealth
+                    ? 'rgba(255, 255, 255, 0.4)'
+                    : 'rgba(255, 255, 255, 0.55)',
+                  border: slot.isThreatened
+                    ? '1.5px solid rgba(239, 68, 68, 0.35)'
+                    : '1px solid var(--border-subtle)',
                   transition: 'transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease',
                   userSelect: 'none',
                 }}
                 className="rescue-shelf-card"
-                title="Click or press Space to squash!"
+                title={slot.isMaxHealth ? "Customer SLA is at 100% nominal capacity" : (slot.isThreatened ? "Click or press Space to defend threat!" : "Click to apply preventive SLA care")}
               >
                 {/* Top Label */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '4px' }}>
@@ -498,7 +550,7 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
                       borderRadius: '3px',
                     }}
                   >
-                    {slot.isThreatened ? '⚠️ CHURN THREAT' : '✔ SLA NOMINAL'}
+                    {slot.isThreatened ? '⚠️ CHURN THREAT' : (slot.isMaxHealth ? '✔ 100% NOMINAL' : '✔ SLA NOMINAL')}
                   </span>
                 </div>
 
@@ -543,11 +595,11 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
                           : 'rgba(0,0,0,0.14)',
                         transition: 'background-color 140ms ease',
                       }}
-                      title={`Durability: ${slot.effectiveHp}/4`}
+                      title={slot.isThreatened ? `Threat Shield: ${slot.effectiveHp}/4` : `Care Buffer: ${slot.effectiveHp}/4`}
                     />
                   ))}
-                  <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 800, color: 'var(--text-muted)', marginLeft: '2px' }}>
-                    {slot.effectiveHp}/4
+                  <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 800, color: slot.isThreatened ? 'var(--color-critical)' : 'var(--color-positive)', marginLeft: '2px' }}>
+                    {slot.isThreatened ? `Shield ${slot.effectiveHp}/4` : (slot.isMaxHealth ? 'Full 4/4' : `Buffer ${slot.effectiveHp}/4`)}
                   </span>
                 </div>
 
@@ -555,7 +607,7 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
                 {slot.account && (
                   <div style={{ width: '100%', maxWidth: '120px', marginBottom: '4px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8.5px', marginBottom: '1px' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Health</span>
+                      <span style={{ color: 'var(--text-muted)' }}>Customer Health</span>
                       <span className="font-mono" style={{ fontWeight: 700, color: slot.account.health < 65 ? 'var(--color-critical)' : 'var(--color-positive)' }}>
                         {Math.round(slot.account.health)}%
                       </span>
@@ -586,9 +638,11 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
                 {/* Action / Flavor copy */}
                 <div style={{ fontSize: '9.5px', color: slot.isThreatened ? 'var(--color-critical)' : 'var(--text-secondary)', lineHeight: 1.25, maxWidth: '160px', fontWeight: slot.isThreatened ? 600 : 400 }}>
                   {slot.isThreatened ? (
-                    <span>Click or [Space] (-{activeTool === 'mallet' ? 5 : 1} HP)</span>
+                    <span>Click or [Space] (-1 Threat Shield)</span>
+                  ) : slot.isMaxHealth ? (
+                    <span style={{ color: 'var(--color-positive)', fontWeight: 600 }}>✔ SLA Fully Protected (Peak Health)</span>
                   ) : (
-                    <span>Click for care (+{craftHealthBonusPct}% HP)</span>
+                    <span>Click for care (+{craftHealthBonusPct}% Health)</span>
                   )}
                 </div>
               </div>
@@ -627,153 +681,6 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
         </div>
       </div>
 
-      {/* Equippable Squashing Arsenal Bar */}
-      <div
-        className="room-card"
-        style={{
-          padding: '8px 12px',
-          marginBottom: '10px',
-          backgroundColor: 'var(--surface-raised)',
-          border: '1px solid var(--border-hairline)',
-          borderRadius: '10px',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '9.5px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
-              Equipped Squashing Arsenal
-            </span>
-            <span style={{ fontSize: '9px', fontWeight: 800, color: '#0284C7', backgroundColor: 'rgba(2, 132, 199, 0.1)', padding: '1px 6px', borderRadius: '4px' }}>
-              Craft SLA Armor: +{craftHealthBonusPct}% HP Restored
-            </span>
-          </div>
-          <span style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>
-            Switch: <kbd className="btn-kbd" style={{ fontSize: '8.5px', padding: '1px 4px' }}>Q</kbd> <kbd className="btn-kbd" style={{ fontSize: '8.5px', padding: '1px 4px' }}>W</kbd> <kbd className="btn-kbd" style={{ fontSize: '8.5px', padding: '1px 4px' }}>E</kbd>
-          </span>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '8px' }}>
-          {/* Tool 1: Fast Slap */}
-          <button
-            onClick={() => { setActiveTool('slap'); sound.playClick() }}
-            style={{
-              padding: '6px 8px',
-              borderRadius: '6px',
-              border: activeTool === 'slap' ? '2px solid var(--color-brand)' : '1px solid var(--border-hairline)',
-              backgroundColor: activeTool === 'slap' ? 'rgba(37, 99, 235, 0.08)' : 'var(--surface-work)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-          >
-            <div
-              className="font-mono"
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '4px',
-                backgroundColor: 'rgba(56, 189, 248, 0.15)',
-                border: '1px solid rgba(56, 189, 248, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '11px',
-                fontWeight: 900,
-                color: 'var(--color-brand)',
-                flexShrink: 0,
-              }}
-            >
-              Q
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-bright)' }}>
-                [Q] Quick Slap
-              </div>
-              <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
-                1 dmg · Free
-              </div>
-            </div>
-          </button>
-
-          {/* Tool 2: Heavy Mallet */}
-          <button
-            onClick={() => { setActiveTool('mallet'); sound.playClick() }}
-            disabled={state.cashCents < 1000}
-            style={{
-              padding: '6px 8px',
-              borderRadius: '6px',
-              border: activeTool === 'mallet' ? '2px solid var(--accent-monetisation)' : '1px solid var(--border-hairline)',
-              backgroundColor: activeTool === 'mallet' ? 'rgba(245, 158, 11, 0.08)' : 'var(--surface-work)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: state.cashCents >= 1000 ? 'pointer' : 'not-allowed',
-              opacity: state.cashCents >= 1000 ? 1 : 0.5,
-              textAlign: 'left',
-            }}
-          >
-            <img
-              src="/assets/2.5d/tool_hotfix_sledge.png"
-              alt="Hotfix Sledge"
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '4px',
-                objectFit: 'contain',
-                flexShrink: 0,
-              }}
-            />
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-bright)' }}>
-                [W] Sledge
-              </div>
-              <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
-                5 dmg · $10
-              </div>
-            </div>
-          </button>
-
-          {/* Tool 3: Coffee Surge */}
-          <button
-            onClick={handleCoffeeSurge}
-            disabled={state.cashCents < 2000 || liveIncidents.length === 0}
-            style={{
-              padding: '6px 8px',
-              borderRadius: '6px',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              backgroundColor: 'rgba(16, 185, 129, 0.08)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: state.cashCents >= 2000 && liveIncidents.length > 0 ? 'pointer' : 'not-allowed',
-              opacity: state.cashCents >= 2000 && liveIncidents.length > 0 ? 1 : 0.5,
-              textAlign: 'left',
-            }}
-          >
-            <img
-              src="/assets/2.5d/tool_coffee_surge.png"
-              alt="Coffee Surge"
-              style={{
-                width: '24px',
-                height: '24px',
-                borderRadius: '4px',
-                objectFit: 'contain',
-                flexShrink: 0,
-              }}
-            />
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-positive)' }}>
-                [E] Coffee
-              </div>
-              <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
-                Room Clear · $20
-              </div>
-            </div>
-          </button>
-        </div>
-      </div>
 
       {/* Customer Fleet Health Radar Strip */}
       <div style={{ width: '100%' }}>
@@ -796,7 +703,7 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
           </span>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '135px', overflowY: 'auto', paddingRight: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '220px', overflowY: 'auto', paddingRight: '4px' }}>
           {prioritizedAccounts.map((account) => {
             const isSelected = activeTarget?.id === account.id
             const isThreatened = account.isThreatened || account.health < 65
@@ -880,8 +787,8 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
                     >
                       <span style={{ fontSize: '10.5px', color: isThreatened ? 'var(--color-critical)' : 'var(--text-muted)' }}>
                         {isThreatened
-                          ? '⚠️ Account threatened! Squash threat on Defense Shelf above using Slap [1], Sledge [2], or Coffee [3].'
-                          : 'Spotlighted on Defense Shelf above. Click piggy bank to apply preventive care (+35% Health).'}
+                          ? '⚠️ Account threatened! Defend SLA on Defense Shelf above via Click or [Space].'
+                          : 'Spotlighted on Defense Shelf above. Click for preventive care (+35% Health).'}
                       </span>
                       <button
                         onClick={() => {

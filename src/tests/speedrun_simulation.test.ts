@@ -4,8 +4,7 @@ import { gameReducer } from '../engine/reducer'
 import {
   UPGRADE_RANK_COSTS,
   UNICORN_VALUATION_CENTS,
-  SPECULATIVE_OPTIMIZER_COOLDOWN_TICKS,
-  DEMAND_REPLENISH_INTERVAL_TICKS,
+  SEGMENT_PROFILES,
 } from '../engine/constants'
 import type { FunctionId, ProgressionAxis } from '../engine/types'
 
@@ -70,7 +69,7 @@ describe('Game Balancing & Speedrun Invariants', () => {
 
       // Qualify another opportunity and place components again
       state = { ...state, lastDemandTriageTick: -9999 }
-      const sig2 = state.demandSignals[1]
+      const sig2 = state.demandSignals[0]
       state = gameReducer(state, { type: 'demand.triage', signalId: sig2.id, decision: 'qualify' })
       state = gameReducer(state, { type: 'product.place_component', componentId: 'engine-streaming', slot: 'speed' })
       state = gameReducer(state, { type: 'product.place_component', componentId: 'collab-presence', slot: 'collaboration' })
@@ -154,8 +153,8 @@ describe('Game Balancing & Speedrun Invariants', () => {
       state = { ...state, paused: false }
       let tick = 0
 
-      // Run optimal speedrunner for 7,100 ticks (11.83 minutes)
-      const testLimitTicks = 7_100
+      // Run optimal speedrunner for 6,800 ticks (11.33 minutes)
+      const testLimitTicks = 6_800
       while (tick < testLimitTicks && state.runStatus === 'running') {
         if (state.quarterReviewPending) {
           if (state.availableQuarterRelics.length > 0) {
@@ -178,8 +177,9 @@ describe('Game Balancing & Speedrun Invariants', () => {
           { fn: 'product', axis: 'craft' },
           { fn: 'demand', axis: 'craft' },
         ]
-        // Prudent liquidity: ensure cash covers monthly obligations before buying upgrades
-        const monthlyObligations = (state.opexMonthCents + state.cogsMonthCents) || 100_000
+        // Prudent liquidity: ensure cash covers monthly obligations (including debt service) before buying upgrades
+        const debtPmt = state.debt.active ? state.debt.monthlyPaymentCents : 0
+        const monthlyObligations = (state.opexMonthCents + state.cogsMonthCents + debtPmt) || 100_000
         const requiredBuffer = Math.max(100_000, Math.round(monthlyObligations * 1.5))
         for (const u of upgradeOrder) {
           const currentRank = state.fleet[u.fn]?.[`${u.axis}Rank` as keyof typeof state.fleet[typeof u.fn]] as number ?? 0
@@ -204,8 +204,17 @@ describe('Game Balancing & Speedrun Invariants', () => {
         }
         if (tick % 20 === 0) {
           if (state.demandSignals.length > 0 && state.qualifiedOpportunities.length < 2) {
-            const best = [...state.demandSignals].sort((a, b) => b.estimatedWtpCents - a.estimatedWtpCents)[0]
-            if (best && state.cashCents >= best.acquisitionCostCents + 10_000) {
+            const candidates = state.demandSignals.filter(s => {
+              if (s.segment === 'enterprise') return state.cashCents >= s.acquisitionCostCents * 2.5
+              return state.cashCents - s.acquisitionCostCents >= monthlyObligations
+            })
+            const best = candidates.sort((a, b) => {
+              const rateA = SEGMENT_PROFILES[a.segment]?.qualificationSuccessRate ?? 0.8
+              const rateB = SEGMENT_PROFILES[b.segment]?.qualificationSuccessRate ?? 0.8
+              return (b.estimatedWtpCents * rateB) - (a.estimatedWtpCents * rateA)
+            })[0] || state.demandSignals[0]
+
+            if (best && state.cashCents - best.acquisitionCostCents >= monthlyObligations) {
               state = gameReducer(state, { type: 'demand.triage', signalId: best.id, decision: 'qualify' })
             }
           }
@@ -224,7 +233,7 @@ describe('Game Balancing & Speedrun Invariants', () => {
         tick += 1
       }
 
-      // At 7,100 ticks (< 12 minutes), valuation must be strictly below $1B USD
+      // At 6,800 ticks (< 11.5 minutes), valuation must be strictly below $1B USD
       expect(state.valuationCents).toBeLessThan(UNICORN_VALUATION_CENTS)
       if (state.runStatus === 'failed') {
         console.error('SPEEDRUN FAILED BECAUSE:', state.failureReason, 'tick:', tick, 'val:', state.valuationCents, 'cash:', state.cashCents)

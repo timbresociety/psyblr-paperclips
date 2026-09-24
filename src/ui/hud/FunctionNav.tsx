@@ -2,10 +2,12 @@ import React from 'react'
 import type { GameState, FunctionId } from '../../engine/types'
 import type { GameAction } from '../../engine/actions'
 import { sound } from '../../audio/soundEngine'
+import { getMonetisationDealStats } from '../../engine/formulas'
 
 interface FunctionNavProps {
   state: GameState
   dispatch: React.Dispatch<GameAction>
+  activeRoomOverride?: FunctionId
   onOpenSkillTree?: () => void
   onOpenFleetModal?: () => void
   onOpenLedger?: () => void
@@ -31,6 +33,7 @@ const ROOMS: NavItem[] = [
 export const FunctionNav: React.FC<FunctionNavProps> = ({
   state,
   dispatch,
+  activeRoomOverride,
   onOpenSkillTree,
   onOpenFleetModal,
 }) => {
@@ -45,18 +48,36 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
   const productReadyPods = (state.productPods || []).filter(p => p.isReadyToShip).length
   const productAlertCount = (state.qualifiedOpportunities || []).length + productReadyPods
 
-  const monetisationAlertCount = (state.currentActivation ? 1 : 0) + (state.activationsQueue || []).length
+  const monetisationAlertCount = getMonetisationDealStats(state).totalCount
 
-  // Unique accounts currently threatened or in critical condition requiring founder intervention
-  const threatenedAccountsCount = (state.accounts || []).filter(a => a.isThreatened || a.health < 50).length
-  const standaloneRetentionEvent = state.retentionEvent?.active && !state.accounts.some(a => a.id === state.retentionEvent?.accountId && (a.isThreatened || a.health < 50)) ? 1 : 0
-  const retentionAlertCount = threatenedAccountsCount + standaloneRetentionEvent
+  // Active retention threats: unique threatened accounts, active incidents, or crisis events
+  const activeThreatIds = new Set<string>()
+  ;(state.accounts || []).forEach(a => {
+    if (a.isThreatened || (a.health !== undefined && a.health < 65)) {
+      activeThreatIds.add(a.id)
+    }
+  })
+  ;(state.retentionIncidents || []).forEach(inc => {
+    activeThreatIds.add(inc.accountId || inc.id)
+  })
+  if (state.retentionEvent?.active && state.retentionEvent.accountId) {
+    activeThreatIds.add(state.retentionEvent.accountId)
+  }
+  const retentionAlertCount =
+    activeThreatIds.size + (state.retentionEvent?.active && !state.retentionEvent.accountId ? 1 : 0)
+
 
   const expansionOrdersCount = (state.expansionOrders || []).length
 
   const opsEventActive = state.operationsEvent?.active ? 1 : 0
-  const opsIncidentsBacklog = (state.operations?.incidentsBacklog || 0) > 0 ? 1 : 0
-  const opsAlertCount = opsEventActive + opsIncidentsBacklog
+  const opsIncidentsCount = state.operations?.incidentsBacklog || 0
+  const opsBustedCount = (state.activeTickets || []).filter(t => t.isBusted).length
+  const opsStrainAlert = (state.operations?.strainBacklog ?? 0) >= 10 ? 1 : 0
+  const opsRotAlert = (state.operations?.contextRot ?? 0) >= 0.35 ? 1 : 0
+  const opsUnackAlerts = (state.alerts || []).filter(
+    a => !a.acknowledged && (a.targetFunction === 'operations' || (a.tone === 'critical' && (a.id.startsWith('ticket-') || a.id.startsWith('ops-'))))
+  ).length
+  const opsAlertCount = opsEventActive + opsIncidentsCount + opsBustedCount + opsStrainAlert + opsRotAlert + opsUnackAlerts
 
   return (
     <nav
@@ -94,7 +115,8 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
         {/* 6 Operational Rooms */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
           {ROOMS.map(room => {
-            const isActive = state.activeFunction === room.id
+            const currentActive = activeRoomOverride ?? state.activeFunction
+            const isActive = currentActive === room.id
             const fleet = state.fleet[room.id as keyof typeof state.fleet]
             const units = fleet ? fleet.onlineUnits : 0
             const isAutomated = Boolean(fleet && fleet.automateRank > 0)
@@ -123,10 +145,21 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
               badgeTone = 'accent'
             } else if (room.id === 'operations') {
               badgeCount = opsAlertCount
-              badgeTone = opsEventActive || opsIncidentsBacklog > 0 ? 'critical' : 'warning'
+              badgeTone = opsEventActive || opsIncidentsCount > 0 || opsBustedCount > 0 ? 'critical' : 'warning'
             }
 
             const hasBadge = badgeCount > 0
+
+            const badgeColor =
+              badgeTone === 'critical'
+                ? '#EF4444'
+                : badgeTone === 'warning'
+                ? '#D97706'
+                : badgeTone === 'info'
+                ? '#0284C7'
+                : room.accentColor
+
+            const isCritical = badgeTone === 'critical'
 
             return (
               <div
@@ -217,18 +250,11 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
 
                 {hasBadge && (
                   <span
-                    className="font-mono"
+                    className={`font-mono ${isCritical ? 'animate-badge-glow-critical' : 'animate-badge-glow'}`}
                     style={{
                       fontSize: '10px',
                       fontWeight: 800,
-                      color:
-                        badgeTone === 'critical'
-                          ? '#EF4444'
-                          : badgeTone === 'warning'
-                          ? '#D97706'
-                          : badgeTone === 'info'
-                          ? '#0284C7'
-                          : room.accentColor,
+                      color: badgeColor,
                       backgroundColor:
                         badgeTone === 'critical'
                           ? 'rgba(239, 68, 68, 0.12)'
@@ -239,15 +265,17 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                           : `${room.accentColor}1A`,
                       border:
                         badgeTone === 'critical'
-                          ? '1px solid rgba(239, 68, 68, 0.35)'
+                          ? '1px solid rgba(239, 68, 68, 0.45)'
                           : badgeTone === 'warning'
-                          ? '1px solid rgba(217, 119, 6, 0.35)'
+                          ? '1px solid rgba(217, 119, 6, 0.45)'
                           : badgeTone === 'info'
-                          ? '1px solid rgba(2, 132, 199, 0.35)'
-                          : `1px solid ${room.accentColor}44`,
+                          ? '1px solid rgba(2, 132, 199, 0.45)'
+                          : `1px solid ${room.accentColor}55`,
                       padding: '1px 6px',
                       borderRadius: '4px',
                       flexShrink: 0,
+                      ['--badge-glow' as any]: badgeColor,
+                      boxShadow: `0 0 8px ${badgeColor}66, inset 0 0 2px ${badgeColor}33`,
                     }}
                   >
                     {badgeCount}

@@ -7,12 +7,11 @@ import {
   RETENTION_BAY_LIMITS,
   EXPANSION_BAY_LIMITS,
   OPERATIONS_RACK_LIMITS,
-  MONETISATION_CRAFT_MULTIPLIERS,
   EXPANSION_GRID_SIZES,
   EXPANSION_GRID_DIMS,
   EXTENDED_TIER_NAMES,
 } from '../engine/constants'
-import type { DemandSignal, MergeItem, ExpansionOrder } from '../engine/types'
+import type { DemandSignal } from '../engine/types'
 
 describe('Workstations, Increments & Demand Overhaul', () => {
   describe('Workstation Limits & Constants', () => {
@@ -316,7 +315,7 @@ describe('Workstations, Increments & Demand Overhaul', () => {
 
       const initialTicket = state.activeTickets?.[0]
       expect(initialTicket).toBeDefined()
-      expect(initialTicket!.pods.length).toBe(3)
+      expect(initialTicket!.pods.length).toBe(1)
 
       // Scratch sector 0 (Compute Core)
       state = gameReducer(state, {

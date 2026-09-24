@@ -1,12 +1,9 @@
 import type { GameState, DemandSignal, FunctionId, FunctionFleet, ScratchCard, ScratchPod } from './types'
 import {
   INITIAL_CASH_CENTS,
-  BASE_OVERHEAD_MONTHLY_CENTS,
-  TICKS_PER_MONTH,
   DEFAULT_PRODUCT_COMPONENTS,
   RELIC_CATALOG,
   CONSUMABLE_CATALOG,
-  SEGMENT_PROFILES,
 } from './constants'
 
 export function createInitialDemandSignals(): DemandSignal[] {
@@ -256,6 +253,7 @@ export function createInitialState(seed = 1337): GameState {
     signalsTriagedCount: 0,
     lastDemandReplenishTick: 0,
     lastDemandTriageTick: -9999,
+    lastTriageOutcome: null,
 
     // Product
     availableComponents: [...DEFAULT_PRODUCT_COMPONENTS],
@@ -403,6 +401,10 @@ export function createInitialState(seed = 1337): GameState {
     lockedQuarterConsumableIds: [],
     quarterReviewRerolls: 0,
     warRoomTicksRemaining: 0,
+    warRoomSpeedMultiplier: 1.0,
+    bullseyeStrikesRemaining: 0,
+    patentShieldTicksRemaining: 0,
+    quarterValuationBoostMultiple: 0,
     quarterReviewPending: false,
     unicornVictoryAcknowledged: false,
 
@@ -445,93 +447,145 @@ export function createDiagnosticTicket(
   luckRank: number = 0,
   idSuffix?: string
 ): ScratchCard {
-  const isGolden = luckRank >= 4 || (luckRank >= 2 && Math.random() < 0.25)
-  const hazardChance = isGolden ? 0 : Math.max(0.08, 0.28 - 0.06 * luckRank)
+  // Golden tickets roll with chance scaling with luck (up to 22% at high luck)
+  const isGolden = luckRank >= 4
+    ? Math.random() < 0.22
+    : luckRank >= 2
+    ? Math.random() < 0.14
+    : luckRank >= 1
+    ? Math.random() < 0.08
+    : Math.random() < 0.03
 
-  const pods: ScratchPod[] = [
-    // Sector 0: Compute Core
-    Math.random() < hazardChance
-      ? {
-          id: 0,
-          symbol: 'rotten',
-          rewardType: 'penalty',
-          rewardValue: Math.round(4 + Math.random() * 4),
-          label: 'Thermal Fault: +Strain Overload',
-          isScratched: false,
-          isNegative: true,
-        }
-      : {
-          id: 0,
-          symbol: isGolden ? 'golden_apple' : 'coin',
-          rewardType: 'cash',
-          rewardValue: isGolden ? 50_000 : 15_000 + Math.round(Math.random() * 3) * 5_000,
-          label: isGolden ? 'TPU Supercore: +$500 Rebate & -15 Strain' : 'Compute Credit: Token Rebate',
-          isScratched: false,
-          isNegative: false,
-        },
-    // Sector 1: Context Memory Bus
-    Math.random() < hazardChance
-      ? {
-          id: 1,
-          symbol: 'skull',
-          rewardType: 'rot',
-          rewardValue: 0.20,
-          label: 'Memory Leak: +20% Context Rot',
-          isScratched: false,
-          isNegative: true,
-        }
-      : {
-          id: 1,
-          symbol: 'broom',
-          rewardType: 'rot',
-          rewardValue: isGolden ? 0.40 : 0.20 + Math.round(Math.random() * 2) * 0.05,
-          label: isGolden ? 'Deep Memory Flush: -40% Context Rot' : 'Cache Purge: -Rot Relief',
-          isScratched: false,
-          isNegative: false,
-        },
-    // Sector 2: Sentry & Cluster Health
-    Math.random() < hazardChance
-      ? {
-          id: 2,
-          symbol: 'skull',
-          rewardType: 'incident',
-          rewardValue: 1,
-          label: 'Kernel Panic: +1 Incident Risk',
-          isScratched: false,
-          isNegative: true,
-        }
-      : {
-          id: 2,
-          symbol: 'shield',
-          rewardType: 'strain',
-          rewardValue: isGolden ? 15 : 6 + Math.round(Math.random() * 3) * 2,
-          label: isGolden ? 'Hot-Spare Array: -15 Strain & Incident Purge' : 'Strain Scrubber: -Strain Relief',
-          isScratched: false,
-          isNegative: false,
-        },
-  ]
+  // Hazard rate: drops substantially as luckRank rises, but maintains a healthy floor for peeking gameplay
+  // Rank 0: ~35% hazard; Rank 1: ~30%; Rank 2: ~25%; Rank 3: ~20%; Rank 4: ~16%; Rank 5: ~13%
+  const hazardChance = isGolden ? 0 : Math.max(0.14, 0.36 - 0.05 * luckRank)
+  const isHazard = !isGolden && Math.random() < hazardChance
+
+  // Luck expands statistical Value Variance: higher highs for rewards
+  const spread = 0.25 + 0.20 * luckRank
+  const varianceMultiplier = Math.max(0.40, 1 + (Math.random() * 2.2 - 0.6) * spread)
+
+  let outcome: ScratchPod
+
+  if (isHazard) {
+    // Negative hazard ticket (Thermal fault, Memory leak, or Kernel panic)
+    const hazardRoll = Math.random()
+    if (hazardRoll < 0.48) {
+      // Thermal Fault: strain overload (scaled so cluster doesn't instantly collapse)
+      const penaltyStrain = Math.max(2, Math.round((2.0 + Math.random() * 1.5) * (1 + 0.05 * luckRank)))
+      outcome = {
+        id: 0,
+        symbol: 'rotten',
+        rewardType: 'penalty',
+        rewardValue: penaltyStrain,
+        label: `Thermal Fault: +${penaltyStrain} Strain Overload`,
+        isScratched: false,
+        isNegative: true,
+      }
+    } else if (hazardRoll < 0.82) {
+      // Memory Leak: context rot drift
+      const penaltyRot = Number((Math.min(0.20, (0.06 + Math.random() * 0.05) * (1 + 0.05 * luckRank))).toFixed(2))
+      outcome = {
+        id: 0,
+        symbol: 'skull',
+        rewardType: 'rot',
+        rewardValue: penaltyRot,
+        label: `Memory Leak: +${Math.round(penaltyRot * 100)}% Context Rot`,
+        isScratched: false,
+        isNegative: true,
+      }
+    } else {
+      // Kernel Panic: active incident
+      outcome = {
+        id: 0,
+        symbol: 'panic',
+        rewardType: 'incident',
+        rewardValue: 1,
+        label: 'Kernel Panic: +1 Critical Incident',
+        isScratched: false,
+        isNegative: true,
+      }
+    }
+  } else if (isGolden) {
+    // TPU Supercore jackpot: high cash rebate, strain relief, rot purge, primes shipping
+    const goldenCash = Math.round(60_000 * varianceMultiplier)
+    outcome = {
+      id: 0,
+      symbol: 'golden_apple',
+      rewardType: 'cash',
+      rewardValue: goldenCash,
+      label: `TPU Supercore: +$${Math.round(goldenCash / 100).toLocaleString()} Rebate & -15 Strain`,
+      isScratched: false,
+      isNegative: false,
+    }
+  } else {
+    // Standard Positive Telemetry Ticket
+    const positiveRoll = Math.random()
+    if (positiveRoll < 0.42) {
+      // Compute Rebate
+      const computeCash = Math.round((15_000 + Math.floor(Math.random() * 4) * 5_000) * varianceMultiplier)
+      outcome = {
+        id: 0,
+        symbol: 'coin',
+        rewardType: 'cash',
+        rewardValue: computeCash,
+        label: `Compute Credit: +$${Math.round(computeCash / 100).toLocaleString()} Rebate`,
+        isScratched: false,
+        isNegative: false,
+      }
+    } else if (positiveRoll < 0.74) {
+      // Strain Scrubber
+      const strainRelief = Math.max(4, Math.round((6 + Math.floor(Math.random() * 3) * 2) * varianceMultiplier))
+      outcome = {
+        id: 0,
+        symbol: 'shield',
+        rewardType: 'strain',
+        rewardValue: strainRelief,
+        label: `Strain Scrubber: -${strainRelief} Strain Relief`,
+        isScratched: false,
+        isNegative: false,
+      }
+    } else {
+      // Cache Purge
+      const rotRelief = Number((Math.min(0.65, (0.20 + Math.random() * 0.15) * varianceMultiplier)).toFixed(2))
+      outcome = {
+        id: 0,
+        symbol: 'broom',
+        rewardType: 'rot',
+        rewardValue: rotRelief,
+        label: `Cache Purge: -${Math.round(rotRelief * 100)}% Rot Relief`,
+        isScratched: false,
+        isNegative: false,
+      }
+    }
+  }
 
   const severity: 'nominal' | 'elevated' | 'critical' | 'golden' = isGolden
     ? 'golden'
-    : pods.some(p => p.isNegative)
-    ? 'elevated'
+    : outcome.isNegative
+    ? 'critical'
     : 'nominal'
 
   return {
-    id: `ticket-${stationIndex}-${Date.now()}-${idSuffix || Math.floor(Math.random() * 1000)}`,
+    id: `ticket-${stationIndex}-${Date.now()}-${idSuffix || Math.floor(Math.random() * 10000)}`,
     stationIndex,
     type: 'ticket',
     name: `RACK // 0${stationIndex + 1} Diagnostic Ticket`,
     subtitle: isGolden
-      ? '★ Golden TPU Supercore Ticket (Zero Hazard Risk)'
+      ? '★ Golden TPU Supercore Telemetry (Zero Hazard Risk)'
+      : outcome.isNegative
+      ? '⚠️ Warning: Anomaly Telemetry Detected'
       : 'Live Telemetry & Recovery Bay',
-    pods,
+    pods: [outcome],
+    outcome,
+    scratchProgress: 0,
     claimed: false,
     bankedCashCents: 0,
     bankedStrainRelief: 0,
     bankedRotRelief: 0,
     bankedLuckDelta: 0,
     isBusted: false,
+    isHazard: outcome.isNegative,
     severity,
   }
 }

@@ -1,4 +1,4 @@
-import type { FunctionId, ProgressionAxis, CustomerSegment, EvolutionTier, AIPrimitiveType, EngineArchetypeId } from './types'
+import type { FunctionId, ProgressionAxis, EvolutionTier, AIPrimitiveType, EngineArchetypeId } from './types'
 
 export type GameAction =
   | { type: 'clock.tick'; dtTicks?: number }
@@ -66,6 +66,8 @@ export type GameAction =
   | { type: 'operations.new_card'; cardType: 'lucky_cat' | 'apple_tree' }
   | { type: 'operations.scratch_ticket'; ticketIndex?: number; stationIndex?: number; podIndex?: number }
   | { type: 'operations.claim_ticket'; ticketIndex?: number; stationIndex?: number }
+  | { type: 'operations.reject_ticket'; ticketIndex?: number; stationIndex?: number }
+  | { type: 'operations.redeem_ticket'; ticketIndex?: number; stationIndex?: number }
   | { type: 'operations.batch_scratch_all' }
   
   // Fleet / Skill Trees

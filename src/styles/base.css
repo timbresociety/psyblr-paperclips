@@ -1943,7 +1943,7 @@ input:focus, select:focus, textarea:focus {
     padding: 1px 4px;
     border-radius: 9999px;
     line-height: 1;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 8px var(--badge-glow, rgba(225, 29, 72, 0.6));
   }
 }
 

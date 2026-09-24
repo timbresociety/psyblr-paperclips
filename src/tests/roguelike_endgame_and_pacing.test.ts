@@ -48,7 +48,7 @@ describe('Roguelike Endgame, Pacing & Pacing 2.0 Invariants', () => {
     expect(initialSignal).toBeDefined()
 
     const startingOpportunities = state.qualifiedOpportunities.length
-    const expectedCac = Math.round(initialSignal.acquisitionCostCents * 2.5)
+    const expectedCac = Math.round(initialSignal.acquisitionCostCents * 2)
     const expectedCash = state.cashCents - expectedCac
 
     const nextState = gameReducer(state, {

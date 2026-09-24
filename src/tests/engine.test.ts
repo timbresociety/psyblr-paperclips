@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { createInitialState } from '../engine/state'
 import { gameReducer } from '../engine/reducer'
-import { calculateCustomerConversion, calculateValuationCents, calculateArrTotals } from '../engine/formulas'
 
 describe('Deterministic Economic Engine', () => {
   it('initializes with correct baseline capital and score invariants', () => {

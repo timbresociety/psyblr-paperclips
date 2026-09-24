@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import type { GameState, ProductActivation, CustomerSegment } from "../../../engine/types"
 import type { GameAction } from "../../../engine/actions"
 import { sound } from "../../../audio/soundEngine"
-import { calculateCustomerConversion, clamp } from "../../../engine/formulas"
-import { SEGMENT_PROFILES, MONETISATION_CRAFT_MULTIPLIERS, MONETISATION_DESK_LIMITS } from "../../../engine/constants"
+import { calculateCustomerConversion, clamp, getMonetisationDealStats } from "../../../engine/formulas"
+import { MONETISATION_CRAFT_MULTIPLIERS, MONETISATION_DESK_LIMITS } from "../../../engine/constants"
 
 // =========================================================================
 // RADIAL ARC GEOMETRY CONSTANTS
@@ -59,13 +59,22 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
   const [selectedDeskIndex, setSelectedDeskIndex] = useState(0)
   const activeDeskIdx = Math.min(selectedDeskIndex, maxDesks - 1)
 
+  const monetisationStats = useMemo(() => getMonetisationDealStats(state), [state])
+
   // Active desks array (1..6)
   const activeDesks = useMemo(() => {
     const existing = state.activeDealDesks || []
     const result = []
     for (let i = 0; i < maxDesks; i++) {
       if (existing[i]) {
-        result.push(existing[i])
+        const desk = existing[i]
+        const act = desk.activation ?? (i === 0 ? (state.currentActivation ?? null) : null)
+        result.push({
+          ...desk,
+          activation: act,
+          postedPriceMonthlyCents: (i === 0 && state.postedPriceMonthlyCents) ? state.postedPriceMonthlyCents : desk.postedPriceMonthlyCents,
+          status: act ? ("negotiating" as const) : desk.status,
+        })
       } else {
         result.push({
           id: `desk-${i}`,
@@ -97,9 +106,9 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
   const phaseRef = useRef<number>(0)
   const driftPhaseRef = useRef<number>(0)
   const needleRef = useRef<number>(0.5)
-  const lastTimeRef = useRef<number>(performance.now())
+  const lastTimeRef = useRef<number>(0)
 
-  const [previewSegment, setPreviewSegment] = useState<CustomerSegment>("creator")
+  const previewSegment: CustomerSegment = "creator"
 
   const effectiveActivation = useMemo<ProductActivation>(() => {
     if (currentDeskActivation) return currentDeskActivation
@@ -118,7 +127,6 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
   }, [currentDeskActivation, state.currentActivation, previewSegment, state.systemCapabilities, state.elapsedTicks])
 
   const segment = effectiveActivation.targetSegment
-  const profile = SEGMENT_PROFILES[segment]
 
   // Segment-dependent swing speed & sweet-spot challenge
   const swingSpeed = useMemo(() => {
@@ -205,21 +213,17 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
       setTimeout(() => setIsShaking(false), 240)
 
       const hit = needleRef.current
-      let rating: "perfect" | "good" | "hazard" = "hazard"
 
       // Rate hit quality against dynamic sweet spot
       if (hit >= sweetMin && hit <= sweetMax) {
-        rating = "perfect"
         setLastRating("perfect")
         setShowShockwave(true)
         setTimeout(() => setShowShockwave(false), 700)
         sound.playCashTick()
       } else if (Math.abs(hit - sweetSpotCenter) <= sweetSpotWidth * 1.1) {
-        rating = "good"
         setLastRating("good")
         sound.playSnap()
       } else {
-        rating = "hazard"
         setLastRating("hazard")
         sound.playWarning()
       }
@@ -507,8 +511,8 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
                     </div>
                   ) : (
                     <div style={{ fontSize: "9px", color: "var(--text-muted)", lineHeight: 1.3 }}>
-                      {state.activationsQueue.length > 0
-                        ? `+${state.activationsQueue.length} queued to feed next tick`
+                      {monetisationStats.queuedCount > 0
+                        ? `+${monetisationStats.queuedCount} queued to feed next tick`
                         : automateRank > 0
                         ? "AI Closer monitoring incoming deals"
                         : "Awaiting signed packages from Product [2]"}
@@ -716,7 +720,7 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
             >
               PROSPECT: {segment.toUpperCase()}
             </span>
-            {state.activationsQueue.length > 0 && (
+            {monetisationStats.queuedCount > 0 && (
               <span
                 className="badge-tag"
                 style={{
@@ -726,7 +730,7 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
                   fontSize: "10px",
                 }}
               >
-                +{state.activationsQueue.length} queued
+                +{monetisationStats.queuedCount} queued
               </span>
             )}
           </div>

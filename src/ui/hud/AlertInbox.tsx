@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import type { Alert, FunctionId } from '../../engine/types'
 import type { GameAction } from '../../engine/actions'
 import { sound } from '../../audio/soundEngine'
@@ -40,8 +40,8 @@ export const AlertInbox: React.FC<AlertInboxProps> = ({ alerts, dispatch }) => {
   const resolveTargetFunction = (alert: Alert): FunctionId | undefined => {
     if (alert.targetFunction) return alert.targetFunction
     const text = (alert.title + ' ' + alert.message + ' ' + alert.id).toLowerCase()
+    if (alert.id.startsWith('ticket-') || alert.id.startsWith('ops-') || alert.id.startsWith('rack-') || text.includes('ops') || text.includes('strain') || text.includes('failover') || text.includes('rot') || text.includes('cluster') || text.includes('thermal') || text.includes('telemetry') || text.includes('rack 0')) return 'operations'
     if (text.includes('runway') || text.includes('bill') || text.includes('debt') || text.includes('cash') || text.includes('finance') || text.includes('liquidity')) return 'finance'
-    if (text.includes('ops') || text.includes('strain') || text.includes('failover') || text.includes('rot') || text.includes('cluster') || text.includes('thermal')) return 'operations'
     if (text.includes('threat') || text.includes('sla') || text.includes('churn') || text.includes('retention') || text.includes('squash')) return 'retention'
     if (text.includes('deal') || text.includes('monet') || text.includes('pricing') || text.includes('contract') || text.includes('wtp')) return 'monetisation'
     if (text.includes('pod') || text.includes('build') || text.includes('shipped') || text.includes('product') || text.includes('primitive')) return 'product'

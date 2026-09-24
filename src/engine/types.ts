@@ -14,6 +14,14 @@ export interface SegmentProfile {
   needControl: number
   collectionDelayTicks: number
   collectionProbability: number
+  qualificationSuccessRate: number
+}
+
+export interface LuckVarianceResult {
+  multiplier: number
+  delta: number
+  isPeakPositive: boolean
+  isExtremeNegative: boolean
 }
 
 export type EvolutionTier = 'garage' | 'workshop' | 'workstation' | 'growth' | 'ethereal'
@@ -40,6 +48,28 @@ export interface QualifiedOpportunity {
   segmentLabel?: string
   estimatedWtpCents: number
   qualifiedTick: number
+}
+
+export interface DemandTriageOutcome {
+  id: string
+  signalId: string
+  title: string
+  segment: CustomerSegment
+  success: boolean
+  probability: number
+  failureReason?: string
+  effectiveCac: number
+  effectiveWtp: number
+  isHyper: boolean
+  isLuckyWhale: boolean
+  luckVariancePct: number
+  tick: number
+}
+
+export interface SystemCapabilities {
+  speed: number
+  collaboration: number
+  control: number
 }
 
 export type ProductBucket = 'write' | 'diff' | 'test' | 'deploy'
@@ -113,7 +143,7 @@ export interface ExpansionOrder {
 
 export interface ScratchPod {
   id: number
-  symbol: 'cat' | 'apple' | 'golden_apple' | 'bolt' | 'broom' | 'shield' | 'coin' | 'rotten' | 'skull'
+  symbol: 'cat' | 'apple' | 'golden_apple' | 'bolt' | 'broom' | 'shield' | 'coin' | 'rotten' | 'skull' | 'panic'
   rewardType: 'cash' | 'strain' | 'rot' | 'incident' | 'speed' | 'luck' | 'penalty'
   rewardValue: number
   label: string
@@ -128,6 +158,8 @@ export interface ScratchCard {
   name: string
   subtitle: string
   pods: ScratchPod[]
+  outcome?: ScratchPod
+  scratchProgress?: number
   claimed: boolean
   bankedCashCents?: number
   bankedStrainRelief?: number
@@ -135,6 +167,7 @@ export interface ScratchCard {
   bankedLuckDelta?: number
   isBusted?: boolean
   isHazard?: boolean
+  isRejected?: boolean
   severity?: 'nominal' | 'elevated' | 'critical' | 'golden'
 }
 
@@ -345,6 +378,7 @@ export interface FounderAchievement {
   description: string
   metricLabel: string
   relicId: string
+  difficulty?: 'easy' | 'effort'
   unlockedRelic: FounderRelic
 }
 
@@ -418,6 +452,7 @@ export interface GameState {
   signalsTriagedCount: number
   lastDemandReplenishTick?: number
   lastDemandTriageTick?: number
+  lastTriageOutcome?: DemandTriageOutcome | null
   
   // Product
   availableComponents: ProductComponent[]
@@ -440,11 +475,7 @@ export interface GameState {
   productPods?: CodingPod[]
   activationsQueue: ProductActivation[]
   lastProductShipTick?: number
-  systemCapabilities: {
-    speed: number
-    collaboration: number
-    control: number
-  }
+  systemCapabilities: SystemCapabilities
   
   // Monetisation
   currentActivation: ProductActivation | null
@@ -509,6 +540,10 @@ export interface GameState {
   lockedQuarterConsumableIds?: string[]
   quarterReviewRerolls?: number
   warRoomTicksRemaining?: number
+  warRoomSpeedMultiplier?: number
+  bullseyeStrikesRemaining?: number
+  patentShieldTicksRemaining?: number
+  quarterValuationBoostMultiple?: number
   quarterReviewPending: boolean
   unicornVictoryAcknowledged?: boolean
 

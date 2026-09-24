@@ -1,6 +1,6 @@
 import { createInitialState } from '../src/engine/state'
 import { gameReducer } from '../src/engine/reducer'
-import type { GameState, FunctionId, ProgressionAxis } from '../src/engine/types'
+import type { FunctionId, ProgressionAxis } from '../src/engine/types'
 import { UPGRADE_RANK_COSTS, UNICORN_VALUATION_CENTS } from '../src/engine/constants'
 
 function simulateMode(mode: 'pure_manual' | 'pure_automation' | 'speedrun_combined', maxTicks: number = 36000) {

@@ -1,4 +1,4 @@
-import type { CustomerSegment, SegmentProfile, Relic, Consumable, ProductComponent, EvolutionTier, FunctionId, EngineArchetypeId, EngineArchetype, FounderAchievement, FounderRelic, GameState } from './types'
+import type { CustomerSegment, SegmentProfile, Relic, Consumable, ProductComponent, EvolutionTier, FunctionId, EngineArchetypeId, EngineArchetype, FounderAchievement, GameState } from './types'
 
 export interface EvolutionTierConfig {
   tier: EvolutionTier
@@ -115,6 +115,7 @@ export const SEGMENT_PROFILES: Record<CustomerSegment, SegmentProfile> = {
     needControl: 0.1,
     collectionDelayTicks: 60, // 6 seconds
     collectionProbability: 0.95,
+    qualificationSuccessRate: 0.90, // 90% qualification rate: low friction self-serve
   },
   team: {
     id: 'team',
@@ -126,6 +127,7 @@ export const SEGMENT_PROFILES: Record<CustomerSegment, SegmentProfile> = {
     needControl: 0.2,
     collectionDelayTicks: 120, // 12 seconds
     collectionProbability: 0.98,
+    qualificationSuccessRate: 0.70, // 70% qualification rate: departmental evaluation
   },
   enterprise: {
     id: 'enterprise',
@@ -137,7 +139,26 @@ export const SEGMENT_PROFILES: Record<CustomerSegment, SegmentProfile> = {
     needControl: 0.6,
     collectionDelayTicks: 240, // 24 seconds
     collectionProbability: 0.90,
+    qualificationSuccessRate: 0.40, // 40% qualification rate: strict RFP, compliance & security audits
   },
+}
+
+/**
+ * Luck Progression Axis Variance Matrix
+ * Each tier introduces positive (+) and negative (-) outcome variance that resolves to slightly positive Expected Value (EV).
+ * Tier 1: +10% / -8%  (EV: +1.0%)
+ * Tier 2: +20% / -12% (EV: +4.0%)
+ * Tier 3: +30% / -10% (EV: +10.0%)
+ * Tier 4: +40% / -5%  (EV: +17.5%)
+ * Tier 5: +50% / -2%  (EV: +24.0%)
+ */
+export const LUCK_VARIANCE_CONFIG: Record<number, { maxBonus: number; maxPenalty: number; ev: number }> = {
+  0: { maxBonus: 0.00, maxPenalty: 0.00, ev: 0.00 },
+  1: { maxBonus: 0.10, maxPenalty: 0.08, ev: 0.01 },
+  2: { maxBonus: 0.20, maxPenalty: 0.12, ev: 0.04 },
+  3: { maxBonus: 0.30, maxPenalty: 0.10, ev: 0.10 },
+  4: { maxBonus: 0.40, maxPenalty: 0.05, ev: 0.175 },
+  5: { maxBonus: 0.50, maxPenalty: 0.02, ev: 0.24 },
 }
 
 export const UPGRADE_RANK_COSTS = [
@@ -1134,13 +1155,17 @@ export interface FounderAchievementEntry extends FounderAchievement {
 }
 
 export const FOUNDER_ACHIEVEMENTS_AND_RELICS: FounderAchievementEntry[] = [
+  // ==========================================================================
+  // 6 FOUNDER ESSENTIALS (Easy to unlock // Solid starter operational buffs)
+  // ==========================================================================
   {
     id: 'ach_sub_second',
     name: 'Sub-Second Execution',
-    description: 'Complete a run reaching Series A ($10M+ Valuation) or achieve $500k+ ARR.',
-    metricLabel: 'Valuation >= $10M or ARR >= $500k',
+    description: 'Complete a run reaching Series Seed ($2M+ Valuation) or achieve $100k+ ARR.',
+    metricLabel: 'Valuation >= $2M or ARR >= $100k',
     relicId: 'founder_overclocked_silicon',
-    evaluate: (state: GameState) => state.valuationCents >= 1_000_000_000 || state.eligibleArrCents >= 50_000_000,
+    difficulty: 'easy',
+    evaluate: (state: GameState) => state.valuationCents >= 200_000_000 || state.eligibleArrCents >= 10_000_000,
     unlockedRelic: {
       id: 'founder_overclocked_silicon',
       name: 'Overclocked Silicon',
@@ -1148,233 +1173,138 @@ export const FOUNDER_ACHIEVEMENTS_AND_RELICS: FounderAchievementEntry[] = [
       tier: 'rare',
       category: 'speed',
       speedBonus: 2,
-      effectSummary: '⚡ Permanently unlocks 2× Simulation Speed. +15% Product build yield.',
+      effectSummary: '⚡ Permanently unlocks 2× Simulation Speed. +10% Product build yield.',
       flavor: 'Liquid-nitrogen chilled TPU racks pushing clock cycles past theoretical architectural bounds.',
       icon: '/assets/2.5d/expansion_infrastructure.png',
       passiveEffects: {
-        productYieldBonus: 0.15,
-      },
-    },
-  },
-  {
-    id: 'ach_hyperscale_singularity',
-    name: 'Hyperscale Singularity',
-    description: 'Achieve the coveted $1B Valuation Unicorn milestone or reach $50M+ ARR.',
-    metricLabel: 'Valuation >= $1B',
-    relicId: 'founder_tachyon_chronometer',
-    evaluate: (state: GameState) => state.valuationCents >= 100_000_000_000 || state.runStatus === 'unicorn_victory',
-    unlockedRelic: {
-      id: 'founder_tachyon_chronometer',
-      name: 'Tachyon Chronometer',
-      title: 'Relativistic Temporal Engine',
-      tier: 'ethereal',
-      category: 'speed',
-      speedBonus: 5,
-      effectSummary: '🌀 Permanently unlocks 5× Simulation Speed. Automated agents cycle 20% faster.',
-      flavor: 'Causal warp core that compresses days of enterprise execution into split seconds.',
-      icon: '/assets/founder_nexus_3d.png',
-      passiveEffects: {
-        automateSpeedBonus: 0.20,
-      },
-    },
-  },
-  {
-    id: 'ach_zero_defect',
-    name: 'Zero-Defect Dogma',
-    description: 'Reach Q4 without letting any customer-facing defects escape into production.',
-    metricLabel: 'Quarter >= 4 & Incidents Backlog = 0',
-    relicId: 'founder_formal_verification',
-    evaluate: (state: GameState) => state.quarter >= 4 && (state.operations?.incidentsBacklog ?? 0) === 0,
-    unlockedRelic: {
-      id: 'founder_formal_verification',
-      name: 'Formal Verification Kernel',
-      title: 'Provable Correctness Moat',
-      tier: 'rare',
-      category: 'quality',
-      effectSummary: 'Product pods start with 1 auto-slotted TEST primitive and have -35% defect rate.',
-      flavor: 'Mathematical correctness co-pilot guarantees zero runtime crashes or regressions.',
-      icon: '/assets/primitives/primitive_test.png',
-      passiveEffects: {
-        defectReduction: 0.35,
-      },
-    },
-  },
-  {
-    id: 'ach_default_alive',
-    name: 'Default Alive Purist',
-    description: 'Reach $1M+ ARR without taking venture debt or VC dilution.',
-    metricLabel: 'ARR >= $1M & Founder Equity >= 99%',
-    relicId: 'founder_bootstrapper_ledger',
-    evaluate: (state: GameState) => state.eligibleArrCents >= 100_000_000 && (state.vc?.founderOwnershipRatio ?? 1) >= 0.99,
-    unlockedRelic: {
-      id: 'founder_bootstrapper_ledger',
-      name: "Bootstrapper's Ledger",
-      title: 'Capital Discipline Relic',
-      tier: 'rare',
-      category: 'capital',
-      effectSummary: '+20% liquid cash interest yield on banked treasury and -25% base OPEX burn.',
-      flavor: 'Dogged frugality and profitable unit economics that make outside capital obsolete.',
-      icon: '/assets/2.5d/piggy_bank_intact.png',
-      passiveEffects: {
-        cashYieldBonus: 0.20,
-        opexDiscount: 0.25,
-      },
-    },
-  },
-  {
-    id: 'ach_negative_churn',
-    name: 'Negative Churn Citadel',
-    description: 'Maintain >= 120% Net Revenue Retention with at least 5 active customer accounts.',
-    metricLabel: 'Active Accounts >= 5 & Zero Churn',
-    relicId: 'founder_churn_ward',
-    evaluate: (state: GameState) => state.accounts.length >= 5 && state.arrBridge.churnArrCents === 0,
-    unlockedRelic: {
-      id: 'founder_churn_ward',
-      name: 'The Churn Ward',
-      title: 'SLA Retention Perimeter',
-      tier: 'monumental',
-      category: 'stability',
-      effectSummary: 'All customer accounts gain +30 base SLA health buffer and +20% add-on willingness-to-pay.',
-      flavor: 'Predictive sentiment neural net resolves executive dissatisfaction before tickets are filed.',
-      icon: '/assets/2.5d/shield_perimeter_secure.png',
-      passiveEffects: {
-        churnResistance: 0.30,
-        expansionBonus: 0.20,
+        productYieldBonus: 0.10,
       },
     },
   },
   {
     id: 'ach_market_monopoly',
-    name: 'Algorithmic Monopoly',
-    description: 'Qualify 25+ inbound market signals into the product hopper in a single run.',
-    metricLabel: 'Qualified Hopper Opportunities >= 25',
+    name: 'Market Radar Array',
+    description: 'Triage or qualify 10+ inbound market signals into the product hopper.',
+    metricLabel: 'Qualified Hopper Signals >= 10',
     relicId: 'founder_market_radar',
-    evaluate: (state: GameState) => (state.qualifiedOpportunities.length + state.accounts.length * 2) >= 15,
+    difficulty: 'easy',
+    evaluate: (state: GameState) => (state.qualifiedOpportunities.length + state.accounts.length) >= 10,
     unlockedRelic: {
       id: 'founder_market_radar',
       name: 'Market Radar Array',
       title: 'Omnipresent Demand Scanner',
       tier: 'rare',
       category: 'growth',
-      effectSummary: 'Demand hopper displays +2 simultaneous signals with +25% base willingness-to-pay.',
+      effectSummary: 'Demand hopper refreshes +15% faster and customer acquisition costs are discounted by 10%.',
       flavor: 'Autonomous agent web scrapers identify high-budget buyer intent before RFPs open.',
       icon: '/assets/2.5d/nav_demand.png',
       passiveEffects: {
-        demandRateBonus: 0.25,
-      },
-    },
-  },
-  {
-    id: 'ach_autonomous_centaur',
-    name: 'Autonomous Centaur',
-    description: 'Upgrade Automate swarm to Rank 3 across at least 3 workstation functions.',
-    metricLabel: 'Swarm Automation Rank >= 3 in 3 functions',
-    relicId: 'founder_hive_core',
-    evaluate: (state: GameState) => Object.values(state.fleet).filter(f => f.automateRank >= 3).length >= 3,
-    unlockedRelic: {
-      id: 'founder_hive_core',
-      name: 'Autonomous Hive Core',
-      title: 'Self-Organizing Neural Swarm',
-      tier: 'monumental',
-      category: 'automation',
-      effectSummary: 'Automated agent workers execute +40% faster with zero coordination strain.',
-      flavor: 'Coordinated agent mesh eliminates human bottlenecks across the entire corporate stack.',
-      icon: '/assets/2.5d/node_golden_core.png',
-      passiveEffects: {
-        automateSpeedBonus: 0.40,
-      },
-    },
-  },
-  {
-    id: 'ach_diamond_hands',
-    name: 'Diamond Hands Syndicate',
-    description: 'Reach $50M+ valuation while retaining >= 85% founder ownership equity.',
-    metricLabel: 'Valuation >= $50M & Equity >= 85%',
-    relicId: 'founder_voting_proxy',
-    evaluate: (state: GameState) => state.valuationCents >= 5_000_000_000 && (state.vc?.founderOwnershipRatio ?? 1) >= 0.85,
-    unlockedRelic: {
-      id: 'founder_voting_proxy',
-      name: 'Founder Voting Proxy',
-      title: 'Sovereign Cap Table Shield',
-      tier: 'monumental',
-      category: 'capital',
-      effectSummary: 'VC term sheets offer 50% less equity dilution and boost pre-money valuation multiple.',
-      flavor: 'Dual-class super-voting rights that protect visionary founder authority indefinitely.',
-      icon: '/assets/milestones/milestone_founder_equity.png',
-      passiveEffects: {
-        cashYieldBonus: 0.15,
+        demandRateBonus: 0.15,
+        acquisitionCostDiscount: 0.10,
       },
     },
   },
   {
     id: 'ach_incident_commander',
     name: 'Incident Commander',
-    description: 'Squash 15+ retention threats and maintain zero customer cancellations.',
-    metricLabel: 'Retention combo >= 5 and zero churn',
+    description: 'Maintain at least 5 active accounts without letting any account churn.',
+    metricLabel: 'Active Accounts >= 5 & Zero Churn',
     relicId: 'founder_hotfix_sledge',
-    evaluate: (state: GameState) => ((state.retentionCombo ?? 0) >= 5 || state.accounts.length >= 6) && state.arrBridge.churnArrCents === 0,
+    difficulty: 'easy',
+    evaluate: (state: GameState) => state.accounts.length >= 5 && state.arrBridge.churnArrCents === 0,
     unlockedRelic: {
       id: 'founder_hotfix_sledge',
       name: 'Hotfix Sledgehammer',
       title: 'Zero-Downtime Strike Weapon',
       tier: 'rare',
       category: 'stability',
-      effectSummary: 'Mallet tool in Retention costs $0 cash; Operations scratch card reveals 2 positive pods immediately.',
+      effectSummary: 'Operations diagnostic tools have +15% capacity and accounts gain +10% baseline churn resistance.',
       flavor: 'A legendary tungsten mallet forged in the fires of 3 AM production outages.',
       icon: '/assets/2.5d/tool_hotfix_sledge.png',
       passiveEffects: {
-        opsCapacityBonus: 0.25,
-      },
-    },
-  },
-  {
-    id: 'ach_whale_whisperer',
-    name: 'The Whale Whisperer',
-    description: 'Sign 3+ Enterprise tier customer contracts with perfect pricing bullseye timing.',
-    metricLabel: 'Enterprise Accounts >= 3',
-    relicId: 'founder_enterprise_key',
-    evaluate: (state: GameState) => state.accounts.filter(a => a.segment === 'enterprise').length >= 3,
-    unlockedRelic: {
-      id: 'founder_enterprise_key',
-      name: 'Enterprise Master Key',
-      title: 'SOC2 Procurement Passkey',
-      tier: 'monumental',
-      category: 'growth',
-      effectSummary: 'Enterprise leads arrive twice as often and pay +40% contract ARR on closing.',
-      flavor: 'Pre-cleared vendor compliance badges and C-suite golf club introductions.',
-      icon: '/assets/2.5d/expansion_security.png',
-      passiveEffects: {
-        demandRateBonus: 0.30,
+        opsCapacityBonus: 0.15,
+        churnResistance: 0.10,
       },
     },
   },
   {
     id: 'ach_quantum_grid',
     name: 'Quantum Grid Architect',
-    description: 'Synthesize a Tier 4+ component in the Expansion merge studio.',
-    metricLabel: 'Merge Synthesis Tier >= 4',
+    description: 'Synthesize a Tier 3+ component in the Expansion merge studio.',
+    metricLabel: 'Merge Synthesis Tier >= 3',
     relicId: 'founder_synthesis_matrix',
-    evaluate: (state: GameState) => (state.mergeGrid || []).some(item => item && item.tier >= 4),
+    difficulty: 'easy',
+    evaluate: (state: GameState) => (state.mergeGrid || []).some(item => item && item.tier >= 3),
     unlockedRelic: {
       id: 'founder_synthesis_matrix',
       name: 'Fractal Synthesis Matrix',
       title: 'High-Order Topology Fabric',
-      tier: 'ethereal',
+      tier: 'rare',
       category: 'growth',
-      effectSummary: 'Expansion merge grid spawns with free Tier 2 items and +2 starting merge slots.',
+      effectSummary: 'Expansion merge order fulfillments grant +15% bonus contract ARR.',
       flavor: 'Recursive compilation matrix that synthesizes enterprise add-ons instantaneously.',
       icon: '/assets/2.5d/expansion_intelligence.png',
       passiveEffects: {
-        expansionBonus: 0.35,
+        expansionBonus: 0.15,
       },
     },
   },
   {
+    id: 'ach_negative_churn',
+    name: 'The Churn Ward',
+    description: 'Maintain at least 6 active customer accounts simultaneously with zero churn.',
+    metricLabel: 'Active Accounts >= 6 & Zero Churn',
+    relicId: 'founder_churn_ward',
+    difficulty: 'easy',
+    evaluate: (state: GameState) => state.accounts.length >= 6 && state.arrBridge.churnArrCents === 0,
+    unlockedRelic: {
+      id: 'founder_churn_ward',
+      name: 'The Churn Ward',
+      title: 'SLA Retention Perimeter',
+      tier: 'rare',
+      category: 'stability',
+      effectSummary: 'All customer accounts gain +15 base SLA health buffer and +15% baseline churn resistance.',
+      flavor: 'Predictive sentiment neural net resolves executive dissatisfaction before tickets are filed.',
+      icon: '/assets/2.5d/shield_perimeter_secure.png',
+      passiveEffects: {
+        churnResistance: 0.15,
+      },
+    },
+  },
+  {
+    id: 'ach_zero_defect',
+    name: 'Zero-Defect Dogma',
+    description: 'Ship at least 3 completed product pods with 0 customer incidents in backlog.',
+    metricLabel: 'Shipped Pods >= 3 & Incidents Backlog = 0',
+    relicId: 'founder_formal_verification',
+    difficulty: 'easy',
+    evaluate: (state: GameState) => (state.activationsQueue?.length ?? 0) >= 3 && (state.operations?.incidentsBacklog ?? 0) === 0,
+    unlockedRelic: {
+      id: 'founder_formal_verification',
+      name: 'Formal Verification Kernel',
+      title: 'Provable Correctness Moat',
+      tier: 'rare',
+      category: 'quality',
+      effectSummary: 'Shipped product pods have -35% defect generation exposure and +10% pod throughput.',
+      flavor: 'Mathematical correctness co-pilot guarantees zero runtime crashes or regressions.',
+      icon: '/assets/primitives/primitive_test.png',
+      passiveEffects: {
+        defectReduction: 0.35,
+        podCapacityBonus: 0.10,
+      },
+    },
+  },
+
+  // ==========================================================================
+  // 6 LEGENDARY PINNACLES (Require genuine effort // Great, transformative powers)
+  // ==========================================================================
+  {
     id: 'ach_solopreneur_monolith',
     name: "Solopreneur's Monolith",
-    description: 'Reach $50M+ Valuation with total team size / online units <= 2 (pure solopreneur).',
+    description: 'Reach Series B ($50M+ Valuation) with total company team size / online units <= 2 (pure solopreneur).',
     metricLabel: 'Valuation >= $50M & Team <= 2',
     relicId: 'founder_solopreneur_monolith',
+    difficulty: 'effort',
     evaluate: (state: GameState) =>
       state.valuationCents >= 5_000_000_000 &&
       Object.values(state.fleet).reduce((sum, f) => sum + f.onlineUnits, 0) <= 2,
@@ -1384,11 +1314,137 @@ export const FOUNDER_ACHIEVEMENTS_AND_RELICS: FounderAchievementEntry[] = [
       title: 'Infinite Founder Leverage',
       tier: 'ethereal',
       category: 'automation',
-      effectSummary: 'Manual player clicks generate +50% impact across all workstations.',
+      effectSummary: '⚡ 2.0× Impact on ALL manual player clicks across workstations. +25% Product yield & +25% Ops capacity.',
       flavor: 'A monolithic obsidian totem vibrating with the solitary will of a lone unicorn builder.',
       icon: '/assets/archetypes/archetype_product_led_machine.png',
       passiveEffects: {
-        manualActionMultiplier: 1.5,
+        manualActionMultiplier: 2.0,
+        productYieldBonus: 0.25,
+        opsCapacityBonus: 0.25,
+      },
+    },
+  },
+  {
+    id: 'ach_hyperscale_singularity',
+    name: 'Hyperscale Singularity',
+    description: 'Achieve the coveted $1B Valuation Unicorn milestone or reach $50M+ ARR.',
+    metricLabel: 'Valuation >= $1B or ARR >= $50M',
+    relicId: 'founder_tachyon_chronometer',
+    difficulty: 'effort',
+    evaluate: (state: GameState) =>
+      state.valuationCents >= 100_000_000_000 ||
+      state.runStatus === 'unicorn_victory' ||
+      state.eligibleArrCents >= 5_000_000_000,
+    unlockedRelic: {
+      id: 'founder_tachyon_chronometer',
+      name: 'Tachyon Chronometer',
+      title: 'Relativistic Temporal Engine',
+      tier: 'ethereal',
+      category: 'speed',
+      speedBonus: 5,
+      effectSummary: '🌀 Permanently unlocks 5× Simulation Speed. Automated agents cycle +50% faster with -35% cognitive strain.',
+      flavor: 'Causal warp core that compresses days of enterprise execution into split seconds.',
+      icon: '/assets/founder_nexus_3d.png',
+      passiveEffects: {
+        automateSpeedBonus: 0.50,
+        strainReduction: 0.35,
+      },
+    },
+  },
+  {
+    id: 'ach_default_alive',
+    name: 'Default Alive Purist',
+    description: 'Reach $5M+ ARR while retaining 100% Founder Equity (zero VC investment or dilution).',
+    metricLabel: 'ARR >= $5M & Founder Equity = 100%',
+    relicId: 'founder_bootstrapper_ledger',
+    difficulty: 'effort',
+    evaluate: (state: GameState) => state.eligibleArrCents >= 500_000_000 && (state.vc?.founderOwnershipRatio ?? 1) >= 1.0,
+    unlockedRelic: {
+      id: 'founder_bootstrapper_ledger',
+      name: "Bootstrapper's Ledger",
+      title: 'Capital Discipline Relic',
+      tier: 'monumental',
+      category: 'capital',
+      effectSummary: '+40% liquid cash interest yield on banked treasury and -35% permanent OPEX burn discount.',
+      flavor: 'Dogged frugality and profitable unit economics that make outside capital obsolete.',
+      icon: '/assets/2.5d/piggy_bank_intact.png',
+      passiveEffects: {
+        cashYieldBonus: 0.40,
+        opexDiscount: 0.35,
+      },
+    },
+  },
+  {
+    id: 'ach_whale_whisperer',
+    name: 'The Whale Whisperer',
+    description: 'Close 5+ Enterprise tier customer contracts with >= 90% SLA health in a single run.',
+    metricLabel: 'Enterprise Accounts >= 5 (Health >= 90%)',
+    relicId: 'founder_enterprise_key',
+    difficulty: 'effort',
+    evaluate: (state: GameState) => state.accounts.filter(a => a.segment === 'enterprise' && a.health >= 90).length >= 5,
+    unlockedRelic: {
+      id: 'founder_enterprise_key',
+      name: 'Enterprise Master Key',
+      title: 'SOC2 Procurement Passkey',
+      tier: 'monumental',
+      category: 'growth',
+      effectSummary: 'Enterprise leads arrive +50% faster, pay +40% expansion contract ARR, and gain +30% churn resistance.',
+      flavor: 'Pre-cleared vendor compliance badges and C-suite golf club introductions.',
+      icon: '/assets/2.5d/expansion_security.png',
+      passiveEffects: {
+        demandRateBonus: 0.50,
+        expansionBonus: 0.40,
+        churnResistance: 0.30,
+      },
+    },
+  },
+  {
+    id: 'ach_diamond_hands',
+    name: 'Diamond Hands Syndicate',
+    description: 'Reach $100M+ Valuation while retaining >= 85% founder ownership equity.',
+    metricLabel: 'Valuation >= $100M & Equity >= 85%',
+    relicId: 'founder_voting_proxy',
+    difficulty: 'effort',
+    evaluate: (state: GameState) => state.valuationCents >= 10_000_000_000 && (state.vc?.founderOwnershipRatio ?? 1) >= 0.85,
+    unlockedRelic: {
+      id: 'founder_voting_proxy',
+      name: 'Founder Voting Proxy',
+      title: 'Sovereign Cap Table Shield',
+      tier: 'monumental',
+      category: 'capital',
+      effectSummary: 'VC term sheets feature 70% less equity dilution. Banked treasury yields +30% cash interest and -25% CAC.',
+      flavor: 'Dual-class super-voting rights that protect visionary founder authority indefinitely.',
+      icon: '/assets/milestones/milestone_founder_equity.png',
+      passiveEffects: {
+        cashYieldBonus: 0.30,
+        acquisitionCostDiscount: 0.25,
+      },
+    },
+  },
+  {
+    id: 'ach_autonomous_centaur',
+    name: 'Autonomous Centaur',
+    description: 'Upgrade Swarm Automation to Rank 3+ across ALL 6 company workstations.',
+    metricLabel: 'Swarm Automation Rank >= 3 in all 6 departments',
+    relicId: 'founder_hive_core',
+    difficulty: 'effort',
+    evaluate: (state: GameState) =>
+      (['demand', 'product', 'monetisation', 'retention', 'expansion', 'operations'] as const).every(
+        fn => (state.fleet[fn]?.automateRank ?? 0) >= 3
+      ),
+    unlockedRelic: {
+      id: 'founder_hive_core',
+      name: 'Autonomous Hive Core',
+      title: 'Self-Organizing Neural Swarm',
+      tier: 'monumental',
+      category: 'automation',
+      effectSummary: 'Automated agent workers execute +60% faster with -40% operational strain and -20% upkeep burn.',
+      flavor: 'Coordinated agent mesh eliminates human bottlenecks across the entire corporate stack.',
+      icon: '/assets/2.5d/node_golden_core.png',
+      passiveEffects: {
+        automateSpeedBonus: 0.60,
+        strainReduction: 0.40,
+        opexDiscount: 0.20,
       },
     },
   },

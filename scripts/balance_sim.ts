@@ -1,4 +1,4 @@
-import { createInitialState, createDynamicDemandSignals } from '../src/engine/state'
+import { createInitialState } from '../src/engine/state'
 import { gameReducer } from '../src/engine/reducer'
 import type { FunctionId, ProgressionAxis } from '../src/engine/types'
 import { UPGRADE_RANK_COSTS, UNICORN_VALUATION_CENTS } from '../src/engine/constants'
