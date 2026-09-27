@@ -5,5 +5,6 @@
 - **Material:** t1 — matte charcoal basalt / dark obsidian graphite chassis with vibrant accent circuitry veins
 - **Accent:** #38BDF8
 - **Size:** 512x512 · transparency required
+- **Note:** generated variants so far arrived without a real alpha channel; regenerate explicitly requesting transparent-background PNG output.
 - **Prompt:** `python3 scripts/asset_pipeline/prompt.py nav_finance`
 - **Install:** `npm run assets:intake -- nav_finance <raw.png>`
