@@ -15,18 +15,23 @@
 }
 
 /* The Structure mark tints to the active tier accent, cut shows the canvas */
+/* Structure mark fills through the mask: brand magenta at garage, tier
+   material later. Shape is the owner's art (masked); only color/texture vary. */
+.structure-mark {
+  background: var(--brand-magenta);
+}
 .brand-structure {
-  color: var(--tier-accent, var(--brand-magenta));
-  --brand-cut: #090B0E;
-  filter: drop-shadow(0 0 10px var(--tier-glow, rgba(255, 62, 232, 0.3)));
-  transition: color 400ms ease, filter 400ms ease;
-}
-
-/* Garage keeps the raw brand magenta; later tiers inherit their material */
-[data-theme='garage'] .brand-structure {
-  color: var(--brand-magenta);
+  background: var(--brand-magenta);
   filter: drop-shadow(0 0 10px rgba(255, 62, 232, 0.35));
+  transition: filter 400ms ease;
 }
+[data-theme='workshop'] .brand-structure { background: linear-gradient(150deg, #E4E9EE, #8A939D); filter: drop-shadow(0 0 10px rgba(203, 213, 225, 0.3)); }
+[data-theme='workstation'] .brand-structure { background: linear-gradient(150deg, #FFF4B8, #D4AF37); filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.35)); }
+[data-theme='growth'] .brand-structure { background: linear-gradient(150deg, #BAE6FD, #38BDF8); filter: drop-shadow(0 0 10px rgba(186, 230, 253, 0.35)); }
+[data-theme='ethereal'] .brand-structure { background: var(--reward-iridescent); background-size: 200% 100%; filter: drop-shadow(0 0 12px rgba(233, 213, 255, 0.4)); animation: brand-shimmer 6s ease-in-out infinite; }
+
+/* Spark mark tints to currentColor context via its background */
+.spark-mark { background: currentColor; }
 
 .brand-lockup {
   display: flex;
@@ -105,7 +110,7 @@
 }
 
 .brand-kicker .spark-mark {
-  color: var(--tier-accent, var(--accent-product));
+  background: var(--tier-accent, var(--accent-product));
   animation: spark-pulse 3.4s ease-in-out infinite;
 }
 
@@ -116,7 +121,7 @@
 
 /* Reward-moment spark: a spinning, glowing burst (milestones, tier-ups) */
 .spark-reward {
-  color: var(--brand-magenta);
+  background: var(--brand-magenta);
   filter: drop-shadow(0 0 12px var(--brand-magenta));
   animation: spark-spin 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
