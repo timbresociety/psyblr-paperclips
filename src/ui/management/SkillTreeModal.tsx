@@ -1534,10 +1534,10 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                         transform: `translate(-50%, -50%) ${isFocused ? "scale(1.12)" : "scale(1)"}`,
                         width: "128px",
                         backgroundColor: isResearched
-                          ? "#FFFFFF"
+                          ? "#1A1F25"
                           : isAvailable
-                          ? "#FFFFFF"
-                          : "rgba(255, 255, 255, 0.65)",
+                          ? "#14181D"
+                          : "rgba(20, 24, 29, 0.65)",
                         border: isFocused
                           ? `2px solid #0EA5E9`
                           : isResearched

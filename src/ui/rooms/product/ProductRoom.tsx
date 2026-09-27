@@ -1091,7 +1091,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                           backgroundColor: sock.filled
                             ? "var(--surface-card)"
                             : isTargetedByBrush || isDraggedOver
-                            ? "rgba(255, 255, 255, 0.95)"
+                            ? "rgba(88, 217, 255, 0.14)"
                             : "var(--surface-sunken)",
                           boxShadow: sock.filled
                             ? `0 2px 8px ${meta.glow}`

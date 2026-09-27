@@ -752,7 +752,7 @@ export const ExpansionRoom: React.FC<ExpansionRoomProps> = ({ state, dispatch })
                         borderRadius: gridDim >= 6 ? "6px" : "8px",
                         backgroundColor: cell
                           ? chainMeta?.bg || "rgba(255,255,255,0.05)"
-                          : "rgba(255, 255, 255, 0.65)",
+                          : "rgba(20, 24, 29, 0.65)",
                         border: isSelected
                           ? "2px solid #F59E0B"
                           : cell
