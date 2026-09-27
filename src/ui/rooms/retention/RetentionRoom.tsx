@@ -298,7 +298,7 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
             }}
           >
             <span>Acquire First Customer in Demand →</span>
-            <kbd className="btn-kbd" style={{ background: 'rgba(255,255,255,0.25)', color: '#fff' }}>1</kbd>
+            <kbd className="btn-kbd" style={{ background: 'rgba(26,31,37,0.25)', color: '#14181D' }}>1</kbd>
           </button>
         </div>
       </div>

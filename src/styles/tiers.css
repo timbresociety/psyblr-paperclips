@@ -1,0 +1,66 @@
+/* ==========================================================================
+   SOLOUNICORN — EVOLUTION TIER THEME LAYERS
+   The material world climbs charcoal → gunmetal → gold → liquid glass →
+   Ethereal, keyed off the engine's EvolutionTier via data-theme on .app-layout
+   (docs/ASSET_CATALOG.md §2; docs/context/VISUAL_BRAND.md rarity rules).
+   Every surface inherits through custom properties — no per-component logic.
+   ========================================================================== */
+
+/* Tier 1 — Garage: charcoal / dark basalt (token defaults) */
+[data-theme='garage'] {
+  --tier-material: #292F36;
+  --tier-accent: #A7AFB8;
+  --tier-glow: rgba(167, 175, 184, 0.1);
+  --tier-backdrop: url('/assets/tiers/backdrop_garage.png');
+}
+
+/* Tier 2 — Workshop: gunmetal / titanium */
+[data-theme='workshop'] {
+  --tier-material: #64748B;
+  --tier-accent: #CBD5E1;
+  --tier-glow: rgba(203, 213, 225, 0.12);
+  --tier-backdrop: url('/assets/tiers/backdrop_workshop.png');
+  --border-active: rgba(203, 213, 225, 0.45);
+}
+
+/* Tier 3 — Workstation: polished gold / radiant brass */
+[data-theme='workstation'] {
+  --tier-material: #B45309;
+  --tier-accent: #FBBF24;
+  --tier-glow: rgba(251, 191, 36, 0.14);
+  --tier-backdrop: url('/assets/tiers/backdrop_workstation.png');
+  --border-active: rgba(251, 191, 36, 0.45);
+}
+
+/* Tier 4 — Growth: liquid glass / optical crystal */
+[data-theme='growth'] {
+  --tier-material: #0284C7;
+  --tier-accent: #BAE6FD;
+  --tier-glow: rgba(186, 230, 253, 0.16);
+  --tier-backdrop: url('/assets/tiers/backdrop_growth.png');
+  --border-focus: #7DD3FC;
+  --border-active: rgba(186, 230, 253, 0.5);
+}
+
+/* Tier 5 — Ethereal: iridescent liquid metal (the SKY apex; the one tier
+   allowed ambient iridescence, still restrained) */
+[data-theme='ethereal'] {
+  --tier-material: #A855F7;
+  --tier-accent: #E9D5FF;
+  --tier-glow: rgba(233, 213, 255, 0.2);
+  --tier-backdrop: url('/assets/tiers/backdrop_ethereal.png');
+  --border-focus: #C4B5FD;
+  --border-active: rgba(233, 213, 255, 0.5);
+  --bg-canvas: radial-gradient(ellipse 90% 70% at 75% -10%, rgba(233, 213, 255, 0.1) 0%, transparent 60%),
+               radial-gradient(ellipse 90% 70% at 15% 100%, rgba(155, 232, 255, 0.08) 0%, transparent 55%),
+               linear-gradient(180deg, #0B0A12 0%, #0D0B14 100%);
+}
+
+/* Tier identity strip helpers */
+.tier-material-chip {
+  background: var(--tier-material);
+  box-shadow: 0 0 12px var(--tier-glow);
+}
+.tier-accent-text {
+  color: var(--tier-accent);
+}

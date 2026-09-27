@@ -449,7 +449,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
             }}
           >
             <span>Qualify All Channels</span>
-            <kbd style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '3px', background: 'rgba(255, 255, 255, 0.25)' }}>
+            <kbd style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '3px', background: 'rgba(26, 31, 37, 0.25)' }}>
               ↵ Enter
             </kbd>
           </button>
@@ -621,7 +621,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                   <div
                     style={{
                       border: isFail ? '4px solid #DC2626' : '4px solid #059669',
-                      backgroundColor: isFail ? '#FEF2F2' : '#ECFDF5',
+                      backgroundColor: isFail ? '#1D1113' : '#0D1712',
                       color: isFail ? '#DC2626' : '#059669',
                       padding: '8px 16px',
                       borderRadius: '8px',
@@ -1016,7 +1016,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                             style={{
                               fontSize: '9px',
                               fontWeight: 700,
-                              color: canAffordHyper ? '#0284C7' : '#94A3B8',
+                              color: canAffordHyper ? '#0284C7' : '#6F7882',
                               backgroundColor: canAffordHyper ? 'rgba(2, 132, 199, 0.08)' : 'rgba(148, 163, 184, 0.1)',
                               padding: '1px 4px',
                               borderRadius: '3px',
@@ -1104,7 +1104,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                           fontSize: '8.5px',
                           padding: '1px 4px',
                           borderRadius: '3px',
-                          background: canAffordHyper ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.12)',
+                          background: canAffordHyper ? 'rgba(26, 31, 37, 0.25)' : 'rgba(0, 0, 0, 0.12)',
                           color: canAffordHyper ? '#FFF' : 'var(--text-muted)',
                           margin: 0,
                         }}
@@ -1147,7 +1147,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                           fontSize: '8.5px',
                           padding: '1px 4px',
                           borderRadius: '3px',
-                          background: canAffordQualify ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.12)',
+                          background: canAffordQualify ? 'rgba(26, 31, 37, 0.25)' : 'rgba(0, 0, 0, 0.12)',
                           color: canAffordQualify ? '#FFF' : 'var(--text-muted)',
                           margin: 0,
                         }}
@@ -1242,7 +1242,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
             }}
             style={{
               borderRadius: '12px',
-              backgroundColor: 'rgba(255, 255, 255, 0.65)',
+              backgroundColor: 'rgba(26, 31, 37, 0.65)',
               border: '1.5px dashed var(--border-graphite)',
               padding: '16px 14px',
               display: 'flex',
@@ -1283,7 +1283,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                 color: 'var(--text-muted)',
                 padding: '2px 8px',
                 borderRadius: '4px',
-                backgroundColor: '#F1F5F9',
+                backgroundColor: '#1A1F25',
                 border: '1px solid var(--border-hairline)',
               }}
             >

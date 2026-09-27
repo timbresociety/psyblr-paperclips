@@ -46,7 +46,7 @@ export const MobileCompanyDrawer: React.FC<MobileCompanyDrawerProps> = ({
             alignItems: 'center',
             padding: '10px 16px 8px 16px',
             borderBottom: '1px solid var(--border-hairline)',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: '#14181D',
             position: 'sticky',
             top: 0,
             zIndex: 10,
@@ -90,7 +90,7 @@ export const MobileCompanyDrawer: React.FC<MobileCompanyDrawerProps> = ({
             <button
               onClick={handleClose}
               style={{
-                background: 'rgba(15, 23, 42, 0.06)',
+                background: 'rgba(2, 4, 6, 0.06)',
                 border: 'none',
                 borderRadius: '9999px',
                 width: '28px',

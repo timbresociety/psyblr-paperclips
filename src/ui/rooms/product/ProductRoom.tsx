@@ -307,7 +307,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
               }}
             >
               <span>Monetise Deals →</span>
-              <kbd className="btn-kbd" style={{ background: "rgba(255,255,255,0.3)", color: "#fff" }}>3</kbd>
+              <kbd className="btn-kbd" style={{ background: "rgba(26,31,37,0.3)", color: "#14181D" }}>3</kbd>
             </button>
           </div>
         )}
@@ -354,7 +354,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                   fontWeight: 800,
                   padding: "2px 7px",
                   borderRadius: "999px",
-                  backgroundColor: demandSignalsCount > 0 ? "rgba(2, 132, 199, 0.12)" : "#F1F5F9",
+                  backgroundColor: demandSignalsCount > 0 ? "rgba(2, 132, 199, 0.12)" : "#1A1F25",
                   color: demandSignalsCount > 0 ? "#0284C7" : "var(--text-muted)",
                 }}
               >
@@ -370,7 +370,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                 style={{ width: "100%", padding: "7px 12px", fontSize: "11px", fontWeight: 700, display: "flex", justifyContent: "space-between" }}
               >
                 <span>Triage Signals →</span>
-                <kbd style={{ background: "rgba(255,255,255,0.25)", color: "#fff", padding: "0 4px", borderRadius: "3px" }}>1</kbd>
+                <kbd style={{ background: "rgba(26,31,37,0.25)", color: "#14181D", padding: "0 4px", borderRadius: "3px" }}>1</kbd>
               </button>
             </div>
           </div>
@@ -408,7 +408,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                   fontWeight: 800,
                   padding: "2px 7px",
                   borderRadius: "999px",
-                  backgroundColor: dealsReadyCount > 0 ? "#10B981" : "#F1F5F9",
+                  backgroundColor: dealsReadyCount > 0 ? "#10B981" : "#1A1F25",
                   color: dealsReadyCount > 0 ? "#FFFFFF" : "var(--text-muted)",
                 }}
               >
@@ -424,7 +424,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                 style={{ width: "100%", padding: "7px 12px", fontSize: "11px", fontWeight: 700, display: "flex", justifyContent: "space-between" }}
               >
                 <span>Price Activations →</span>
-                <kbd style={{ background: dealsReadyCount > 0 ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.08)", color: dealsReadyCount > 0 ? "#fff" : "var(--text-ink)", padding: "0 4px", borderRadius: "3px" }}>3</kbd>
+                <kbd style={{ background: dealsReadyCount > 0 ? "rgba(26,31,37,0.25)" : "rgba(0,0,0,0.08)", color: dealsReadyCount > 0 ? "#14181D" : "var(--text-ink)", padding: "0 4px", borderRadius: "3px" }}>3</kbd>
               </button>
             </div>
           </div>
@@ -462,7 +462,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                   fontWeight: 800,
                   padding: "2px 7px",
                   borderRadius: "999px",
-                  backgroundColor: (atRiskAccountsCount > 0 || hasActiveThreat) ? "#F43F5E" : "#F1F5F9",
+                  backgroundColor: (atRiskAccountsCount > 0 || hasActiveThreat) ? "#F43F5E" : "#1A1F25",
                   color: (atRiskAccountsCount > 0 || hasActiveThreat) ? "#FFFFFF" : "var(--text-secondary)",
                 }}
               >
@@ -478,7 +478,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                 style={{ width: "100%", padding: "7px 12px", fontSize: "11px", fontWeight: 700, display: "flex", justifyContent: "space-between" }}
               >
                 <span>Defend Accounts →</span>
-                <kbd style={{ background: (atRiskAccountsCount > 0 || hasActiveThreat) ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.08)", color: (atRiskAccountsCount > 0 || hasActiveThreat) ? "#fff" : "var(--text-ink)", padding: "0 4px", borderRadius: "3px" }}>4</kbd>
+                <kbd style={{ background: (atRiskAccountsCount > 0 || hasActiveThreat) ? "rgba(26,31,37,0.25)" : "rgba(0,0,0,0.08)", color: (atRiskAccountsCount > 0 || hasActiveThreat) ? "#14181D" : "var(--text-ink)", padding: "0 4px", borderRadius: "3px" }}>4</kbd>
               </button>
             </div>
           </div>
@@ -516,7 +516,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                   fontWeight: 800,
                   padding: "2px 7px",
                   borderRadius: "999px",
-                  backgroundColor: isOpsOverloaded ? "rgba(245, 158, 11, 0.15)" : "#F1F5F9",
+                  backgroundColor: isOpsOverloaded ? "rgba(245, 158, 11, 0.15)" : "#1A1F25",
                   color: isOpsOverloaded ? "#D97706" : "var(--text-secondary)",
                 }}
               >
@@ -532,7 +532,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                 style={{ width: "100%", padding: "7px 12px", fontSize: "11px", fontWeight: 700, display: "flex", justifyContent: "space-between" }}
               >
                 <span>Manage Ops Rig →</span>
-                <kbd style={{ background: isOpsOverloaded ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.08)", color: isOpsOverloaded ? "#fff" : "var(--text-ink)", padding: "0 4px", borderRadius: "3px" }}>6</kbd>
+                <kbd style={{ background: isOpsOverloaded ? "rgba(26,31,37,0.25)" : "rgba(0,0,0,0.08)", color: isOpsOverloaded ? "#14181D" : "var(--text-ink)", padding: "0 4px", borderRadius: "3px" }}>6</kbd>
               </button>
             </div>
           </div>
@@ -570,7 +570,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                   fontWeight: 800,
                   padding: "2px 7px",
                   borderRadius: "999px",
-                  backgroundColor: expansionOrdersCount > 0 ? "rgba(147, 51, 234, 0.12)" : "#F1F5F9",
+                  backgroundColor: expansionOrdersCount > 0 ? "rgba(147, 51, 234, 0.12)" : "#1A1F25",
                   color: expansionOrdersCount > 0 ? "#9333EA" : "var(--text-secondary)",
                 }}
               >
@@ -679,7 +679,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                     fontWeight: 700,
                     padding: "1px 4px",
                     borderRadius: "3px",
-                    backgroundColor: "#F1F5F9",
+                    backgroundColor: "#1A1F25",
                     border: "1px solid var(--border-hairline)",
                     color: "var(--text-secondary)",
                   }}
@@ -756,7 +756,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                 style={{
                   padding: "6px 10px",
                   borderRadius: "8px",
-                  backgroundColor: isSelected ? "#FFFFFF" : "var(--surface-work)",
+                  backgroundColor: isSelected ? "#14181D" : "var(--surface-work)",
                   border: isSelected ? `2px solid ${meta.color}` : "1px solid var(--border-hairline)",
                   boxShadow: isSelected ? `0 0 10px ${meta.glow}` : "none",
                   display: "flex",
@@ -771,7 +771,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                 }}
                 onMouseEnter={(e) => {
                   if (!isSelected) {
-                    e.currentTarget.style.backgroundColor = "#FFFFFF"
+                    e.currentTarget.style.backgroundColor = "#14181D"
                     e.currentTarget.style.borderColor = meta.color
                     e.currentTarget.style.transform = "translateY(-1px)"
                   }
@@ -909,7 +909,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
             }}
           >
             <span>Qualify Leads →</span>
-            <kbd style={{ background: "rgba(255,255,255,0.25)", color: "#fff", fontSize: "9px", padding: "1px 4px", borderRadius: "3px" }}>1</kbd>
+            <kbd style={{ background: "rgba(26,31,37,0.25)", color: "#14181D", fontSize: "9px", padding: "1px 4px", borderRadius: "3px" }}>1</kbd>
           </button>
         </div>
       )}
@@ -1179,7 +1179,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                         fontSize: "9px",
                         padding: "1px 5px",
                         borderRadius: "3px",
-                        background: "rgba(255, 255, 255, 0.25)",
+                        background: "rgba(26, 31, 37, 0.25)",
                         fontWeight: 900,
                       }}
                     >
@@ -1191,7 +1191,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                     style={{
                       padding: "6px 10px",
                       borderRadius: "6px",
-                      backgroundColor: "#F8FAFC",
+                      backgroundColor: "#12161B",
                       border: "1px solid var(--border-hairline)",
                       fontSize: "10px",
                       color: "var(--text-muted)",
@@ -1215,7 +1215,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
             onClick={() => dispatch({ type: "attention.switch", functionId: "operations" })}
             style={{
               borderRadius: "12px",
-              backgroundColor: "rgba(255, 255, 255, 0.5)",
+              backgroundColor: "rgba(26, 31, 37, 0.5)",
               border: "1.5px dashed var(--border-graphite)",
               padding: "16px 14px",
               display: "flex",
@@ -1237,7 +1237,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
                 color: "var(--text-muted)",
                 padding: "2px 7px",
                 borderRadius: "4px",
-                backgroundColor: "#F1F5F9",
+                backgroundColor: "#1A1F25",
                 border: "1px solid var(--border-hairline)",
               }}
             >
@@ -1260,7 +1260,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
           style={{
             padding: "8px 14px",
             borderRadius: "10px",
-            background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
+            background: "linear-gradient(135deg, #0D1712 0%, #D1FAE5 100%)",
             border: "1px solid #A7F3D0",
             display: "flex",
             alignItems: "center",
@@ -1317,7 +1317,7 @@ export const ProductRoom: React.FC<ProductRoomProps> = ({ state, dispatch }) => 
             }}
           >
             <span>Monetise Deals →</span>
-            <kbd style={{ padding: "1px 4px", borderRadius: "3px", background: "rgba(0,0,0,0.2)", color: "#fff", fontSize: "9px" }}>
+            <kbd style={{ padding: "1px 4px", borderRadius: "3px", background: "rgba(0,0,0,0.2)", color: "#14181D", fontSize: "9px" }}>
               3
             </kbd>
           </button>

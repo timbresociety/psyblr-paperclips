@@ -102,7 +102,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
           border: '1px solid var(--border-hairline)',
           borderRadius: '20px',
           padding: '28px',
-          boxShadow: '0 24px 64px -12px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0 24px 64px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04)',
           color: 'var(--text-ink)',
         }}
       >
@@ -195,10 +195,10 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
                         fontWeight: 700,
                         lineHeight: 1,
                         color: 'var(--text-ink)',
-                        backgroundColor: '#FFFFFF',
+                        backgroundColor: '#14181D',
                         border: '1px solid var(--border-subtle)',
                         borderRadius: '4px',
-                        boxShadow: '0 1px 2px rgba(15, 23, 42, 0.08)',
+                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
                         marginLeft: '10px',
                         whiteSpace: 'nowrap',
                       }}
@@ -225,7 +225,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
             color: 'var(--text-secondary)',
           }}
         >
-          <span>Press <kbd style={{ padding: '2px 5px', borderRadius: '3px', background: '#FFFFFF', border: '1px solid var(--border-subtle)', color: 'var(--text-ink)' }}>?</kbd> anytime to toggle</span>
+          <span>Press <kbd style={{ padding: '2px 5px', borderRadius: '3px', background: '#14181D', border: '1px solid var(--border-subtle)', color: 'var(--text-ink)' }}>?</kbd> anytime to toggle</span>
           <button
             onClick={() => { sound.playClick(); onClose() }}
             className="cred-3d-button cred-3d-button-cyan"

@@ -107,13 +107,13 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
           bottom: '20px',
           left: '260px',
           zIndex: 80,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: '#14181D',
           borderRadius: '9999px',
           padding: '6px 14px',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
           cursor: 'pointer',
         }}
       >
@@ -134,12 +134,12 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
         left: '260px',
         zIndex: 80,
         width: '320px',
-        backgroundColor: 'rgba(255, 255, 255, 0.96)',
+        backgroundColor: 'rgba(26, 31, 37, 0.96)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid #E2E8F0',
+        border: '1px solid #262C34',
         borderRadius: '12px',
-        boxShadow: '0 16px 36px -8px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.04)',
+        boxShadow: '0 16px 36px -8px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04)',
         padding: '14px 16px',
         display: 'flex',
         flexDirection: 'column',
@@ -152,7 +152,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
           <span style={{ fontSize: '12px' }}>📋</span>
           <span
             className="font-mono"
-            style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', color: '#0F172A' }}
+            style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', color: '#F4F6F7' }}
           >
             FOUNDER PLAYBOOK
           </span>
@@ -180,7 +180,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
             title="Minimize Playbook"
             style={{
               fontSize: '11px',
-              color: '#64748B',
+              color: '#6F7882',
               padding: '2px 6px',
               borderRadius: '4px',
             }}
@@ -192,7 +192,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
             title="Dismiss Playbook"
             style={{
               fontSize: '11px',
-              color: '#64748B',
+              color: '#6F7882',
               padding: '2px 6px',
               borderRadius: '4px',
             }}
@@ -207,7 +207,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
         style={{
           width: '100%',
           height: '4px',
-          backgroundColor: '#F1F5F9',
+          backgroundColor: '#1A1F25',
           borderRadius: '2px',
           overflow: 'hidden',
         }}
@@ -236,8 +236,8 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
                 gap: '8px',
                 padding: '6px 10px',
                 borderRadius: '6px',
-                backgroundColor: done ? '#F0FDF4' : '#F8FAFC',
-                border: done ? '1px solid #BBF7D0' : '1px solid #E2E8F0',
+                backgroundColor: done ? '#0D1712' : '#12161B',
+                border: done ? '1px solid #BBF7D0' : '1px solid #262C34',
                 cursor: step.onClickAction ? 'pointer' : 'default',
                 transition: 'all 120ms ease',
               }}
@@ -246,7 +246,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
                 className="font-mono"
                 style={{
                   fontSize: '11px',
-                  color: done ? '#059669' : '#94A3B8',
+                  color: done ? '#059669' : '#6F7882',
                   fontWeight: 800,
                   width: '14px',
                   textAlign: 'center',
@@ -259,7 +259,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
                   style={{
                     fontSize: '11.5px',
                     fontWeight: done ? 500 : 600,
-                    color: done ? '#94A3B8' : '#0F172A',
+                    color: done ? '#6F7882' : '#F4F6F7',
                     textDecoration: done ? 'line-through' : 'none',
                   }}
                 >

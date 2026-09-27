@@ -1,4 +1,5 @@
 @import './tokens.css';
+@import './tiers.css';
 
 * {
   box-sizing: border-box;
@@ -77,10 +78,10 @@ button {
 }
 
 .btn-primary:disabled {
-  background: linear-gradient(180deg, #F1F5F9 0%, #E2E8F0 100%);
-  color: #94A3B8;
-  border: 1px solid #CBD5E1;
-  box-shadow: 0 1.5px 0 #CBD5E1;
+  background: linear-gradient(180deg, #14181D 0%, #10141A 100%);
+  color: var(--text-muted);
+  border: 1px solid #2E353D;
+  box-shadow: 0 1.5px 0 #0A0D10;
   cursor: not-allowed;
   transform: none;
   opacity: 0.8;
@@ -91,37 +92,37 @@ button {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 100%);
-  color: #0F172A;
+  background: linear-gradient(180deg, #21262D 0%, #1A1F25 100%);
+  color: var(--text-bright);
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 700;
   padding: 7px 15px;
   border-radius: 8px;
-  border: 1px solid #CBD5E1;
-  box-shadow: inset 0 1px 0 #FFFFFF, 0 2.5px 0 #94A3B8, 0 4px 8px rgba(15, 23, 42, 0.05);
+  border: 1px solid #2E353D;
+  box-shadow: inset 0 1px 0 rgba(244, 246, 247, 0.12), 0 2.5px 0 #0A0D10, 0 4px 8px rgba(15, 23, 42, 0.05);
   transition: transform 90ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 90ms cubic-bezier(0.16, 1, 0.3, 1), background 120ms ease;
   cursor: pointer;
   user-select: none;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #FFFFFF 0%, #E2E8F0 100%);
-  border-color: #94A3B8;
-  box-shadow: inset 0 1px 0 #FFFFFF, 0 2.5px 0 #64748B, 0 6px 12px rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #262C34 0%, #1E242B 100%);
+  border-color: #3A424B;
+  box-shadow: inset 0 1px 0 rgba(244, 246, 247, 0.12), 0 2.5px 0 #0A0D10, 0 6px 12px rgba(15, 23, 42, 0.08);
   transform: none;
 }
 
 .btn-secondary:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.05), 0 0.5px 0 #94A3B8, 0 1px 3px rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.05), 0 0.5px 0 #0A0D10, 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
 .btn-secondary:disabled {
-  background: linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 100%);
-  color: #94A3B8;
-  border: 1px solid #CBD5E1;
-  box-shadow: 0 1.5px 0 #CBD5E1;
+  background: linear-gradient(180deg, #14181D 0%, #10141A 100%);
+  color: var(--text-muted);
+  border: 1px solid #2E353D;
+  box-shadow: 0 1.5px 0 #0A0D10;
   cursor: not-allowed;
   transform: none;
   opacity: 0.8;
@@ -162,10 +163,10 @@ button {
 
 .cred-3d-button:disabled,
 .cred-3d-button-disabled {
-  background: linear-gradient(180deg, #F1F5F9 0%, #E2E8F0 100%) !important;
-  color: #94A3B8 !important;
-  border: 1px solid #CBD5E1 !important;
-  box-shadow: 0 1.5px 0 #CBD5E1 !important;
+  background: linear-gradient(180deg, #14181D 0%, #10141A 100%) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid #2E353D !important;
+  box-shadow: 0 1.5px 0 #0A0D10 !important;
   cursor: not-allowed !important;
   transform: none !important;
   opacity: 0.8 !important;
@@ -174,23 +175,23 @@ button {
 /* Light / Auxiliary 2.5D Button (for AUDIT, MANAGE, REROLL, secondary buttons) */
 .cred-3d-button-light,
 .cred-3d-button-subtle {
-  background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 100%);
-  color: #0F172A;
-  border: 1px solid #CBD5E1;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 2.5px 0 #94A3B8, 0 4px 10px rgba(15, 23, 42, 0.06);
+  background: linear-gradient(180deg, #21262D 0%, #1A1F25 100%);
+  color: var(--text-bright);
+  border: 1px solid #2E353D;
+  box-shadow: inset 0 1px 0 rgba(244, 246, 247, 0.12), 0 2.5px 0 #0A0D10, 0 4px 10px rgba(15, 23, 42, 0.06);
 }
 
 .cred-3d-button-light:hover:not(:disabled),
 .cred-3d-button-subtle:hover:not(:disabled) {
-  background: linear-gradient(180deg, #FFFFFF 0%, #E2E8F0 100%);
-  border-color: #94A3B8;
-  box-shadow: inset 0 1px 0 #FFFFFF, 0 2.5px 0 #64748B, 0 6px 14px rgba(15, 23, 42, 0.1);
+  background: linear-gradient(180deg, #262C34 0%, #1E242B 100%);
+  border-color: #3A424B;
+  box-shadow: inset 0 1px 0 rgba(244, 246, 247, 0.12), 0 2.5px 0 #0A0D10, 0 6px 14px rgba(15, 23, 42, 0.1);
 }
 
 .cred-3d-button-light:active:not(:disabled),
 .cred-3d-button-subtle:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.05), 0 0.5px 0 #94A3B8, 0 1px 4px rgba(15, 23, 42, 0.08);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.05), 0 0.5px 0 #0A0D10, 0 1px 4px rgba(15, 23, 42, 0.08);
 }
 
 /* Dark Slate 2.5D Button (when dark contrast is intentionally needed) */
@@ -231,7 +232,7 @@ button {
 
 .cred-3d-button-amber {
   background: linear-gradient(180deg, #F59E0B 0%, #D97706 100%);
-  color: #0F172A;
+  color: var(--text-bright);
   border: 1px solid rgba(255, 255, 255, 0.35);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 3px 0 #B45309, 0 6px 16px rgba(245, 158, 11, 0.35);
 }
@@ -305,7 +306,7 @@ input, select, textarea {
   font-family: inherit;
   font-size: 13px;
   color: var(--text-ink);
-  background: #FFFFFF;
+  background: var(--surface-secondary);
   border: 1px solid var(--border-hairline);
   border-radius: 8px;
   padding: 8px 12px;
@@ -342,7 +343,7 @@ input:focus, select:focus, textarea:focus {
 .liquid-chrome-icon-box {
   position: relative;
   background: var(--chrome-surface);
-  border: 1px solid rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(244, 246, 247, 0.14);
   box-shadow: var(--chrome-shadow);
   border-radius: 10px;
   display: flex;
@@ -368,7 +369,7 @@ input:focus, select:focus, textarea:focus {
   left: 0;
   right: 0;
   height: 42%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(180deg, rgba(244, 246, 247, 0.09) 0%, rgba(244, 246, 247, 0) 100%);
   pointer-events: none;
 }
 
@@ -385,17 +386,17 @@ input:focus, select:focus, textarea:focus {
 
 .liquid-chrome-pill {
   background: var(--chrome-surface);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 8px -1px rgba(100, 116, 139, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(244, 246, 247, 0.12);
+  box-shadow: 0 2px 8px -1px rgba(100, 116, 139, 0.15), inset 0 1px 1px rgba(244, 246, 247, 0.1);
   border-radius: 9999px;
   position: relative;
   overflow: hidden;
 }
 
 .liquid-chrome-card {
-  background: #FFFFFF;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background: var(--surface-card);
+  border: 1px solid var(--border-card);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(244, 246, 247, 0.06);
   border-radius: 14px;
 }
 
@@ -723,7 +724,7 @@ input:focus, select:focus, textarea:focus {
   font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 500;
-  color: #94A3B8;
+  color: var(--text-muted);
 }
 
 .nav-label {
@@ -942,7 +943,7 @@ input:focus, select:focus, textarea:focus {
   flex-direction: column;
   align-items: center;
   padding: 8px 18px;
-  background: #FFFFFF;
+  background: var(--surface-secondary);
   border: 1px solid var(--border-hairline);
   border-radius: 8px;
   cursor: pointer;
@@ -1243,7 +1244,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .bottom-action-btn {
-  background: #FFFFFF;
+  background: var(--surface-secondary);
   border: 1px solid var(--border-hairline);
   font-family: var(--font-sans);
   font-size: 13px;
@@ -1592,7 +1593,7 @@ input:focus, select:focus, textarea:focus {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  background: #FFFFFF;
+  background: var(--surface-secondary);
   border: 1px solid var(--border-hairline);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(18, 22, 26, 0.04);
@@ -1697,7 +1698,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .rail-fleet-cell {
-  background: #FFFFFF;
+  background: var(--surface-secondary);
   border: 1px solid var(--border-hairline);
   border-radius: 6px;
   padding: 6px 8px;

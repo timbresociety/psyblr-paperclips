@@ -85,8 +85,8 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
       style={{
         width: '248px',
         flexShrink: 0,
-        backgroundColor: '#FFFFFF',
-        borderRight: '1px solid rgba(15, 23, 42, 0.07)',
+        backgroundColor: '#14181D',
+        borderRight: '1px solid rgba(244, 246, 247, 0.07)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -104,7 +104,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
             fontSize: '9.5px',
             fontWeight: 800,
             letterSpacing: '0.14em',
-            color: '#94A3B8',
+            color: '#6F7882',
             textTransform: 'uppercase',
             padding: '0 8px 10px 8px',
           }}
@@ -171,9 +171,9 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                   justifyContent: 'space-between',
                   padding: '8px 10px',
                   borderRadius: '10px',
-                  backgroundColor: isActive ? '#FFFFFF' : 'transparent',
-                  border: isActive ? '1px solid #E2E8F0' : '1px solid transparent',
-                  boxShadow: isActive ? '0 3px 10px rgba(15, 23, 42, 0.06)' : 'none',
+                  backgroundColor: isActive ? '#14181D' : 'transparent',
+                  border: isActive ? '1px solid #262C34' : '1px solid transparent',
+                  boxShadow: isActive ? '0 3px 10px rgba(0, 0, 0, 0.06)' : 'none',
                   cursor: 'pointer',
                   transition: 'all 120ms ease',
                   gap: '8px',
@@ -187,8 +187,8 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                       height: '28px',
                       borderRadius: '7px',
                       backgroundColor: isActive ? 'rgba(2, 132, 199, 0.07)' : 'rgba(241, 245, 249, 0.9)',
-                      border: `1px solid ${isActive ? room.accentColor : '#E2E8F0'}`,
-                      boxShadow: isActive ? `0 2px 8px ${room.accentColor}33` : '0 1px 2px rgba(15, 23, 42, 0.04)',
+                      border: `1px solid ${isActive ? room.accentColor : '#262C34'}`,
+                      boxShadow: isActive ? `0 2px 8px ${room.accentColor}33` : '0 1px 2px rgba(0, 0, 0, 0.04)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -214,7 +214,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                         className="font-mono"
                         style={{
                           fontSize: '10.5px',
-                          color: isActive ? '#0284C7' : '#94A3B8',
+                          color: isActive ? '#0284C7' : '#6F7882',
                           fontWeight: 700,
                         }}
                       >
@@ -224,7 +224,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                         style={{
                           fontSize: '12.5px',
                           fontWeight: isActive ? 800 : 600,
-                          color: isActive ? '#0F172A' : '#475569',
+                          color: isActive ? '#F4F6F7' : '#A7AFB8',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -237,7 +237,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                       className="font-mono"
                       style={{
                         fontSize: '9.5px',
-                        color: isAutomated && units > 0 ? '#10B981' : '#94A3B8',
+                        color: isAutomated && units > 0 ? '#10B981' : '#6F7882',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -293,7 +293,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
             fontSize: '9.5px',
             fontWeight: 800,
             letterSpacing: '0.14em',
-            color: '#94A3B8',
+            color: '#6F7882',
             textTransform: 'uppercase',
             padding: '20px 8px 10px 8px',
           }}
@@ -330,8 +330,8 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                   height: '28px',
                   borderRadius: '7px',
                   backgroundColor: 'rgba(241, 245, 249, 0.9)',
-                  border: '1px solid #E2E8F0',
-                  boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)',
+                  border: '1px solid #262C34',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -351,14 +351,14 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#0F172A' }}>
+                <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#F4F6F7' }}>
                   Skill trees
                 </span>
                 <span
                   className="font-mono"
                   style={{
                     fontSize: '9.5px',
-                    color: '#94A3B8',
+                    color: '#6F7882',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -379,9 +379,9 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
               justifyContent: 'space-between',
               padding: '8px 10px',
               borderRadius: '10px',
-              backgroundColor: state.activeFunction === 'finance' ? '#FFFFFF' : 'transparent',
-              border: state.activeFunction === 'finance' ? '1px solid #E2E8F0' : '1px solid transparent',
-              boxShadow: state.activeFunction === 'finance' ? '0 3px 10px rgba(15, 23, 42, 0.06)' : 'none',
+              backgroundColor: state.activeFunction === 'finance' ? '#14181D' : 'transparent',
+              border: state.activeFunction === 'finance' ? '1px solid #262C34' : '1px solid transparent',
+              boxShadow: state.activeFunction === 'finance' ? '0 3px 10px rgba(0, 0, 0, 0.06)' : 'none',
               cursor: 'pointer',
               transition: 'all 120ms ease',
               gap: '8px',
@@ -395,8 +395,8 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                   height: '28px',
                   borderRadius: '7px',
                   backgroundColor: state.activeFunction === 'finance' ? 'rgba(5, 150, 105, 0.08)' : 'rgba(241, 245, 249, 0.9)',
-                  border: `1px solid ${state.activeFunction === 'finance' ? '#10B981' : '#E2E8F0'}`,
-                  boxShadow: state.activeFunction === 'finance' ? '0 2px 8px rgba(16, 185, 129, 0.2)' : '0 1px 2px rgba(15, 23, 42, 0.04)',
+                  border: `1px solid ${state.activeFunction === 'finance' ? '#10B981' : '#262C34'}`,
+                  boxShadow: state.activeFunction === 'finance' ? '0 2px 8px rgba(16, 185, 129, 0.2)' : '0 1px 2px rgba(0, 0, 0, 0.04)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -422,7 +422,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                     className="font-mono"
                     style={{
                       fontSize: '10.5px',
-                      color: state.activeFunction === 'finance' ? '#059669' : '#94A3B8',
+                      color: state.activeFunction === 'finance' ? '#059669' : '#6F7882',
                       fontWeight: 700,
                     }}
                   >
@@ -432,7 +432,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                     style={{
                       fontSize: '12.5px',
                       fontWeight: state.activeFunction === 'finance' ? 800 : 600,
-                      color: state.activeFunction === 'finance' ? '#0F172A' : '#475569',
+                      color: state.activeFunction === 'finance' ? '#F4F6F7' : '#A7AFB8',
                     }}
                   >
                     Finance
@@ -442,7 +442,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                   className="font-mono"
                   style={{
                     fontSize: '9.5px',
-                    color: '#94A3B8',
+                    color: '#6F7882',
                   }}
                 >
                   Cashflow & capital

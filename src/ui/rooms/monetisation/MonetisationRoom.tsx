@@ -574,7 +574,7 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
                     +{6 - maxDesks} DESKS // 0{maxDesks + 1}–06 [LOCKED]
                   </div>
                 </div>
-                <span style={{ fontSize: "8px", fontWeight: 800, color: "var(--text-muted)", backgroundColor: "#F1F5F9", padding: "1px 5px", borderRadius: "3px" }}>
+                <span style={{ fontSize: "8px", fontWeight: 800, color: "var(--text-muted)", backgroundColor: "#1A1F25", padding: "1px 5px", borderRadius: "3px" }}>
                   UPGRADE SCALE
                 </span>
               </div>
@@ -595,7 +595,7 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
               position: "absolute",
               inset: 0,
               zIndex: 30,
-              backgroundColor: "rgba(255, 255, 255, 0.88)",
+              backgroundColor: "rgba(26, 31, 37, 0.88)",
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
               borderRadius: "16px",
@@ -844,7 +844,7 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
               {/* Background Gauge Track */}
               <path
                 d={makeWedgePath(0, 1.0, R_OUTER, R_INNER)}
-                fill="rgba(15, 23, 42, 0.75)"
+                fill="rgba(217, 222, 227, 0.75)"
                 stroke="rgba(255, 255, 255, 0.08)"
                 strokeWidth="1"
               />
@@ -896,7 +896,7 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
                     y1={t.pt1.y}
                     x2={t.pt2.x}
                     y2={t.pt2.y}
-                    stroke={t.isMajor ? "#CBD5E1" : "rgba(148, 163, 184, 0.45)"}
+                    stroke={t.isMajor ? "#4A525B" : "rgba(148, 163, 184, 0.45)"}
                     strokeWidth={t.isMajor ? 1.8 : 1}
                   />
                   {t.labelPt && (
@@ -907,7 +907,7 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
                       fontSize="9.5"
                       fontFamily="var(--font-mono)"
                       fontWeight="700"
-                      fill="#94A3B8"
+                      fill="#6F7882"
                     >
                       {t.label}
                     </text>
@@ -959,8 +959,8 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
               </g>
 
               {/* Center Pivot Hub (Industrial 2.5D Rivet) */}
-              <circle cx={CX} cy={CY} r="18" fill="url(#hub-metal)" stroke="#475569" strokeWidth="2" />
-              <circle cx={CX} cy={CY} r="9" fill="#0F172A" />
+              <circle cx={CX} cy={CY} r="18" fill="url(#hub-metal)" stroke="#A7AFB8" strokeWidth="2" />
+              <circle cx={CX} cy={CY} r="9" fill="#F4F6F7" />
               <circle
                 cx={CX}
                 cy={CY}
