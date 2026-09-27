@@ -3,6 +3,7 @@ import type { GameState } from '../../engine/types'
 import type { GameAction } from '../../engine/actions'
 import { sound } from '../../audio/soundEngine'
 import { getActiveEvolutionTier } from '../../engine/formulas'
+import { BrandLockup } from '../brand/Brand'
 import { getMaxUnlockedSpeed } from '../../engine/constants'
 
 interface TopHudProps {
@@ -85,29 +86,8 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
       {/* DESKTOP AEROSPACE COCKPIT BAR */}
       <div className="top-hud-desktop">
         {/* 1. BRAND IDENTITY */}
-        <div className="top-hud-brand" style={{ display: 'flex', flexDirection: 'column', minWidth: '130px', flexShrink: 0 }}>
-          <div
-            className="font-display"
-            style={{
-              fontSize: '15px',
-              fontWeight: 800,
-              letterSpacing: '0.04em',
-              color: 'var(--text-bright)',
-            }}
-          >
-            ONE / PERSON
-          </div>
-          <div
-            className="font-mono"
-            style={{
-              fontSize: '11px',
-              color: 'var(--accent-product)',
-              textTransform: 'capitalize',
-              marginTop: '1px',
-            }}
-          >
-            {getActiveEvolutionTier(state).tier} / 0{state.quarter}
-          </div>
+        <div className="top-hud-brand" style={{ display: 'flex', flexDirection: 'column', minWidth: '150px', flexShrink: 0 }}>
+          <BrandLockup tier={getActiveEvolutionTier(state).tier} quarter={state.quarter} />
         </div>
 
         {/* 2. CENTER FINANCIAL TELEMETRY & CLOCK */}
