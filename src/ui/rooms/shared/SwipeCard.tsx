@@ -46,9 +46,13 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
   const start = useRef<{ x: number; y: number; id: number } | null>(null)
   const elRef = useRef<HTMLDivElement>(null)
   const flyoutTimer = useRef<number | null>(null)
+  // Live offset, updated synchronously in pointermove — pointerup reads this,
+  // not the React state (which can lag a frame on a fast release and drop the commit).
+  const liveDrag = useRef<{ dx: number; dy: number }>({ dx: 0, dy: 0 })
 
   const reset = useCallback(() => {
     start.current = null
+    liveDrag.current = { dx: 0, dy: 0 }
     setDrag({ dx: 0, dy: 0, active: false })
   }, [])
 
@@ -78,7 +82,10 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!start.current || e.pointerId !== start.current.id) return
-    setDrag({ dx: resist(e.clientX - start.current.x), dy: resist(e.clientY - start.current.y), active: true })
+    const dx = resist(e.clientX - start.current.x)
+    const dy = resist(e.clientY - start.current.y)
+    liveDrag.current = { dx, dy }
+    setDrag({ dx, dy, active: true })
   }
 
   const commit = (dir: 'left' | 'right' | 'up') => {
@@ -104,7 +111,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
 
   const handlePointerUp = (e: React.PointerEvent) => {
     if (!start.current || e.pointerId !== start.current.id) return
-    const { dx, dy } = drag
+    const { dx, dy } = liveDrag.current
     start.current = null
     if (onUp && dy < -COMMIT_PX && Math.abs(dy) > Math.abs(dx)) commit('up')
     else if (dx > COMMIT_PX) commit('right')
