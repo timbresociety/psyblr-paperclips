@@ -4,6 +4,7 @@ import type { GameAction } from '../../../engine/actions'
 import { DEMAND_CHANNELS, DEMAND_CHANNEL_LIMITS, SEGMENT_PROFILES, LUCK_VARIANCE_CONFIG } from '../../../engine/constants'
 import { sound } from '../../../audio/soundEngine'
 import { SwipeCard } from '../shared/SwipeCard'
+import { RadarScope } from './RadarScope'
 
 interface DemandRoomProps {
   state: GameState
@@ -397,9 +398,10 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
           maxWidth: '680px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+          <RadarScope signalIds={demandSignals.map(x => x.id)} size={44} />
           <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-ink)' }}>
-            📡 Market Scanner: {demandSignals.length} Active Inbound Signals
+            Market Scanner: <strong style={{ color: 'var(--accent-demand)' }}>{demandSignals.length}</strong> Active Inbound Signals
           </span>
           {automateRank > 0 && (
             <span
