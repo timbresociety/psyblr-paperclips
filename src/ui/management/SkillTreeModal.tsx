@@ -366,7 +366,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
 
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#F4F6F7", letterSpacing: "-0.01em" }}>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-bright)", letterSpacing: "-0.01em" }}>
                 Architecture Matrix
               </span>
               <span
@@ -396,9 +396,9 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
               borderRadius: "9999px",
               fontSize: "10.5px",
               fontWeight: 600,
-              backgroundColor: selectedHub === null ? "#0284C7" : "rgba(2, 4, 6, 0.05)",
-              color: selectedHub === null ? "#FFFFFF" : "#A7AFB8",
-              border: selectedHub === null ? "1px solid #0284C7" : "1px solid rgba(244, 246, 247, 0.1)",
+              backgroundColor: selectedHub === null ? "var(--accent-product)" : "rgba(2, 4, 6, 0.05)",
+              color: selectedHub === null ? "#FFFFFF" : "var(--text-secondary)",
+              border: selectedHub === null ? "1px solid var(--accent-product)" : "1px solid rgba(244, 246, 247, 0.1)",
               cursor: "pointer",
               transition: "all 120ms ease",
               whiteSpace: "nowrap",
@@ -424,7 +424,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                   fontSize: "11px",
                   fontWeight: 600,
                   backgroundColor: isSelected ? info.color : "rgba(2, 4, 6, 0.04)",
-                  color: isSelected ? "#FFFFFF" : "#A7AFB8",
+                  color: isSelected ? "#FFFFFF" : "var(--text-secondary)",
                   border: isSelected ? `1px solid ${info.color}` : "1px solid rgba(244, 246, 247, 0.08)",
                   cursor: "pointer",
                   display: "flex",
@@ -440,7 +440,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                     width: "7px",
                     height: "7px",
                     borderRadius: "50%",
-                    backgroundColor: isSelected ? "#14181D" : info.color,
+                    backgroundColor: isSelected ? "var(--surface-card)" : info.color,
                   }}
                 />
                 <span>{info.name}</span>
@@ -494,7 +494,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
           alignItems: "center",
           justifyContent: "space-between",
           padding: "8px 16px",
-          backgroundColor: "#14181D",
+          backgroundColor: "var(--surface-card)",
           borderBottom: "1px solid rgba(244, 246, 247, 0.08)",
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
           flexWrap: "wrap",
@@ -506,26 +506,26 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
         <div style={{ display: "flex", alignItems: "center", gap: "24px", flexWrap: "wrap" }}>
           {/* VALUATION */}
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: '95px' }}>
-            <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: '#6F7882' }}>
+            <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)' }}>
               VALUATION
             </span>
-            <span className="font-display" style={{ fontSize: '17px', fontWeight: 800, color: '#F4F6F7', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+            <span className="font-display" style={{ fontSize: '17px', fontWeight: 800, color: 'var(--text-bright)', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
               {formatDollars(state.valuationCents)}
             </span>
-            <span className="font-mono" style={{ fontSize: '8.5px', color: '#6F7882' }}>
+            <span className="font-mono" style={{ fontSize: '8.5px', color: 'var(--text-muted)' }}>
               TARGET $1B
             </span>
           </div>
 
           {/* ARR */}
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: '95px' }}>
-            <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: '#6F7882' }}>
+            <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)' }}>
               ARR
             </span>
-            <span className="font-display" style={{ fontSize: '17px', fontWeight: 800, color: '#F4F6F7', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+            <span className="font-display" style={{ fontSize: '17px', fontWeight: 800, color: 'var(--text-bright)', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
               {formatDollars(state.contractualArrCents)}
             </span>
-            <span className="font-mono" style={{ fontSize: '8.5px', color: '#6F7882' }}>
+            <span className="font-mono" style={{ fontSize: '8.5px', color: 'var(--text-muted)' }}>
               {state.accounts.length} paying customers
             </span>
           </div>
@@ -533,7 +533,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
           {/* LIQUID CASH */}
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: '115px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: '#6F7882' }}>
+              <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)' }}>
                 LIQUID CASH
               </span>
               {isOnlyNextBillRemaining && (
@@ -558,17 +558,17 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
             <span className="font-display" style={{ fontSize: '17px', fontWeight: 800, color: isOnlyNextBillRemaining || state.cashCents < 50_000_00 ? '#E11D48' : '#059669', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
               {formatDollars(state.cashCents)}
             </span>
-            <span className="font-mono" style={{ fontSize: '8.5px', color: '#6F7882' }}>
+            <span className="font-mono" style={{ fontSize: '8.5px', color: 'var(--text-muted)' }}>
               {formatDollars(upcomingObligationsCents)} 180s obligations
             </span>
           </div>
 
           {/* QUARTER PROGRESS */}
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: '95px' }}>
-            <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: '#6F7882' }}>
+            <span className="font-mono" style={{ fontSize: '8.5px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)' }}>
               QUARTER {state.quarter}
             </span>
-            <span className="font-mono" style={{ fontSize: '17px', fontWeight: 800, color: '#F4F6F7', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+            <span className="font-mono" style={{ fontSize: '17px', fontWeight: 800, color: 'var(--text-bright)', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
               {mins}:{secs.toString().padStart(2, '0')}
             </span>
             <div
@@ -585,7 +585,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                 style={{
                   width: `${quarterProgressPct}%`,
                   height: '100%',
-                  backgroundColor: '#0284C7',
+                  backgroundColor: 'var(--accent-product)',
                   transition: 'width 250ms ease',
                 }}
               />
@@ -672,8 +672,8 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                     padding: '8px 14px',
                     borderRadius: '12px',
                     border: isSelected ? `2px solid ${info.color}` : '1px solid rgba(244, 246, 247, 0.22)',
-                    backgroundColor: isSelected ? '#14181D' : 'rgba(2, 4, 6, 0.65)',
-                    color: isSelected ? '#F4F6F7' : '#F8FAFC',
+                    backgroundColor: isSelected ? 'var(--surface-card)' : 'rgba(2, 4, 6, 0.65)',
+                    color: isSelected ? 'var(--text-bright)' : '#F8FAFC',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
@@ -742,12 +742,12 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                     >
                       SECTOR // 0{FUNCTIONS_ORDER.indexOf(activeSector) + 1}
                     </span>
-                    <span style={{ fontSize: '10px', color: '#6F7882' }}>·</span>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#6F7882' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>·</span>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)' }}>
                       {activeTotal}/20 Researched
                     </span>
                   </div>
-                  <div style={{ fontSize: '16px', fontWeight: 800, color: '#F4F6F7', marginTop: '2px' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-bright)', marginTop: '2px' }}>
                     {activeInfo.name} Architecture
                   </div>
                 </div>
@@ -787,7 +787,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                 <div
                   key={axis}
                   style={{
-                    backgroundColor: '#14181D',
+                    backgroundColor: 'var(--surface-card)',
                     borderRadius: '14px',
                     padding: '14px',
                     border: `1.5px solid ${currentRank > 0 ? axisCfg.color + '45' : 'rgba(244, 246, 247, 0.08)'}`,
@@ -814,7 +814,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                       >
                         {axisCfg.code}
                       </span>
-                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#F4F6F7' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-bright)' }}>
                         {axisCfg.name}
                       </span>
                     </div>
@@ -833,7 +833,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                           }}
                         />
                       ))}
-                      <span className="font-mono" style={{ fontSize: '11px', fontWeight: 800, color: '#6F7882', marginLeft: '4px' }}>
+                      <span className="font-mono" style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', marginLeft: '4px' }}>
                         {currentRank}/5
                       </span>
                     </div>
@@ -851,10 +851,10 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                       gap: '8px',
                     }}
                   >
-                    <div style={{ fontSize: '11px', color: '#6F7882', flexShrink: 0 }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', flexShrink: 0 }}>
                       Current:
                     </div>
-                    <div style={{ fontSize: '11.5px', fontWeight: 800, color: currentRank > 0 ? '#F4F6F7' : '#6F7882', textAlign: 'right' }}>
+                    <div style={{ fontSize: '11.5px', fontWeight: 800, color: currentRank > 0 ? 'var(--text-bright)' : 'var(--text-muted)', textAlign: 'right' }}>
                       {currentTierInfo ? currentTierInfo.desc : 'Baseline (Rank 0)'}
                     </div>
                   </div>
@@ -869,7 +869,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                           style={{ width: '28px', height: '28px', objectFit: 'contain', flexShrink: 0 }}
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '12px', fontWeight: 800, color: '#F4F6F7' }}>
+                          <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-bright)' }}>
                             Tier {currentRank + 1}: {nextTierInfo.label}
                           </div>
                           <div style={{ fontSize: '11px', color: axisCfg.color, fontWeight: 700, marginTop: '1px' }}>
@@ -956,7 +956,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
           position: "relative",
           cursor: isDragging ? "grabbing" : "grab",
           overflow: "hidden",
-          backgroundColor: "#1A1F25",
+          backgroundColor: "var(--surface-secondary)",
           backgroundImage: `
             radial-gradient(circle, rgba(148, 163, 184, 0.35) 1.2px, transparent 1.2px)
           `,
@@ -1057,15 +1057,15 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "10px", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.06em", color: fnInfo.color }}>
                       <span>{fnInfo.name}</span>
-                      <span style={{ color: "#6F7882" }}>/</span>
+                      <span style={{ color: "var(--text-muted)" }}>/</span>
                       <span style={{ color: axisInfo.color }}>{axisInfo.name}</span>
-                      <span style={{ color: "#6F7882" }}>/</span>
-                      <span style={{ color: "#6F7882" }}>TIER {tier}</span>
+                      <span style={{ color: "var(--text-muted)" }}>/</span>
+                      <span style={{ color: "var(--text-muted)" }}>TIER {tier}</span>
                     </div>
 
                     <button
                       onClick={() => setSelectedNode(null)}
-                      style={{ color: "#6F7882", padding: "2px", cursor: "pointer" }}
+                      style={{ color: "var(--text-muted)", padding: "2px", cursor: "pointer" }}
                     >
                       <span style={{ fontSize: '13px', lineHeight: 1, fontFamily: 'monospace' }}>✕</span>
                     </button>
@@ -1159,8 +1159,8 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "6px",
-                          backgroundColor: "#1A1F25",
-                          color: "#6F7882",
+                          backgroundColor: "var(--surface-secondary)",
+                          color: "var(--text-muted)",
                           border: "1px solid var(--border-hairline)",
                           padding: "8px 14px",
                           borderRadius: "9999px",
@@ -1316,7 +1316,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                 width: "160px",
                 height: "160px",
                 borderRadius: "50%",
-                backgroundColor: "#14181D",
+                backgroundColor: "var(--surface-card)",
                 border: "2.5px solid #6366F1",
                 boxShadow: "0 0 40px rgba(99, 102, 241, 0.22), 0 4px 20px rgba(0, 0, 0, 0.08)",
                 display: "flex",
@@ -1378,7 +1378,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                     top: `${y}px`,
                     transform: "translate(-50%, -50%)",
                     width: "140px",
-                    backgroundColor: "#14181D",
+                    backgroundColor: "var(--surface-card)",
                     border: `1.5px solid ${isSelected ? info.color : `var(--border-hairline)`}`,
                     borderRadius: "14px",
                     padding: "10px 12px",
@@ -1457,7 +1457,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                       >
                         -
                       </button>
-                      <span className="font-mono" style={{ fontSize: "11px", fontWeight: 700, color: "#0284C7" }}>
+                      <span className="font-mono" style={{ fontSize: "11px", fontWeight: 700, color: "var(--accent-product)" }}>
                         {fleet.onlineUnits}
                       </span>
                       <button
@@ -1534,9 +1534,9 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                         transform: `translate(-50%, -50%) ${isFocused ? "scale(1.12)" : "scale(1)"}`,
                         width: "128px",
                         backgroundColor: isResearched
-                          ? "#1A1F25"
+                          ? "var(--surface-secondary)"
                           : isAvailable
-                          ? "#14181D"
+                          ? "var(--surface-card)"
                           : "rgba(20, 24, 29, 0.65)",
                         border: isFocused
                           ? `2px solid #0EA5E9`
@@ -1580,7 +1580,7 @@ export const SkillTreeModal: React.FC<SkillTreeModalProps> = ({ state, dispatch,
                             {formatCost(cost)}
                           </span>
                         ) : (
-                          <span className="font-mono" style={{ fontSize: '7.5px', color: '#6F7882', fontWeight: 700 }}>[LOCK]</span>
+                          <span className="font-mono" style={{ fontSize: '7.5px', color: 'var(--text-muted)', fontWeight: 700 }}>[LOCK]</span>
                         )}
                       </div>
 

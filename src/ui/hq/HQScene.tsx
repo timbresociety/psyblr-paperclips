@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import type { GameState, FunctionId } from '../../engine/types'
 import { getActiveEvolutionTier } from '../../engine/formulas'
-import { EVOLUTION_TIERS } from '../../engine/constants'
 import { gridToScreen, depthOf } from './iso'
+import { tierIndexOf } from './tierIndex'
+import { NonFinalAsset } from '../juice/NonFinalAsset'
 import { computeQueueBadges } from './queueMetrics'
 import { sound } from '../../audio/soundEngine'
 import './hq.css'
@@ -31,9 +32,8 @@ const DESKS: DeskDef[] = [
   { id: 'operations', name: 'Operations', icon: '/assets/2.5d/nav_operations.png', accent: '#B5F35A', col: 2, row: 3.1 },
 ]
 
-const TIER_INDEX: Record<string, number> = Object.fromEntries(
-  EVOLUTION_TIERS.map((t, i) => [t.tier, i + 1]),
-)
+// Depth order is static — sort once at module scope.
+const SORTED_DESKS = [...DESKS].sort((a, b) => depthOf(a.col, a.row) - depthOf(b.col, b.row))
 
 /** Image with a procedural fallback so a missing render never shows broken. */
 function SpriteImg({
@@ -41,21 +41,24 @@ function SpriteImg({
   className,
   alt,
   fallback,
+  style,
 }: {
   src: string
   className: string
   alt: string
   fallback?: React.ReactNode
+  style?: React.CSSProperties
 }) {
   const [failed, setFailed] = useState(false)
   if (failed) return <>{fallback ?? null}</>
-  return <img src={src} className={className} alt={alt} draggable={false} onError={() => setFailed(true)} />
+  return <img src={src} className={className} style={style} alt={alt} draggable={false} onError={() => setFailed(true)} />
 }
 
 export const HQScene: React.FC<HQSceneProps> = ({ state, onEnterRoom }) => {
   const tierInfo = getActiveEvolutionTier(state)
-  const tierN = TIER_INDEX[tierInfo.tier] ?? 1
-  const badges = useMemo(() => computeQueueBadges(state), [state])
+  const tierN = tierIndexOf(tierInfo.tier) + 1
+  // state identity changes every tick, so memoization would never hit — compute directly.
+  const badges = computeQueueBadges(state)
 
   const deskBaseSrc = `/assets/hq/desk_base_t${tierN}.png`
   const backdropSrc = `/assets/tiers/backdrop_${tierInfo.tier}.png`
@@ -63,15 +66,13 @@ export const HQScene: React.FC<HQSceneProps> = ({ state, onEnterRoom }) => {
   const active = DESKS.find(d => d.id === state.activeFunction) ?? DESKS[0]
   const founderPos = gridToScreen(active.col, active.row)
 
-  const sorted = [...DESKS].sort((a, b) => depthOf(a.col, a.row) - depthOf(b.col, b.row))
-
   return (
     <div className="hq-scene" data-testid="hq-scene">
       <div className="hq-backdrop" style={{ backgroundImage: `url(${backdropSrc}), var(--bg-canvas)` }} />
 
       <div className="hq-floor">
         <div className="hq-stage">
-          {sorted.map(desk => {
+          {SORTED_DESKS.map(desk => {
             const p = gridToScreen(desk.col, desk.row)
             const fleet = state.fleet[desk.id as keyof typeof state.fleet]
             const isAutomated = Boolean(fleet && fleet.automateRank > 0 && desk.id !== 'finance')
@@ -104,7 +105,12 @@ export const HQScene: React.FC<HQSceneProps> = ({ state, onEnterRoom }) => {
                   alt=""
                   fallback={<div className="hq-desk-platform" />}
                 />
-                <SpriteImg src={desk.icon} className="hq-desk-icon" alt={desk.name} />
+                <SpriteImg
+                  src={desk.icon}
+                  className="hq-desk-icon"
+                  alt={desk.name}
+                  fallback={<NonFinalAsset label={desk.name} size={72} accent={desk.accent} />}
+                />
 
                 {agentCount > 0 &&
                   Array.from({ length: agentCount }).map((_, i) => (
@@ -134,10 +140,10 @@ export const HQScene: React.FC<HQSceneProps> = ({ state, onEnterRoom }) => {
           <SpriteImg
             src="/assets/hq/founder_figure.png"
             className="hq-founder"
+            style={{ left: founderPos.x, top: founderPos.y, zIndex: Math.round(depthOf(active.col, active.row) * 10) + 5 }}
             alt="Founder"
             fallback={null}
           />
-          <style>{`.hq-founder { left: ${founderPos.x}px; top: ${founderPos.y}px; z-index: ${Math.round(depthOf(active.col, active.row) * 10) + 5}; }`}</style>
         </div>
       </div>
 

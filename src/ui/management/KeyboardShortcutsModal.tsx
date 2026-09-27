@@ -167,7 +167,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
                   fontWeight: 800,
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
-                  color: '#0284C7',
+                  color: 'var(--accent-product)',
                   marginBottom: '10px',
                 }}
               >
@@ -195,7 +195,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
                         fontWeight: 700,
                         lineHeight: 1,
                         color: 'var(--text-ink)',
-                        backgroundColor: '#14181D',
+                        backgroundColor: 'var(--surface-card)',
                         border: '1px solid var(--border-subtle)',
                         borderRadius: '4px',
                         boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
@@ -225,7 +225,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
             color: 'var(--text-secondary)',
           }}
         >
-          <span>Press <kbd style={{ padding: '2px 5px', borderRadius: '3px', background: '#14181D', border: '1px solid var(--border-subtle)', color: 'var(--text-ink)' }}>?</kbd> anytime to toggle</span>
+          <span>Press <kbd style={{ padding: '2px 5px', borderRadius: '3px', background: 'var(--surface-card)', border: '1px solid var(--border-subtle)', color: 'var(--text-ink)' }}>?</kbd> anytime to toggle</span>
           <button
             onClick={() => { sound.playClick(); onClose() }}
             className="cred-3d-button cred-3d-button-cyan"

@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import type { GameState } from '../../engine/types'
-import { getActiveEvolutionTier, } from '../../engine/formulas'
-import { EVOLUTION_TIERS } from '../../engine/constants'
+import { getActiveEvolutionTier } from '../../engine/formulas'
+import { tierIndexOf } from '../hq/tierIndex'
 import { sound } from '../../audio/soundEngine'
+import './beats.css'
 
 const BEAT_STORE_KEY = 'solounicorn.tierbeats.v1'
 
@@ -28,10 +29,6 @@ function writeBeatMemory(mem: BeatMemory) {
   }
 }
 
-const TIER_INDEX: Record<string, number> = Object.fromEntries(
-  EVOLUTION_TIERS.map((t, i) => [t.tier, i]),
-)
-
 /**
  * The one authored tier-up beat (SKY moment). Watches the engine's evolution
  * tier and plays a single celebratory overlay per tier ascension per run —
@@ -39,12 +36,16 @@ const TIER_INDEX: Record<string, number> = Object.fromEntries(
  */
 export function useTierUpBeat(state: GameState) {
   const tierInfo = getActiveEvolutionTier(state)
-  const idx = TIER_INDEX[tierInfo.tier] ?? 0
+  const idx = tierIndexOf(tierInfo.tier)
   const [beat, setBeat] = useState<typeof tierInfo | null>(null)
   const seenRef = useRef<number>(-1)
+  const seedRef = useRef<number | null>(null)
 
-  // initialize from persistent memory (survives reload of a checkpointed run)
-  if (seenRef.current === -1) {
+  // Initialize from persistent memory (survives reload of a checkpointed run),
+  // and re-initialize whenever the run seed changes — run.reset creates a new
+  // run in place without remounting, and its beats must not stay suppressed (#6).
+  if (seedRef.current !== state.seed) {
+    seedRef.current = state.seed
     const mem = readBeatMemory()
     seenRef.current = mem && mem.seed === state.seed ? mem.maxTierIndex : 0
   }
@@ -59,9 +60,12 @@ export function useTierUpBeat(state: GameState) {
         sound.playPowerUp()
       }
     }
-  }, [idx, state.seed, tierInfo])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tierInfo is a fresh object every tick; idx/isOverridden are the real signals
+  }, [idx, state.seed, tierInfo.isOverridden])
 
-  const dismiss = () => setBeat(null)
+  // Stable identity: TierUpBeat's auto-dismiss effect depends on this, and the
+  // 10Hz tick re-render must not re-arm the timer every 100ms (#3).
+  const dismiss = useCallback(() => setBeat(null), [])
   return { beat, dismiss }
 }
 

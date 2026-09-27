@@ -271,7 +271,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
         return '#7C3AED'
       case 'creator':
       default:
-        return '#0284C7'
+        return 'var(--accent-product)'
     }
   }
 
@@ -741,7 +741,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
 
           return (
             <SwipeCard
-              key={channel.id}
+              key={`${channel.id}:${signal?.id ?? 'empty'}`}
               disabled={!signal || isTriaging}
               rightBlocked={!canAffordQualify}
               upBlocked={!canAffordHyper}
@@ -1028,7 +1028,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                             style={{
                               fontSize: '9px',
                               fontWeight: 700,
-                              color: canAffordHyper ? '#0284C7' : '#6F7882',
+                              color: canAffordHyper ? 'var(--accent-product)' : 'var(--text-muted)',
                               backgroundColor: canAffordHyper ? 'rgba(2, 132, 199, 0.08)' : 'rgba(148, 163, 184, 0.1)',
                               padding: '1px 4px',
                               borderRadius: '3px',
@@ -1296,7 +1296,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                 color: 'var(--text-muted)',
                 padding: '2px 8px',
                 borderRadius: '4px',
-                backgroundColor: '#1A1F25',
+                backgroundColor: 'var(--surface-secondary)',
                 border: '1px solid var(--border-hairline)',
               }}
             >

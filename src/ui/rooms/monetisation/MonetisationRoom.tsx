@@ -574,7 +574,7 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
                     +{6 - maxDesks} DESKS // 0{maxDesks + 1}–06 [LOCKED]
                   </div>
                 </div>
-                <span style={{ fontSize: "8px", fontWeight: 800, color: "var(--text-muted)", backgroundColor: "#1A1F25", padding: "1px 5px", borderRadius: "3px" }}>
+                <span style={{ fontSize: "8px", fontWeight: 800, color: "var(--text-muted)", backgroundColor: "var(--surface-secondary)", padding: "1px 5px", borderRadius: "3px" }}>
                   UPGRADE SCALE
                 </span>
               </div>
@@ -907,7 +907,7 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
                       fontSize="9.5"
                       fontFamily="var(--font-mono)"
                       fontWeight="700"
-                      fill="#6F7882"
+                      fill="var(--text-muted)"
                     >
                       {t.label}
                     </text>
@@ -959,8 +959,8 @@ export const MonetisationRoom: React.FC<MonetisationRoomProps> = ({ state, dispa
               </g>
 
               {/* Center Pivot Hub (Industrial 2.5D Rivet) */}
-              <circle cx={CX} cy={CY} r="18" fill="url(#hub-metal)" stroke="#A7AFB8" strokeWidth="2" />
-              <circle cx={CX} cy={CY} r="9" fill="#F4F6F7" />
+              <circle cx={CX} cy={CY} r="18" fill="url(#hub-metal)" stroke="var(--text-secondary)" strokeWidth="2" />
+              <circle cx={CX} cy={CY} r="9" fill="var(--text-bright)" />
               <circle
                 cx={CX}
                 cy={CY}

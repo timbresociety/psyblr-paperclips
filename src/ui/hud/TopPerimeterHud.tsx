@@ -92,7 +92,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
               fontSize: '15px',
               fontWeight: 800,
               letterSpacing: '0.04em',
-              color: '#F4F6F7',
+              color: 'var(--text-bright)',
             }}
           >
             ONE / PERSON
@@ -101,7 +101,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
             className="font-mono"
             style={{
               fontSize: '11px',
-              color: '#0284C7',
+              color: 'var(--accent-product)',
               textTransform: 'capitalize',
               marginTop: '1px',
             }}
@@ -116,7 +116,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: '110px' }}>
             <span
               className="font-mono"
-              style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: '#6F7882' }}
+              style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)' }}
             >
               VALUATION
             </span>
@@ -125,7 +125,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
               style={{
                 fontSize: '20px',
                 fontWeight: 800,
-                color: '#F4F6F7',
+                color: 'var(--text-bright)',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.15,
                 margin: '1px 0',
@@ -133,7 +133,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
             >
               {formatDollars(state.valuationCents)}
             </span>
-            <span className="font-mono" style={{ fontSize: '9px', color: '#6F7882' }}>
+            <span className="font-mono" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
               TARGET $1B
             </span>
           </div>
@@ -142,7 +142,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: '110px' }}>
             <span
               className="font-mono"
-              style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: '#6F7882' }}
+              style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)' }}
             >
               ARR
             </span>
@@ -151,7 +151,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
               style={{
                 fontSize: '20px',
                 fontWeight: 800,
-                color: '#F4F6F7',
+                color: 'var(--text-bright)',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.15,
                 margin: '1px 0',
@@ -159,7 +159,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
             >
               {formatDollars(state.contractualArrCents)}
             </span>
-            <span className="font-mono" style={{ fontSize: '9px', color: '#6F7882' }}>
+            <span className="font-mono" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
               {state.accounts.length} paying customers
             </span>
           </div>
@@ -169,7 +169,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span
                 className="font-mono"
-                style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: '#6F7882' }}
+                style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)' }}
               >
                 LIQUID CASH
               </span>
@@ -198,7 +198,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
               style={{
                 fontSize: '20px',
                 fontWeight: 800,
-                color: isOnlyNextBillRemaining || state.cashCents < 50_000_00 ? '#E11D48' : '#F4F6F7',
+                color: isOnlyNextBillRemaining || state.cashCents < 50_000_00 ? '#E11D48' : 'var(--text-bright)',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.15,
                 margin: '1px 0',
@@ -206,7 +206,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
             >
               {formatDollars(state.cashCents)}
             </span>
-            <span className="font-mono" style={{ fontSize: '9px', color: '#6F7882' }}>
+            <span className="font-mono" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
               {formatDollars(upcomingObligationsCents)} 180s obligations
             </span>
           </div>
@@ -215,7 +215,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', minWidth: '100px' }}>
             <span
               className="font-mono"
-              style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: '#6F7882' }}
+              style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)' }}
             >
               QUARTER {state.quarter}
             </span>
@@ -224,7 +224,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
               style={{
                 fontSize: '20px',
                 fontWeight: 800,
-                color: '#F4F6F7',
+                color: 'var(--text-bright)',
                 letterSpacing: '-0.02em',
                 lineHeight: 1.15,
                 margin: '1px 0',
@@ -246,7 +246,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
                 style={{
                   width: `${quarterProgressPct}%`,
                   height: '100%',
-                  backgroundColor: '#0284C7',
+                  backgroundColor: 'var(--accent-product)',
                   transition: 'width 250ms ease',
                 }}
               />
@@ -273,7 +273,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
         <div
           style={{
             display: 'flex',
-            backgroundColor: '#1A1F25',
+            backgroundColor: 'var(--surface-secondary)',
             border: '1px solid #2E353D',
             borderRadius: '6px',
             padding: '2px',
@@ -307,8 +307,8 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
                     padding: '3px 7px',
                     fontSize: '10.5px',
                     fontWeight: state.speedMultiplier === spd ? 800 : 500,
-                    backgroundColor: state.speedMultiplier === spd && !state.paused ? '#14181D' : 'transparent',
-                    color: isLocked ? '#6F7882' : state.speedMultiplier === spd && !state.paused ? '#F4F6F7' : '#6F7882',
+                    backgroundColor: state.speedMultiplier === spd && !state.paused ? 'var(--surface-card)' : 'transparent',
+                    color: isLocked ? 'var(--text-muted)' : state.speedMultiplier === spd && !state.paused ? 'var(--text-bright)' : 'var(--text-muted)',
                     borderRadius: '4px',
                     border: 'none',
                     boxShadow: state.speedMultiplier === spd && !state.paused ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
@@ -427,7 +427,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
                   fontSize: '13px',
                   fontWeight: 800,
                   letterSpacing: '0.04em',
-                  color: '#F4F6F7',
+                  color: 'var(--text-bright)',
                   lineHeight: 1.1,
                 }}
               >
@@ -437,7 +437,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
                 className="font-mono"
                 style={{
                   fontSize: '9.5px',
-                  color: '#0284C7',
+                  color: 'var(--accent-product)',
                   textTransform: 'capitalize',
                   fontWeight: 600,
                 }}
@@ -452,7 +452,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
             style={{
               fontSize: '12px',
               fontWeight: 800,
-              color: '#F4F6F7',
+              color: 'var(--text-bright)',
               padding: '3px 8px',
               borderRadius: '6px',
               backgroundColor: 'rgba(2, 4, 6, 0.04)',
@@ -523,7 +523,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
         {/* Tier 2: 3-Column Compact Telemetry Grid */}
         <div className="top-hud-mobile-telemetry">
           <div className="telemetry-col">
-            <span className="telemetry-label font-mono" style={{ color: '#6F7882' }}>
+            <span className="telemetry-label font-mono" style={{ color: 'var(--text-muted)' }}>
               VALUATION
             </span>
             <span className="telemetry-number font-display">
@@ -532,7 +532,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
           </div>
 
           <div className="telemetry-col">
-            <span className="telemetry-label font-mono" style={{ color: '#6F7882' }}>
+            <span className="telemetry-label font-mono" style={{ color: 'var(--text-muted)' }}>
               ARR ({state.accounts.length})
             </span>
             <span className="telemetry-number font-display">
@@ -542,7 +542,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
 
           <div className="telemetry-col">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-              <span className="telemetry-label font-mono" style={{ color: '#6F7882' }}>
+              <span className="telemetry-label font-mono" style={{ color: 'var(--text-muted)' }}>
                 LIQUID CASH
               </span>
               {isOnlyNextBillRemaining && (
@@ -564,7 +564,7 @@ export const TopPerimeterHud: React.FC<TopHudProps> = ({
             </div>
             <span
               className="telemetry-number font-display"
-              style={{ color: isOnlyNextBillRemaining || state.cashCents < 50_000_00 ? '#E11D48' : '#F4F6F7' }}
+              style={{ color: isOnlyNextBillRemaining || state.cashCents < 50_000_00 ? '#E11D48' : 'var(--text-bright)' }}
             >
               {formatDollars(state.cashCents)}
             </span>

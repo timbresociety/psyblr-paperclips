@@ -111,7 +111,7 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
         clickX + (Math.random() * 20 - 10),
         clickY,
         isThreat ? '-1 THREAT SHIELD' : '+SLA CARE',
-        isThreat ? '#EF4444' : '#0284C7'
+        isThreat ? '#EF4444' : 'var(--accent-product)'
       )
 
       setTimeout(() => {
@@ -298,7 +298,7 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
             }}
           >
             <span>Acquire First Customer in Demand →</span>
-            <kbd className="btn-kbd" style={{ background: 'rgba(26,31,37,0.25)', color: '#14181D' }}>1</kbd>
+            <kbd className="btn-kbd" style={{ background: 'rgba(26,31,37,0.25)', color: 'var(--surface-card)' }}>1</kbd>
           </button>
         </div>
       </div>
@@ -358,7 +358,7 @@ export const RetentionRoom: React.FC<RetentionRoomProps> = ({ state, dispatch })
             style={{ width: '42px', height: '42px', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))', flexShrink: 0 }}
           />
           <div className="header-text-group">
-            <div className="room-eyebrow" style={{ color: '#0284C7', fontSize: '10px', letterSpacing: '0.14em', marginBottom: '2px', fontWeight: 700 }}>
+            <div className="room-eyebrow" style={{ color: 'var(--accent-product)', fontSize: '10px', letterSpacing: '0.14em', marginBottom: '2px', fontWeight: 700 }}>
               <span>04 / RETENTION • CUSTOMER SLA & RECURRING REVENUE DEFENSE</span>
             </div>
             <h2 className="room-title" style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-ink)', margin: '0 0 2px 0', lineHeight: 1.2 }}>

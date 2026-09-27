@@ -83,7 +83,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
       className={isDrawer ? "company-rail-drawer" : "company-rail"}
       style={isDrawer ? {
         width: '100%',
-        backgroundColor: '#14181D',
+        backgroundColor: 'var(--surface-card)',
         display: 'flex',
         flexDirection: 'column',
         gap: '16px',
@@ -92,8 +92,8 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
       } : {
         width: '280px',
         flexShrink: 0,
-        backgroundColor: '#14181D',
-        borderLeft: '1px solid rgba(244, 246, 247, 0.07)',
+        backgroundColor: 'var(--surface-card)',
+        borderLeft: '1px solid var(--border-card)',
         display: 'flex',
         flexDirection: 'column',
         gap: '16px',
@@ -112,13 +112,13 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
               fontSize: '10px',
               fontWeight: 800,
               letterSpacing: '0.12em',
-              color: '#F4F6F7',
+              color: 'var(--text-bright)',
               textTransform: 'uppercase',
             }}
           >
             THE COMPANY
           </span>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0284C7' }} />
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-product)' }} />
         </div>
 
         <button
@@ -145,7 +145,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span
             className="font-mono"
-            style={{ fontSize: '9px', fontWeight: 800, letterSpacing: '0.1em', color: '#6F7882' }}
+            style={{ fontSize: '9px', fontWeight: 800, letterSpacing: '0.1em', color: 'var(--text-muted)' }}
           >
             ACTIVE ENGINE ARCHETYPE
           </span>
@@ -160,9 +160,9 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
               fontWeight: 700,
               padding: '2px 7px',
               borderRadius: '4px',
-              backgroundColor: '#12161B',
-              color: '#A7AFB8',
-              border: '1px solid #262C34',
+              backgroundColor: 'var(--surface-modal)',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border-raised)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -202,8 +202,8 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
               width: '40px',
               height: '40px',
               borderRadius: '8px',
-              backgroundColor: '#1A1F25',
-              border: '1px solid rgba(244, 246, 247, 0.07)',
+              backgroundColor: 'var(--surface-secondary)',
+              border: '1px solid var(--border-card)',
               boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.04)',
               display: 'flex',
               alignItems: 'center',
@@ -224,7 +224,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
               style={{
                 fontSize: '11.5px',
                 fontWeight: 800,
-                color: '#F4F6F7',
+                color: 'var(--text-bright)',
                 lineHeight: 1.25,
                 wordBreak: 'break-word',
               }}
@@ -236,7 +236,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
               style={{
                 fontSize: '8.5px',
                 fontWeight: 600,
-                color: '#0284C7',
+                color: 'var(--accent-product)',
                 marginTop: '3px',
                 lineHeight: 1.35,
                 wordBreak: 'break-word',
@@ -261,10 +261,10 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: '#F4F6F7', lineHeight: 1.1 }}>
+          <span className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-bright)', lineHeight: 1.1 }}>
             {qualifiedPipelineCount}
           </span>
-          <span className="font-mono" style={{ fontSize: '9px', color: '#6F7882' }}>
+          <span className="font-mono" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
             qualified pipeline
           </span>
         </div>
@@ -272,10 +272,10 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
         <span style={{ fontSize: '14px', color: '#4A525B' }}>→</span>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-          <span className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: '#F4F6F7', lineHeight: 1.1 }}>
+          <span className="font-mono" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-bright)', lineHeight: 1.1 }}>
             {activatedTrialsCount}
           </span>
-          <span className="font-mono" style={{ fontSize: '9px', color: '#6F7882' }}>
+          <span className="font-mono" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
             activated trials
           </span>
         </div>
@@ -286,7 +286,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span
             className="font-mono"
-            style={{ fontSize: '9.5px', fontWeight: 700, letterSpacing: '0.08em', color: '#6F7882' }}
+            style={{ fontSize: '9.5px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)' }}
           >
             OPERATING STABILITY
           </span>
@@ -295,14 +295,14 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
             style={{
               fontSize: '11px',
               fontWeight: 800,
-              color: stabilityPct < 70 ? '#E11D48' : '#F4F6F7',
+              color: stabilityPct < 70 ? '#E11D48' : 'var(--text-bright)',
             }}
           >
             {stabilityPct}%
           </span>
         </div>
 
-        <p style={{ fontSize: '11px', color: '#6F7882', margin: 0, lineHeight: 1.35 }}>
+        <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.35 }}>
           {opsMetrics.excessStrain > 0.5
             ? 'Coordination slowing work. Repair strain or upgrade Operations.'
             : 'Nominal operations throughput. Fleet coordination balanced.'}
@@ -312,7 +312,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
           className="font-mono"
           style={{
             fontSize: '9.5px',
-            color: '#6F7882',
+            color: 'var(--text-muted)',
             display: 'flex',
             flexDirection: 'column',
             gap: '3px',
@@ -321,13 +321,13 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
         >
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Strain backlog</span>
-            <span style={{ color: state.operations.strainBacklog > 5 ? '#E11D48' : '#F4F6F7' }}>
+            <span style={{ color: state.operations.strainBacklog > 5 ? '#E11D48' : 'var(--text-bright)' }}>
               {state.operations.strainBacklog.toFixed(1)}
             </span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span>Worst context rot</span>
-            <span style={{ color: state.operations.contextRot > 0.3 ? '#E11D48' : '#F4F6F7' }}>
+            <span style={{ color: state.operations.contextRot > 0.3 ? '#E11D48' : 'var(--text-bright)' }}>
               {Math.round(state.operations.contextRot * 100)}%
             </span>
           </div>
@@ -345,19 +345,19 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span
             className="font-mono"
-            style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.08em', color: '#6F7882' }}
+            style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)' }}
           >
             NEXT OPERATING BILL
           </span>
           <span
             className="font-mono"
-            style={{ fontSize: '8.5px', color: '#0284C7', textTransform: 'uppercase', fontWeight: 700 }}
+            style={{ fontSize: '8.5px', color: 'var(--accent-product)', textTransform: 'uppercase', fontWeight: 700 }}
           >
             {getActiveEvolutionTier(state).tier} TIER
           </span>
         </div>
 
-        <div className="font-display" style={{ fontSize: '18px', fontWeight: 800, color: isOnlyNextBillRemaining ? '#E11D48' : '#F4F6F7' }}>
+        <div className="font-display" style={{ fontSize: '18px', fontWeight: 800, color: isOnlyNextBillRemaining ? '#E11D48' : 'var(--text-bright)' }}>
           ~{formatDollars(nextBillAmountCents)}
         </div>
 
@@ -382,7 +382,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
           </div>
         )}
 
-        <span className="font-mono" style={{ fontSize: '9.5px', color: '#6F7882' }}>
+        <span className="font-mono" style={{ fontSize: '9.5px', color: 'var(--text-muted)' }}>
           Due in {billMins}:{billSecs.toString().padStart(2, '0')} · cash {formatDollars(state.cashCents)}
         </span>
       </div>
@@ -392,11 +392,11 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span
             className="font-mono"
-            style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.08em', color: '#6F7882' }}
+            style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)' }}
           >
             CONSUMABLES HOLSTER
           </span>
-          <span className="font-mono" style={{ fontSize: '9px', color: '#6F7882' }}>
+          <span className="font-mono" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
             {consumables.length}/{MAX_CONSUMABLE_SLOTS}
           </span>
         </div>
@@ -407,11 +407,11 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
             style={{
               padding: '10px',
               borderRadius: '8px',
-              backgroundColor: '#12161B',
-              border: '1px dashed #262C34',
+              backgroundColor: 'var(--surface-modal)',
+              border: '1px dashed var(--border-raised)',
               textAlign: 'center',
               fontSize: '9px',
-              color: '#6F7882',
+              color: 'var(--text-muted)',
             }}
           >
             [HOLSTER EMPTY · ACQUIRE IN QTR REVIEW]
@@ -429,8 +429,8 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
                     justifyContent: 'space-between',
                     padding: '6px 8px',
                     borderRadius: '8px',
-                    backgroundColor: '#12161B',
-                    border: '1px solid #262C34',
+                    backgroundColor: 'var(--surface-modal)',
+                    border: '1px solid var(--border-raised)',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -441,8 +441,8 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
                       <img src={assetSrc} alt={c.name} style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#F4F6F7' }}>{c.name}</span>
-                      <span className="font-mono" style={{ fontSize: '8.5px', color: '#6F7882' }}>{c.effectSummary}</span>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-bright)' }}>{c.name}</span>
+                      <span className="font-mono" style={{ fontSize: '8.5px', color: 'var(--text-muted)' }}>{c.effectSummary}</span>
                     </div>
                   </div>
                   <button
@@ -471,11 +471,11 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span
             className="font-mono"
-            style={{ fontSize: '9px', fontWeight: 800, letterSpacing: '0.08em', color: '#6F7882' }}
+            style={{ fontSize: '9px', fontWeight: 800, letterSpacing: '0.08em', color: 'var(--text-muted)' }}
           >
             ACTIVE MILESTONE UPGRADES
           </span>
-          <span className="font-mono" style={{ fontSize: '9px', color: '#6F7882' }}>
+          <span className="font-mono" style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
             {activeRelics.length}/{MAX_RELIC_SLOTS}
           </span>
         </div>
@@ -486,11 +486,11 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
             style={{
               padding: '10px',
               borderRadius: '8px',
-              backgroundColor: '#12161B',
-              border: '1px dashed #262C34',
+              backgroundColor: 'var(--surface-modal)',
+              border: '1px dashed var(--border-raised)',
               textAlign: 'center',
               fontSize: '9px',
-              color: '#6F7882',
+              color: 'var(--text-muted)',
             }}
           >
             [NO MILESTONES ACTIVE · UNLOCK IN REVIEW]
@@ -508,8 +508,8 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
                     gap: '8px',
                     padding: '6px 8px',
                     borderRadius: '8px',
-                    backgroundColor: '#12161B',
-                    border: '1px solid #262C34',
+                    backgroundColor: 'var(--surface-modal)',
+                    border: '1px solid var(--border-raised)',
                   }}
                 >
                   <div
@@ -524,7 +524,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
                         style={{
                           fontSize: '11px',
                           fontWeight: 700,
-                          color: '#F4F6F7',
+                          color: 'var(--text-bright)',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
@@ -548,7 +548,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
                       className="font-mono"
                       style={{
                         fontSize: '8.5px',
-                        color: '#6F7882',
+                        color: 'var(--text-muted)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -569,12 +569,12 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span
             className="font-mono"
-            style={{ fontSize: '9px', fontWeight: 800, letterSpacing: '0.08em', color: '#6F7882' }}
+            style={{ fontSize: '9px', fontWeight: 800, letterSpacing: '0.08em', color: 'var(--text-muted)' }}
           >
             ACTIVE SKILL TREE UPGRADES
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="font-mono" style={{ fontSize: '9px', color: '#0284C7', fontWeight: 700 }}>
+            <span className="font-mono" style={{ fontSize: '9px', color: 'var(--accent-product)', fontWeight: 700 }}>
               {activeSkillTreeUpgrades.length}/24
             </span>
             {onOpenSkillTree && (
@@ -605,11 +605,11 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
             style={{
               padding: '10px',
               borderRadius: '8px',
-              backgroundColor: '#12161B',
-              border: '1px dashed #262C34',
+              backgroundColor: 'var(--surface-modal)',
+              border: '1px dashed var(--border-raised)',
               textAlign: 'center',
               fontSize: '9px',
-              color: '#6F7882',
+              color: 'var(--text-muted)',
             }}
           >
             [NO SKILL TREE UPGRADES ACTIVE · VISIT TREE]
@@ -625,8 +625,8 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
                   gap: '8px',
                   padding: '5px 7px',
                   borderRadius: '6px',
-                  backgroundColor: '#12161B',
-                  border: '1px solid #262C34',
+                  backgroundColor: 'var(--surface-modal)',
+                  border: '1px solid var(--border-raised)',
                 }}
               >
                 <div
@@ -642,7 +642,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
                       style={{
                         fontSize: '10px',
                         fontWeight: 700,
-                        color: '#F4F6F7',
+                        color: 'var(--text-bright)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -658,7 +658,7 @@ export const CompanyRail: React.FC<CompanyRailProps> = ({
                     className="font-mono"
                     style={{
                       fontSize: '8px',
-                      color: '#6F7882',
+                      color: 'var(--text-muted)',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',

@@ -45,6 +45,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
   const [flyout, setFlyout] = useState<'left' | 'right' | 'up' | null>(null)
   const start = useRef<{ x: number; y: number; id: number } | null>(null)
   const elRef = useRef<HTMLDivElement>(null)
+  const flyoutTimer = useRef<number | null>(null)
 
   const reset = useCallback(() => {
     start.current = null
@@ -54,7 +55,10 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
   useEffect(() => {
     const onResize = () => reset()
     window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      if (flyoutTimer.current !== null) window.clearTimeout(flyoutTimer.current)
+    }
   }, [reset])
 
   const resist = (v: number) => {
@@ -80,17 +84,21 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({
   const commit = (dir: 'left' | 'right' | 'up') => {
     if (dir === 'right' && rightBlocked) { reset(); onRight(); return }
     if (dir === 'up' && upBlocked) { reset(); onUp?.(); return }
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduced) {
+    // Dispatch synchronously at the commitment threshold — the flyout is pure
+    // ornament. A deferred dispatch fires stale closures after unmount, races
+    // SDR automation, and animates commits the engine's cooldown rejects (#4).
+    if (dir === 'left') onLeft()
+    else if (dir === 'right') onRight()
+    else onUp?.()
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       reset()
-      if (dir === 'left') onLeft(); else if (dir === 'right') onRight(); else onUp?.()
       return
     }
     setFlyout(dir)
-    window.setTimeout(() => {
+    flyoutTimer.current = window.setTimeout(() => {
+      flyoutTimer.current = null
       setFlyout(null)
       reset()
-      if (dir === 'left') onLeft(); else if (dir === 'right') onRight(); else onUp?.()
     }, 240)
   }
 

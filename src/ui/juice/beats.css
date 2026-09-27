@@ -1,0 +1,93 @@
+/* Tier-up beat overlay — owned by beats.tsx (#9) */
+
+/* ===== Tier-up beat overlay (one authored SKY moment per tier) ===== */
+.beat-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background:
+    var(--sky-veil),
+    radial-gradient(ellipse 100% 80% at 50% 55%, rgba(9, 11, 14, 0.55) 0%, rgba(9, 11, 14, 0.92) 100%);
+  cursor: pointer;
+  animation: beat-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.beat-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  animation: beat-reveal 1600ms ease 250ms forwards;
+}
+
+@keyframes beat-reveal {
+  to { opacity: 0.5; }
+}
+
+@keyframes beat-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.beat-kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--tier-accent);
+  animation: beat-rise 800ms cubic-bezier(0.22, 1, 0.36, 1) 150ms both;
+}
+
+.beat-title {
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-bright);
+  text-align: center;
+  animation: beat-rise 800ms cubic-bezier(0.22, 1, 0.36, 1) 300ms both;
+}
+
+.beat-title--ethereal {
+  background: var(--reward-iridescent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 28px rgba(200, 182, 255, 0.45));
+}
+
+.beat-sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  animation: beat-rise 800ms cubic-bezier(0.22, 1, 0.36, 1) 450ms both;
+}
+
+.beat-dismiss {
+  margin-top: 18px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  animation: beat-in 600ms ease 1400ms both;
+}
+
+@keyframes beat-rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beat-overlay, .beat-kicker, .beat-title, .beat-sub, .beat-dismiss { animation: none; }
+  .beat-backdrop { animation: none; opacity: 0.5; }
+}

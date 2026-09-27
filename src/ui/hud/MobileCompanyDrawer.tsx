@@ -46,7 +46,7 @@ export const MobileCompanyDrawer: React.FC<MobileCompanyDrawerProps> = ({
             alignItems: 'center',
             padding: '10px 16px 8px 16px',
             borderBottom: '1px solid var(--border-hairline)',
-            backgroundColor: '#14181D',
+            backgroundColor: 'var(--surface-card)',
             position: 'sticky',
             top: 0,
             zIndex: 10,
@@ -84,7 +84,7 @@ export const MobileCompanyDrawer: React.FC<MobileCompanyDrawerProps> = ({
               >
                 THE COMPANY & INFRASTRUCTURE
               </span>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#0284C7' }} />
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent-product)' }} />
             </div>
 
             <button

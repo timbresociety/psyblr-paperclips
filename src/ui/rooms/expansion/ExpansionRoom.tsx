@@ -973,7 +973,7 @@ export const ExpansionRoom: React.FC<ExpansionRoomProps> = ({ state, dispatch })
                   }}
                 >
                   <span>Synthesize Feature ($15)</span>
-                  <kbd className="btn-kbd" style={{ background: "rgba(26,31,37,0.25)", color: "#000" }}>Space</kbd>
+                  <kbd className="btn-kbd" style={{ background: "rgba(26,31,37,0.25)", color: "var(--text-bright)" }}>Space</kbd>
                 </button>
               </div>
 

@@ -11,7 +11,7 @@ import React from 'react'
 export function NonFinalAsset({
   label,
   size = 48,
-  accent = '#6F7882',
+  accent = 'var(--text-muted)',
 }: {
   label: string
   size?: number

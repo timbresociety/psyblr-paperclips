@@ -62,6 +62,7 @@
   --border-subtle: rgba(244, 246, 247, 0.05);
   --border-active: rgba(88, 217, 255, 0.45);
   --border-graphite: #292F36;
+  --border-raised: #262C34;
   --border-focus: #58D9FF;
   --border-card: rgba(244, 246, 247, 0.07);
 

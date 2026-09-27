@@ -183,6 +183,13 @@ export default function App() {
 
       // Toggle Skill Tree on 'K', 'F', or 'S' (when not on Product deploy)
       if (e.key === 'h' || e.key === 'H') {
+        // OperationsRoom binds H to resolve-incident; while that binding is
+        // live, this window-level toggle must yield or one keypress does both (#1).
+        const operationsOwnsH =
+          view === 'room' &&
+          displayedRoom === 'operations' &&
+          (state.operations?.incidentsBacklog || 0) > 0
+        if (operationsOwnsH) return
         e.preventDefault()
         sound.playClick()
         setView(v => (v === 'hq' ? 'room' : 'hq'))

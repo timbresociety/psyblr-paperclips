@@ -111,7 +111,7 @@ export const AlertInbox: React.FC<AlertInboxProps> = ({ alerts, dispatch }) => {
           padding: '12px 14px',
           borderBottom: '1px solid var(--border-hairline)',
           cursor: 'pointer',
-          backgroundColor: '#14181D',
+          backgroundColor: 'var(--surface-card)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -195,7 +195,7 @@ export const AlertInbox: React.FC<AlertInboxProps> = ({ alerts, dispatch }) => {
                 <div
                   key={alert.id}
                   style={{
-                    backgroundColor: '#14181D',
+                    backgroundColor: 'var(--surface-card)',
                     border: `1px solid ${isCritical ? 'rgba(239, 68, 68, 0.35)' : isWarning ? 'rgba(245, 158, 11, 0.35)' : 'var(--border-hairline)'}`,
                     borderRadius: '10px',
                     padding: '10px 12px',
