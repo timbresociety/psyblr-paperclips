@@ -5,7 +5,9 @@
  */
 class ProceduralAudioEngine {
   private ctx: AudioContext | null = null
-  private muted = false
+  private muted = (() => {
+    try { return localStorage.getItem('solounicorn.muted.v1') === '1' } catch { return false }
+  })()
   private volume = 0.35
 
   private initContext(): AudioContext | null {
@@ -23,6 +25,7 @@ class ProceduralAudioEngine {
 
   setMuted(muted: boolean) {
     this.muted = muted
+    try { localStorage.setItem('solounicorn.muted.v1', muted ? '1' : '0') } catch { /* no-op */ }
   }
 
   isMuted() {
@@ -30,7 +33,7 @@ class ProceduralAudioEngine {
   }
 
   toggleMute() {
-    this.muted = !this.muted
+    this.setMuted(!this.muted)
     return this.muted
   }
 
