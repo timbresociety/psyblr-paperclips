@@ -8,7 +8,10 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "assets:pull": "node scripts/asset_pipeline/pull.mjs",
+    "assets:intake": "python3 scripts/asset_pipeline/intake.py",
+    "assets:report": "python3 scripts/asset_pipeline/intake.py --report"
   },
   "dependencies": {
     "react": "^19.0.0",
