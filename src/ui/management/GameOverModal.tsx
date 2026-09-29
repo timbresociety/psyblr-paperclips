@@ -97,7 +97,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ state, dispatch })
         {/* Post-Mortem Cause */}
         <div
           style={{
-            backgroundColor: '#FEF2F2',
+            backgroundColor: '#1D1113',
             border: '1px solid #FEE2E2',
             borderRadius: '12px',
             padding: '16px',

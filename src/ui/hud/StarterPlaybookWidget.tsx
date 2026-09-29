@@ -107,18 +107,18 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
           bottom: '20px',
           left: '260px',
           zIndex: 80,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--surface-card)',
           borderRadius: '9999px',
           padding: '6px 14px',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
           cursor: 'pointer',
         }}
       >
         <span style={{ fontSize: '12px' }}>📋</span>
-        <span className="font-mono" style={{ fontSize: '11px', color: '#0284C7', fontWeight: 700 }}>
+        <span className="font-mono" style={{ fontSize: '11px', color: 'var(--accent-product)', fontWeight: 700 }}>
           PLAYBOOK ({completedCount}/{totalCount})
         </span>
       </button>
@@ -134,12 +134,12 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
         left: '260px',
         zIndex: 80,
         width: '320px',
-        backgroundColor: 'rgba(255, 255, 255, 0.96)',
+        backgroundColor: 'rgba(26, 31, 37, 0.96)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid #E2E8F0',
+        border: '1px solid var(--border-raised)',
         borderRadius: '12px',
-        boxShadow: '0 16px 36px -8px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.04)',
+        boxShadow: '0 16px 36px -8px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04)',
         padding: '14px 16px',
         display: 'flex',
         flexDirection: 'column',
@@ -152,7 +152,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
           <span style={{ fontSize: '12px' }}>📋</span>
           <span
             className="font-mono"
-            style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', color: '#0F172A' }}
+            style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', color: 'var(--text-bright)' }}
           >
             FOUNDER PLAYBOOK
           </span>
@@ -161,7 +161,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
             style={{
               fontSize: '9px',
               backgroundColor: allCompleted ? 'rgba(16, 185, 129, 0.15)' : 'rgba(2, 132, 199, 0.1)',
-              color: allCompleted ? '#059669' : '#0284C7',
+              color: allCompleted ? '#059669' : 'var(--accent-product)',
               padding: '1px 5px',
               borderRadius: '4px',
               fontWeight: 700,
@@ -180,7 +180,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
             title="Minimize Playbook"
             style={{
               fontSize: '11px',
-              color: '#64748B',
+              color: 'var(--text-muted)',
               padding: '2px 6px',
               borderRadius: '4px',
             }}
@@ -192,7 +192,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
             title="Dismiss Playbook"
             style={{
               fontSize: '11px',
-              color: '#64748B',
+              color: 'var(--text-muted)',
               padding: '2px 6px',
               borderRadius: '4px',
             }}
@@ -207,7 +207,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
         style={{
           width: '100%',
           height: '4px',
-          backgroundColor: '#F1F5F9',
+          backgroundColor: 'var(--surface-secondary)',
           borderRadius: '2px',
           overflow: 'hidden',
         }}
@@ -216,7 +216,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
           style={{
             width: `${progressPct}%`,
             height: '100%',
-            backgroundColor: allCompleted ? '#10B981' : '#0284C7',
+            backgroundColor: allCompleted ? '#10B981' : 'var(--accent-product)',
             transition: 'width 250ms ease',
           }}
         />
@@ -236,8 +236,8 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
                 gap: '8px',
                 padding: '6px 10px',
                 borderRadius: '6px',
-                backgroundColor: done ? '#F0FDF4' : '#F8FAFC',
-                border: done ? '1px solid #BBF7D0' : '1px solid #E2E8F0',
+                backgroundColor: done ? '#0D1712' : 'var(--surface-modal)',
+                border: done ? '1px solid #BBF7D0' : '1px solid var(--border-raised)',
                 cursor: step.onClickAction ? 'pointer' : 'default',
                 transition: 'all 120ms ease',
               }}
@@ -246,7 +246,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
                 className="font-mono"
                 style={{
                   fontSize: '11px',
-                  color: done ? '#059669' : '#94A3B8',
+                  color: done ? '#059669' : 'var(--text-muted)',
                   fontWeight: 800,
                   width: '14px',
                   textAlign: 'center',
@@ -259,7 +259,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
                   style={{
                     fontSize: '11.5px',
                     fontWeight: done ? 500 : 600,
-                    color: done ? '#94A3B8' : '#0F172A',
+                    color: done ? 'var(--text-muted)' : 'var(--text-bright)',
                     textDecoration: done ? 'line-through' : 'none',
                   }}
                 >
@@ -268,7 +268,7 @@ export const StarterPlaybookWidget: React.FC<StarterPlaybookWidgetProps> = ({
                 {!done && (
                   <span
                     className="font-mono"
-                    style={{ fontSize: '9px', color: '#0284C7', marginTop: '1px' }}
+                    style={{ fontSize: '9px', color: 'var(--accent-product)', marginTop: '1px' }}
                   >
                     {step.hint}
                   </span>

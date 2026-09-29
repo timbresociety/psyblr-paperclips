@@ -11,6 +11,8 @@ import { LedgerDrawer } from './hud/LedgerDrawer'
 import { MobileBottomNav } from './hud/MobileBottomNav'
 import { MobileCompanyDrawer } from './hud/MobileCompanyDrawer'
 
+import { HQScene } from './hq/HQScene'
+import { useTierUpBeat, TierUpBeat } from './juice/beats'
 import { DemandRoom } from './rooms/demand/DemandRoom'
 import { ProductRoom } from './rooms/product/ProductRoom'
 import { MonetisationRoom } from './rooms/monetisation/MonetisationRoom'
@@ -43,6 +45,9 @@ export default function App() {
 
   // Delayed room transition state: lets DemandRoom animate the green success shake & glide before navigating to Product
   const [displayedRoom, setDisplayedRoom] = useState<FunctionId>(state.activeFunction)
+  // Company HQ overview vs an individual desk room. The company keeps running either way.
+  const [view, setView] = useState<'hq' | 'room'>('hq')
+  const { beat: tierBeat, dismiss: dismissTierBeat } = useTierUpBeat(state)
   const roomTransitionTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -177,6 +182,20 @@ export default function App() {
       }
 
       // Toggle Skill Tree on 'K', 'F', or 'S' (when not on Product deploy)
+      if (e.key === 'h' || e.key === 'H') {
+        // OperationsRoom binds H to resolve-incident; while that binding is
+        // live, this window-level toggle must yield or one keypress does both (#1).
+        const operationsOwnsH =
+          view === 'room' &&
+          displayedRoom === 'operations' &&
+          (state.operations?.incidentsBacklog || 0) > 0
+        if (operationsOwnsH) return
+        e.preventDefault()
+        sound.playClick()
+        setView(v => (v === 'hq' ? 'room' : 'hq'))
+        return
+      }
+
       if (e.key === 'k' || e.key === 'K' || e.key === 'f' || e.key === 'F' || ((e.key === 's' || e.key === 'S') && state.activeFunction !== 'product')) {
         e.preventDefault()
         sound.playClick()
@@ -265,8 +284,23 @@ export default function App() {
 
         {/* Column 2: TACTILE WORK OBJECT */}
         <main className="center-stage" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
-          <div className="center-stage-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', minHeight: 0 }}>
-            {renderActiveRoom()}
+          <div className="center-stage-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', minHeight: 0, position: 'relative' }}>
+            {view === 'hq' ? (
+              <HQScene
+                state={state}
+                onEnterRoom={fn => {
+                  dispatch({ type: 'attention.switch', functionId: fn })
+                  setView('room')
+                }}
+              />
+            ) : (
+              <>
+                {renderActiveRoom()}
+                <button className="hq-return-chip" onClick={() => { sound.playClick(); setView('hq') }}>
+                  COMPANY HQ <span className="hq-return-key">H</span>
+                </button>
+              </>
+            )}
           </div>
         </main>
 
@@ -356,6 +390,8 @@ export default function App() {
       {state.runStatus === 'failed' && (
         <GameOverModal state={state} dispatch={dispatch} />
       )}
+
+      {tierBeat && <TierUpBeat beat={tierBeat} onDismiss={dismissTierBeat} />}
     </div>
   )
 }

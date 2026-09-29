@@ -108,7 +108,7 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
             Finance & Capital Facilities
           </h2>
           <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', margin: 0 }}>
-            Manage liquid runway, draw debt credit lines <kbd className="mini-kbd" style={{ background: '#FFFFFF', border: '1px solid var(--border-hairline)', color: 'var(--text-ink)' }}>D</kbd>, or accept VC growth term sheets <kbd className="mini-kbd" style={{ background: '#FFFFFF', border: '1px solid var(--border-hairline)', color: 'var(--text-ink)' }}>V</kbd>.
+            Manage liquid runway, draw debt credit lines <kbd className="mini-kbd" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-hairline)', color: 'var(--text-ink)' }}>D</kbd>, or accept VC growth term sheets <kbd className="mini-kbd" style={{ background: 'var(--surface-card)', border: '1px solid var(--border-hairline)', color: 'var(--text-ink)' }}>V</kbd>.
           </p>
         </div>
       </div>
@@ -121,7 +121,7 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
           gap: '10px',
         }}
       >
-        <div style={{ backgroundColor: '#FFFFFF', border: isOnlyNextBillRemaining ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-hairline)', borderRadius: '12px', padding: '10px 14px', boxShadow: '0 2px 8px rgba(18, 22, 26, 0.04)' }}>
+        <div style={{ backgroundColor: 'var(--surface-card)', border: isOnlyNextBillRemaining ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-hairline)', borderRadius: '12px', padding: '10px 14px', boxShadow: '0 2px 8px rgba(18, 22, 26, 0.04)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
             <div style={{ fontSize: '9.5px', color: isOnlyNextBillRemaining ? '#EF4444' : 'var(--color-positive)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.06em' }}>
               Liquid Cash
@@ -152,8 +152,8 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
           </div>
         </div>
 
-        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '12px', padding: '10px 14px', boxShadow: '0 2px 8px rgba(18, 22, 26, 0.04)' }}>
-          <div style={{ fontSize: '9.5px', color: '#0284C7', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.06em' }}>
+        <div style={{ backgroundColor: 'var(--surface-card)', border: '1px solid var(--border-hairline)', borderRadius: '12px', padding: '10px 14px', boxShadow: '0 2px 8px rgba(18, 22, 26, 0.04)' }}>
+          <div style={{ fontSize: '9.5px', color: 'var(--accent-product)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.06em' }}>
             Contractual ARR
           </div>
           <div className="font-mono font-display" style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-ink)', marginTop: '2px', letterSpacing: '-0.03em' }}>
@@ -164,7 +164,7 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
           </div>
         </div>
 
-        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid var(--border-hairline)', borderRadius: '12px', padding: '10px 14px', boxShadow: '0 2px 8px rgba(18, 22, 26, 0.04)' }}>
+        <div style={{ backgroundColor: 'var(--surface-card)', border: '1px solid var(--border-hairline)', borderRadius: '12px', padding: '10px 14px', boxShadow: '0 2px 8px rgba(18, 22, 26, 0.04)' }}>
           <div style={{ fontSize: '9.5px', color: '#7C3AED', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.06em' }}>
             Valuation
           </div>
@@ -180,7 +180,7 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
       {/* 3-Month Cashflow Forecast */}
       <div
         style={{
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--surface-card)',
           border: '1px solid var(--border-hairline)',
           borderRadius: '12px',
           padding: '12px 16px',
@@ -197,28 +197,28 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
-          <div style={{ backgroundColor: '#F8FAFC', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-hairline)' }}>
+          <div style={{ backgroundColor: 'var(--surface-modal)', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-hairline)' }}>
             <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Mandatory Obligations</div>
             <div className="font-mono" style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-critical)', marginTop: '2px' }}>
               ${(state.forecastObligationsCents / 100).toLocaleString()}
             </div>
           </div>
 
-          <div style={{ backgroundColor: '#F8FAFC', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-hairline)' }}>
+          <div style={{ backgroundColor: 'var(--surface-modal)', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-hairline)' }}>
             <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Expected Collections</div>
             <div className="font-mono" style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-positive)', marginTop: '2px' }}>
               ${(state.forecastExpectedCollectionsCents / 100).toLocaleString()}
             </div>
           </div>
 
-          <div style={{ backgroundColor: '#F8FAFC', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-hairline)' }}>
+          <div style={{ backgroundColor: 'var(--surface-modal)', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-hairline)' }}>
             <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Projected Peak Shortfall</div>
             <div className="font-mono" style={{ fontSize: '13px', fontWeight: 700, color: state.peakNegativeCashCents > 0 ? 'var(--color-critical)' : 'var(--color-positive)', marginTop: '2px' }}>
               ${(state.peakNegativeCashCents / 100).toLocaleString()}
             </div>
           </div>
 
-          <div style={{ backgroundColor: '#F8FAFC', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-hairline)' }}>
+          <div style={{ backgroundColor: 'var(--surface-modal)', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-hairline)' }}>
             <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Shortfall Fraction</div>
             <div className="font-mono" style={{ fontSize: '13px', fontWeight: 700, color: state.shortfallFraction > 0 ? 'var(--color-warning)' : 'var(--color-positive)', marginTop: '2px' }}>
               {(state.shortfallFraction * 100).toFixed(1)}%
@@ -232,7 +232,7 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
         {/* Debt Credit Facility */}
         <div
           style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface-card)',
             border: '1px solid var(--border-hairline)',
             borderRadius: '12px',
             padding: '12px 14px',
@@ -253,7 +253,7 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
                     letterSpacing: "0.08em",
                     padding: "2px 6px",
                     borderRadius: "4px",
-                    backgroundColor: "#FEF3C7",
+                    backgroundColor: "#1F1909",
                     color: "#B45309",
                     border: "1px solid #FDE68A",
                   }}
@@ -287,7 +287,7 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
                   onChange={e => setBorrowAmountInput(e.target.value)}
                   style={{
                     width: '100%',
-                    backgroundColor: '#F8FAFC',
+                    backgroundColor: 'var(--surface-modal)',
                     border: '1px solid var(--border-hairline)',
                     borderRadius: '6px',
                     padding: '6px 10px 6px 22px',
@@ -333,7 +333,7 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
                   }}
                 >
                   <span>Repay</span>
-                  <kbd style={{ background: '#E2E8F0', color: '#334155', padding: '1px 4px', borderRadius: '3px', fontSize: '9.5px', fontFamily: 'var(--font-mono)' }}>R</kbd>
+                  <kbd style={{ background: '#21262D', color: 'var(--text-bright)', padding: '1px 4px', borderRadius: '3px', fontSize: '9.5px', fontFamily: 'var(--font-mono)' }}>R</kbd>
                 </button>
               )}
             </div>
@@ -349,8 +349,8 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
         {/* VC Term Sheet Section */}
         <div
           style={{
-            backgroundColor: state.vc.accepted ? '#F0FDFA' : '#FFFFFF',
-            border: `1px solid ${state.vc.accepted ? '#99F6E4' : 'var(--border-hairline)'}`,
+            backgroundColor: state.vc.accepted ? '#0D1A17' : 'var(--surface-card)',
+            border: `1px solid ${state.vc.accepted ? 'rgba(52, 211, 153, 0.45)' : 'var(--border-hairline)'}`,
             borderRadius: '12px',
             padding: '12px 14px',
             boxShadow: '0 2px 8px rgba(18, 22, 26, 0.04)',
@@ -375,8 +375,8 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
                   fontSize: '9px',
                   padding: '2px 6px',
                   borderRadius: '4px',
-                  backgroundColor: state.vc.accepted ? '#CCFBF1' : '#F1F5F9',
-                  color: state.vc.accepted ? '#0F766E' : 'var(--text-secondary)',
+                  backgroundColor: state.vc.accepted ? 'rgba(52, 211, 153, 0.15)' : 'var(--surface-secondary)',
+                  color: state.vc.accepted ? '#34D399' : 'var(--text-secondary)',
                   fontWeight: 800,
                   fontFamily: 'var(--font-mono)',
                 }}
@@ -387,7 +387,7 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
           </div>
 
           {state.vc.accepted ? (
-            <div style={{ backgroundColor: '#FFFFFF', padding: '8px 10px', borderRadius: '6px', border: '1px solid #CCFBF1' }}>
+            <div style={{ backgroundColor: 'var(--surface-card)', padding: '8px 10px', borderRadius: '6px', border: '1px solid rgba(52, 211, 153, 0.35)' }}>
               <div style={{ fontSize: '10px', color: '#D97706', fontWeight: 700 }}>
                 BOARD MANDATE:
               </div>
@@ -422,7 +422,7 @@ export const FinanceRoom: React.FC<FinanceRoomProps> = ({ state, dispatch }) => 
                 }}
               >
                 <span>Take Capital</span>
-                <kbd style={{ background: 'rgba(255,255,255,0.25)', color: '#FFF', padding: '1px 4px', borderRadius: '3px', fontSize: '9.5px', fontFamily: 'var(--font-mono)' }}>V</kbd>
+                <kbd style={{ background: 'rgba(26,31,37,0.25)', color: 'var(--surface-card)', padding: '1px 4px', borderRadius: '3px', fontSize: '9.5px', fontFamily: 'var(--font-mono)' }}>V</kbd>
               </button>
             </div>
           ) : (

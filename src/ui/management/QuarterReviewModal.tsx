@@ -149,7 +149,7 @@ export const QuarterReviewModal: React.FC<QuarterReviewProps> = ({ state, dispat
           backgroundColor: 'var(--surface-modal)',
           border: '1px solid var(--border-hairline)',
           borderRadius: '18px',
-          boxShadow: '0 24px 64px -12px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0 24px 64px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -318,7 +318,7 @@ export const QuarterReviewModal: React.FC<QuarterReviewProps> = ({ state, dispat
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
-                      boxShadow: theme.glow !== 'none' ? theme.glow : '0 2px 8px rgba(15, 23, 42, 0.05)',
+                      boxShadow: theme.glow !== 'none' ? theme.glow : '0 2px 8px rgba(0, 0, 0, 0.05)',
                       position: 'relative',
                       transition: 'all 140ms ease',
                     }}

@@ -115,7 +115,7 @@ export const GuidedTutorialModal: React.FC<GuidedTutorialModalProps> = ({ onClos
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.55)',
+        backgroundColor: 'rgba(2, 4, 6, 0.55)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         display: 'flex',
@@ -133,9 +133,9 @@ export const GuidedTutorialModal: React.FC<GuidedTutorialModalProps> = ({ onClos
         style={{
           width: '100%',
           maxWidth: '680px',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--surface-card)',
           borderRadius: '16px',
-          boxShadow: '0 25px 60px -10px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(15, 23, 42, 0.05)',
+          boxShadow: '0 25px 60px -10px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05)',
           padding: '32px',
           display: 'flex',
           flexDirection: 'column',
@@ -153,7 +153,7 @@ export const GuidedTutorialModal: React.FC<GuidedTutorialModalProps> = ({ onClos
                   fontSize: '10px',
                   fontWeight: 800,
                   letterSpacing: '0.14em',
-                  color: '#0284C7',
+                  color: 'var(--accent-product)',
                   backgroundColor: 'rgba(2, 132, 199, 0.1)',
                   padding: '2px 8px',
                   borderRadius: '9999px',
@@ -164,7 +164,7 @@ export const GuidedTutorialModal: React.FC<GuidedTutorialModalProps> = ({ onClos
               </span>
               <span
                 className="font-mono"
-                style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}
+                style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}
               >
                 STEP {slide.stepNumber}
               </span>
@@ -174,14 +174,14 @@ export const GuidedTutorialModal: React.FC<GuidedTutorialModalProps> = ({ onClos
               style={{
                 fontSize: '22px',
                 fontWeight: 800,
-                color: '#0F172A',
+                color: 'var(--text-bright)',
                 letterSpacing: '-0.02em',
                 margin: '10px 0 4px 0',
               }}
             >
               {slide.title}
             </h2>
-            <p style={{ fontSize: '13px', color: '#475569', margin: 0 }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
               {slide.tagline}
             </p>
           </div>
@@ -201,9 +201,9 @@ export const GuidedTutorialModal: React.FC<GuidedTutorialModalProps> = ({ onClos
         {/* Visual Presentation Area */}
         <div
           style={{
-            backgroundColor: '#F8FAFC',
+            backgroundColor: 'var(--surface-modal)',
             borderRadius: '12px',
-            border: '1px solid #E2E8F0',
+            border: '1px solid var(--border-raised)',
             padding: '20px',
             display: 'flex',
             gap: '20px',
@@ -240,7 +240,7 @@ export const GuidedTutorialModal: React.FC<GuidedTutorialModalProps> = ({ onClos
                   key={idx}
                   style={{
                     fontSize: '12.5px',
-                    color: '#1E293B',
+                    color: '#D9DEE3',
                     lineHeight: '1.45',
                   }}
                 >
@@ -254,22 +254,22 @@ export const GuidedTutorialModal: React.FC<GuidedTutorialModalProps> = ({ onClos
         {/* Key Takeaway Callout */}
         <div
           style={{
-            backgroundColor: '#F0F9FF',
-            borderLeft: '3px solid #0284C7',
+            backgroundColor: '#0E1926',
+            borderLeft: '3px solid var(--accent-product)',
             padding: '12px 16px',
             borderRadius: '0 8px 8px 0',
           }}
         >
           <div
             className="font-mono"
-            style={{ fontSize: '9.5px', fontWeight: 800, color: '#0284C7', letterSpacing: '0.1em' }}
+            style={{ fontSize: '9.5px', fontWeight: 800, color: 'var(--accent-product)', letterSpacing: '0.1em' }}
           >
             TACTICAL PRINCIPLE
           </div>
           <p
             style={{
               fontSize: '12.5px',
-              color: '#0F172A',
+              color: 'var(--text-bright)',
               margin: '4px 0 0 0',
               fontWeight: 500,
             }}
@@ -293,7 +293,7 @@ export const GuidedTutorialModal: React.FC<GuidedTutorialModalProps> = ({ onClos
                   width: idx === currentSlideIndex ? '28px' : '8px',
                   height: '8px',
                   borderRadius: '4px',
-                  backgroundColor: idx === currentSlideIndex ? '#0284C7' : '#CBD5E1',
+                  backgroundColor: idx === currentSlideIndex ? 'var(--accent-product)' : '#CBD5E1',
                   transition: 'all 200ms ease',
                 }}
               />

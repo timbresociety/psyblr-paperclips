@@ -2,7 +2,7 @@ import React from 'react'
 import type { GameState, FunctionId } from '../../engine/types'
 import type { GameAction } from '../../engine/actions'
 import { sound } from '../../audio/soundEngine'
-import { getMonetisationDealStats } from '../../engine/formulas'
+import { computeQueueBadges } from '../hq/queueMetrics'
 
 interface FunctionNavProps {
   state: GameState
@@ -42,42 +42,17 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
     dispatch({ type: 'attention.switch', functionId: fnId })
   }
 
-  // Actionable Backlog & Alert indicators per workstation function
-  const demandAlertCount = (state.demandSignals || []).length
-
+  // Actionable backlog per function — shared with the HQ desk badges so
+  // attention pressure reads identically everywhere. Tone (severity color)
+  // stays rail-local: the rail escalates monetisation/retention/operations
+  // more aggressively than the HQ overview by design.
+  const queueBadges = computeQueueBadges(state)
+  const opsCritical = Boolean(
+    state.operationsEvent?.active ||
+    (state.operations?.incidentsBacklog || 0) > 0 ||
+    (state.activeTickets || []).some(t => t.isBusted)
+  )
   const productReadyPods = (state.productPods || []).filter(p => p.isReadyToShip).length
-  const productAlertCount = (state.qualifiedOpportunities || []).length + productReadyPods
-
-  const monetisationAlertCount = getMonetisationDealStats(state).totalCount
-
-  // Active retention threats: unique threatened accounts, active incidents, or crisis events
-  const activeThreatIds = new Set<string>()
-  ;(state.accounts || []).forEach(a => {
-    if (a.isThreatened || (a.health !== undefined && a.health < 65)) {
-      activeThreatIds.add(a.id)
-    }
-  })
-  ;(state.retentionIncidents || []).forEach(inc => {
-    activeThreatIds.add(inc.accountId || inc.id)
-  })
-  if (state.retentionEvent?.active && state.retentionEvent.accountId) {
-    activeThreatIds.add(state.retentionEvent.accountId)
-  }
-  const retentionAlertCount =
-    activeThreatIds.size + (state.retentionEvent?.active && !state.retentionEvent.accountId ? 1 : 0)
-
-
-  const expansionOrdersCount = (state.expansionOrders || []).length
-
-  const opsEventActive = state.operationsEvent?.active ? 1 : 0
-  const opsIncidentsCount = state.operations?.incidentsBacklog || 0
-  const opsBustedCount = (state.activeTickets || []).filter(t => t.isBusted).length
-  const opsStrainAlert = (state.operations?.strainBacklog ?? 0) >= 10 ? 1 : 0
-  const opsRotAlert = (state.operations?.contextRot ?? 0) >= 0.35 ? 1 : 0
-  const opsUnackAlerts = (state.alerts || []).filter(
-    a => !a.acknowledged && (a.targetFunction === 'operations' || (a.tone === 'critical' && (a.id.startsWith('ticket-') || a.id.startsWith('ops-'))))
-  ).length
-  const opsAlertCount = opsEventActive + opsIncidentsCount + opsBustedCount + opsStrainAlert + opsRotAlert + opsUnackAlerts
 
   return (
     <nav
@@ -85,8 +60,8 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
       style={{
         width: '248px',
         flexShrink: 0,
-        backgroundColor: '#FFFFFF',
-        borderRight: '1px solid rgba(15, 23, 42, 0.07)',
+        backgroundColor: 'var(--surface-card)',
+        borderRight: '1px solid var(--border-card)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -104,7 +79,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
             fontSize: '9.5px',
             fontWeight: 800,
             letterSpacing: '0.14em',
-            color: '#94A3B8',
+            color: 'var(--text-muted)',
             textTransform: 'uppercase',
             padding: '0 8px 10px 8px',
           }}
@@ -128,24 +103,15 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
             let badgeCount = 0
             let badgeTone: 'critical' | 'warning' | 'info' | 'accent' = 'accent'
 
-            if (room.id === 'demand') {
-              badgeCount = demandAlertCount
-              badgeTone = 'accent'
-            } else if (room.id === 'product') {
-              badgeCount = productAlertCount
+            badgeCount = queueBadges[room.id as Exclude<FunctionId, 'finance'>]?.count ?? 0
+            if (room.id === 'product') {
               badgeTone = productReadyPods > 0 ? 'info' : 'accent'
             } else if (room.id === 'monetisation') {
-              badgeCount = monetisationAlertCount
               badgeTone = 'warning'
             } else if (room.id === 'retention') {
-              badgeCount = retentionAlertCount
               badgeTone = 'critical'
-            } else if (room.id === 'expansion') {
-              badgeCount = expansionOrdersCount
-              badgeTone = 'accent'
             } else if (room.id === 'operations') {
-              badgeCount = opsAlertCount
-              badgeTone = opsEventActive || opsIncidentsCount > 0 || opsBustedCount > 0 ? 'critical' : 'warning'
+              badgeTone = opsCritical ? 'critical' : 'warning'
             }
 
             const hasBadge = badgeCount > 0
@@ -156,7 +122,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                 : badgeTone === 'warning'
                 ? '#D97706'
                 : badgeTone === 'info'
-                ? '#0284C7'
+                ? 'var(--accent-product)'
                 : room.accentColor
 
             const isCritical = badgeTone === 'critical'
@@ -171,9 +137,9 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                   justifyContent: 'space-between',
                   padding: '8px 10px',
                   borderRadius: '10px',
-                  backgroundColor: isActive ? '#FFFFFF' : 'transparent',
-                  border: isActive ? '1px solid #E2E8F0' : '1px solid transparent',
-                  boxShadow: isActive ? '0 3px 10px rgba(15, 23, 42, 0.06)' : 'none',
+                  backgroundColor: isActive ? 'var(--surface-card)' : 'transparent',
+                  border: isActive ? '1px solid var(--border-raised)' : '1px solid transparent',
+                  boxShadow: isActive ? '0 3px 10px rgba(0, 0, 0, 0.06)' : 'none',
                   cursor: 'pointer',
                   transition: 'all 120ms ease',
                   gap: '8px',
@@ -187,8 +153,8 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                       height: '28px',
                       borderRadius: '7px',
                       backgroundColor: isActive ? 'rgba(2, 132, 199, 0.07)' : 'rgba(241, 245, 249, 0.9)',
-                      border: `1px solid ${isActive ? room.accentColor : '#E2E8F0'}`,
-                      boxShadow: isActive ? `0 2px 8px ${room.accentColor}33` : '0 1px 2px rgba(15, 23, 42, 0.04)',
+                      border: `1px solid ${isActive ? room.accentColor : 'var(--border-raised)'}`,
+                      boxShadow: isActive ? `0 2px 8px ${room.accentColor}33` : '0 1px 2px rgba(0, 0, 0, 0.04)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -214,7 +180,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                         className="font-mono"
                         style={{
                           fontSize: '10.5px',
-                          color: isActive ? '#0284C7' : '#94A3B8',
+                          color: isActive ? 'var(--accent-product)' : 'var(--text-muted)',
                           fontWeight: 700,
                         }}
                       >
@@ -224,7 +190,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                         style={{
                           fontSize: '12.5px',
                           fontWeight: isActive ? 800 : 600,
-                          color: isActive ? '#0F172A' : '#475569',
+                          color: isActive ? 'var(--text-bright)' : 'var(--text-secondary)',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -237,7 +203,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                       className="font-mono"
                       style={{
                         fontSize: '9.5px',
-                        color: isAutomated && units > 0 ? '#10B981' : '#94A3B8',
+                        color: isAutomated && units > 0 ? '#10B981' : 'var(--text-muted)',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -293,7 +259,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
             fontSize: '9.5px',
             fontWeight: 800,
             letterSpacing: '0.14em',
-            color: '#94A3B8',
+            color: 'var(--text-muted)',
             textTransform: 'uppercase',
             padding: '20px 8px 10px 8px',
           }}
@@ -330,8 +296,8 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                   height: '28px',
                   borderRadius: '7px',
                   backgroundColor: 'rgba(241, 245, 249, 0.9)',
-                  border: '1px solid #E2E8F0',
-                  boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)',
+                  border: '1px solid var(--border-raised)',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.04)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -351,14 +317,14 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#0F172A' }}>
+                <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text-bright)' }}>
                   Skill trees
                 </span>
                 <span
                   className="font-mono"
                   style={{
                     fontSize: '9.5px',
-                    color: '#94A3B8',
+                    color: 'var(--text-muted)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -379,9 +345,9 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
               justifyContent: 'space-between',
               padding: '8px 10px',
               borderRadius: '10px',
-              backgroundColor: state.activeFunction === 'finance' ? '#FFFFFF' : 'transparent',
-              border: state.activeFunction === 'finance' ? '1px solid #E2E8F0' : '1px solid transparent',
-              boxShadow: state.activeFunction === 'finance' ? '0 3px 10px rgba(15, 23, 42, 0.06)' : 'none',
+              backgroundColor: state.activeFunction === 'finance' ? 'var(--surface-card)' : 'transparent',
+              border: state.activeFunction === 'finance' ? '1px solid var(--border-raised)' : '1px solid transparent',
+              boxShadow: state.activeFunction === 'finance' ? '0 3px 10px rgba(0, 0, 0, 0.06)' : 'none',
               cursor: 'pointer',
               transition: 'all 120ms ease',
               gap: '8px',
@@ -395,8 +361,8 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                   height: '28px',
                   borderRadius: '7px',
                   backgroundColor: state.activeFunction === 'finance' ? 'rgba(5, 150, 105, 0.08)' : 'rgba(241, 245, 249, 0.9)',
-                  border: `1px solid ${state.activeFunction === 'finance' ? '#10B981' : '#E2E8F0'}`,
-                  boxShadow: state.activeFunction === 'finance' ? '0 2px 8px rgba(16, 185, 129, 0.2)' : '0 1px 2px rgba(15, 23, 42, 0.04)',
+                  border: `1px solid ${state.activeFunction === 'finance' ? '#10B981' : 'var(--border-raised)'}`,
+                  boxShadow: state.activeFunction === 'finance' ? '0 2px 8px rgba(16, 185, 129, 0.2)' : '0 1px 2px rgba(0, 0, 0, 0.04)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -422,7 +388,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                     className="font-mono"
                     style={{
                       fontSize: '10.5px',
-                      color: state.activeFunction === 'finance' ? '#059669' : '#94A3B8',
+                      color: state.activeFunction === 'finance' ? '#059669' : 'var(--text-muted)',
                       fontWeight: 700,
                     }}
                   >
@@ -432,7 +398,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                     style={{
                       fontSize: '12.5px',
                       fontWeight: state.activeFunction === 'finance' ? 800 : 600,
-                      color: state.activeFunction === 'finance' ? '#0F172A' : '#475569',
+                      color: state.activeFunction === 'finance' ? 'var(--text-bright)' : 'var(--text-secondary)',
                     }}
                   >
                     Finance
@@ -442,7 +408,7 @@ export const FunctionNav: React.FC<FunctionNavProps> = ({
                   className="font-mono"
                   style={{
                     fontSize: '9.5px',
-                    color: '#94A3B8',
+                    color: 'var(--text-muted)',
                   }}
                 >
                   Cashflow & capital

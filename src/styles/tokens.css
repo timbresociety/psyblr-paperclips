@@ -1,7 +1,9 @@
 /* ==========================================================================
-   ONE / PERSON — INDUSTRIAL DESIGN TOKENS
-   Inspired by Gleb Alexandrov (Milkinside), Teenage Engineering & Dieter Rams
-   Precision Telemetry, Ethereal Atmosphere, Tactile Skeuo-Modernism
+   SOLOUNICORN — MACHINE PLANE DESIGN TOKENS
+   Graphite operational world per docs/context/VISUAL_BRAND.md +
+   docs/context/TASTE_AND_GAME_SENSE.md (MACHINE + SKY split).
+   Near-black instrumentation, function accents used locally for meaning,
+   iridescence reserved for reward salience — never default chrome.
    ========================================================================== */
 
 :root {
@@ -11,117 +13,119 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-quote: 'Newsreader', 'Instrument Serif', Georgia, serif;
 
-  /* Universal Accents */
-  /* Universal Accents — Minimal Pastel Ethereal Palette */
-  --color-positive: #10B981;
-  --color-negative: #F43F5E;
-  --color-warning: #F59E0B;
-  --color-critical: #F43F5E;
-  --color-cyan: #0284C7;
-  --color-indigo: #6366F1;
-  --color-slate: #64748B;
+  /* Universal semantic accents */
+  --color-positive: #74E89A;
+  --color-negative: #FF6B72;
+  --color-warning: #FFB84D;
+  --color-critical: #FF3D4F;
+  --color-cyan: #58D9FF;
+  --color-indigo: #6F8CFF;
+  --color-slate: #6F7882;
 
-  /* Function Accents — Ethereal Pastel Palette (NO chatak neon pink) */
-  --accent-demand: #E11D48;
-  --accent-demand-soft: rgba(225, 29, 72, 0.08);
-  --accent-product: #0284C7;
-  --accent-product-soft: rgba(2, 132, 199, 0.08);
-  --accent-monetisation: #D97706;
-  --accent-monetisation-soft: rgba(217, 119, 6, 0.08);
-  --accent-retention: #4F46E5;
-  --accent-retention-soft: rgba(79, 70, 229, 0.08);
-  --accent-expansion: #7C3AED;
-  --accent-expansion-soft: rgba(124, 58, 237, 0.08);
-  --accent-operations: #059669;
-  --accent-operations-soft: rgba(5, 150, 105, 0.08);
-  --accent-finance: #475569;
-  --accent-finance-soft: rgba(71, 85, 105, 0.08);
+  /* Function accents — VISUAL_BRAND baseline palette */
+  --accent-demand: #FF5C9A;
+  --accent-demand-soft: rgba(255, 92, 154, 0.12);
+  --accent-product: #58D9FF;
+  --accent-product-soft: rgba(88, 217, 255, 0.12);
+  --accent-monetisation: #FFC857;
+  --accent-monetisation-soft: rgba(255, 200, 87, 0.12);
+  --accent-retention: #6F8CFF;
+  --accent-retention-soft: rgba(111, 140, 255, 0.12);
+  --accent-expansion: #A778FF;
+  --accent-expansion-soft: rgba(167, 120, 255, 0.12);
+  --accent-operations: #B5F35A;
+  --accent-operations-soft: rgba(181, 243, 90, 0.12);
+  --accent-finance: #38BDF8;
+  --accent-finance-soft: rgba(56, 189, 248, 0.12);
 
-  /* MINIMAL PASTEL ETHEREAL CANVAS THEME (Airy, Calm & Tactile) */
-  --bg-main: #F8FAFC;
-  --bg-canvas: radial-gradient(ellipse 90% 70% at 75% -10%, rgba(224, 231, 255, 0.5) 0%, transparent 60%),
-               radial-gradient(ellipse 90% 70% at 15% 100%, rgba(207, 250, 254, 0.45) 0%, transparent 55%),
-               linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+  /* MACHINE canvas — near-black graphite, one quiet atmosphere */
+  --bg-main: #090B0E;
+  --bg-canvas: radial-gradient(ellipse 90% 70% at 75% -10%, rgba(88, 217, 255, 0.05) 0%, transparent 60%),
+               radial-gradient(ellipse 90% 70% at 15% 100%, rgba(167, 120, 255, 0.04) 0%, transparent 55%),
+               linear-gradient(180deg, #090B0E 0%, #0B0E12 100%);
 
-  /* Translucent & Tactile Pure White Surfaces */
-  --surface-work: #FFFFFF;
-  --surface-rail: rgba(255, 255, 255, 0.95);
-  --surface-card: #FFFFFF;
-  --surface-raised: #FFFFFF;
-  --surface-sunken: #F8FAFC;
-  --surface-secondary: #F1F5F9;
-  --surface-tertiary: #E2E8F0;
-  --surface-modal: #FFFFFF;
-  --backdrop-modal: rgba(15, 23, 42, 0.45);
-  --surface-overlay: rgba(255, 255, 255, 0.98);
-  --surface-active-nav: #FFFFFF;
+  /* Graphite surfaces */
+  --surface-work: #0E1115;
+  --surface-rail: rgba(14, 17, 21, 0.94);
+  --surface-card: #14181D;
+  --surface-raised: #14181D;
+  --surface-sunken: #0B0E12;
+  --surface-secondary: #1A1F25;
+  --surface-tertiary: #21262D;
+  --surface-modal: #12161B;
+  --backdrop-modal: rgba(2, 4, 6, 0.72);
+  --surface-overlay: rgba(14, 17, 21, 0.97);
+  --surface-active-nav: #1A1F25;
 
-  /* Hairlines & Precision Borders */
-  --border-hairline: rgba(15, 23, 42, 0.08);
-  --border-subtle: rgba(15, 23, 42, 0.04);
-  --border-active: rgba(2, 132, 199, 0.4);
-  --border-graphite: #CBD5E1;
-  --border-focus: #0284C7;
-  --border-card: rgba(15, 23, 42, 0.06);
+  /* Hairlines & precision borders */
+  --border-hairline: rgba(244, 246, 247, 0.09);
+  --border-subtle: rgba(244, 246, 247, 0.05);
+  --border-active: rgba(88, 217, 255, 0.45);
+  --border-graphite: #292F36;
+  --border-raised: #262C34;
+  --border-focus: #58D9FF;
+  --border-card: rgba(244, 246, 247, 0.07);
 
-  /* Deep Crisp Ink & Grotesque Typography */
-  --text-ink: #0F172A;
-  --text-bright: #020617;
-  --text-primary: #1E293B;
-  --text-secondary: #64748B;
-  --text-muted: #94A3B8;
-  --text-dim: #CBD5E1;
+  /* Ink on graphite */
+  --text-ink: #D9DEE3;
+  --text-bright: #F4F6F7;
+  --text-primary: #D9DEE3;
+  --text-secondary: #A7AFB8;
+  --text-muted: #6F7882;
+  --text-dim: #4A525B;
 
-  /* Tactile Shadows & Ethereal Diffuse Depth */
-  --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 0 1px rgba(0, 0, 0, 0.05);
-  --shadow-tactile: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow-raised: 0 12px 32px -4px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04);
-  --shadow-active-tab: 0 2px 8px rgba(15, 23, 42, 0.08), 0 0 1px rgba(0, 0, 0, 0.1);
+  /* Depth on a dark world: shadow + faint top-light instead of drop cards */
+  --shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(244, 246, 247, 0.04);
+  --shadow-tactile: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-raised: 0 16px 40px -8px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(244, 246, 247, 0.05);
+  --shadow-active-tab: 0 2px 12px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(244, 246, 247, 0.06);
 
-  /* Clean Tactile 2.5D Buttons */
-  --button-bg: #FFFFFF;
-  --button-hover: #F8FAFC;
-  --button-border: #CBD5E1;
-  --button-primary-bg: linear-gradient(180deg, #0EA5E9 0%, #0284C7 100%);
-  --button-primary-text: #FFFFFF;
-  --button-3d-bevel-shadow: 0 3px 0 #0369A1;
+  /* Tactile buttons — machined, not glossy */
+  --button-bg: #1A1F25;
+  --button-hover: #21262D;
+  --button-border: #2E353D;
+  --button-primary-bg: linear-gradient(180deg, #2AA9DB 0%, #1D86B8 100%);
+  --button-primary-text: #04121B;
+  --button-3d-bevel-shadow: 0 3px 0 #10516F;
 
-  /* Liquid Chrome & Iridescent Metallic Tokens */
-  --chrome-surface: linear-gradient(145deg, #FFFFFF 0%, #F1F5F9 45%, #E2E8F0 75%, #F8FAFC 100%);
-  --chrome-border: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(203, 213, 225, 0.8) 40%, rgba(255, 255, 255, 0.95) 60%, rgba(148, 163, 184, 0.5) 100%);
-  --chrome-shadow: 0 3px 10px -2px rgba(100, 116, 139, 0.18), inset 0 1px 2px rgba(255, 255, 255, 0.95), inset 0 -1px 2px rgba(148, 163, 184, 0.25);
-  --chrome-iridescent: linear-gradient(135deg, rgba(165, 243, 252, 0.2) 0%, rgba(244, 208, 249, 0.2) 50%, rgba(254, 240, 138, 0.15) 100%);
+  /* Machined chrome (quiet). Iridescence lives in --reward-iridescent ONLY. */
+  --chrome-surface: linear-gradient(145deg, #1A1F25 0%, #14181D 45%, #10141A 75%, #171C22 100%);
+  --chrome-border: linear-gradient(135deg, rgba(244, 246, 247, 0.25) 0%, rgba(111, 120, 130, 0.35) 40%, rgba(244, 246, 247, 0.18) 60%, rgba(41, 47, 54, 0.8) 100%);
+  --chrome-shadow: 0 3px 10px -2px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(244, 246, 247, 0.12), inset 0 -1px 2px rgba(0, 0, 0, 0.5);
+  --chrome-iridescent: linear-gradient(135deg, rgba(88, 217, 255, 0.08) 0%, rgba(167, 120, 255, 0.08) 50%, rgba(255, 200, 87, 0.06) 100%);
 
-  /* Minigame & Gameplay Tokens */
-  --bucket-write: #0284C7;
-  --bucket-diff: #D97706;
-  --bucket-test: #7C3AED;
-  --bucket-deploy: #059669;
+  /* SKY / reward salience — scarce by contract (milestones, Ethereal apex) */
+  --reward-iridescent: linear-gradient(120deg, #9BE8FF 0%, #C8B6FF 28%, #FFC8E0 52%, #FFE9A8 74%, #9BE8FF 100%);
+  --reward-glow: 0 0 24px rgba(200, 182, 255, 0.35), 0 0 64px rgba(155, 232, 255, 0.18);
+  --sky-veil: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(200, 182, 255, 0.16) 0%, transparent 65%);
 
-  --timing-sweetspot: #059669;
-  --timing-acceptable: #0284C7;
-  --timing-hazard: #E11D48;
+  /* Minigame & gameplay tokens */
+  --bucket-write: #58D9FF;
+  --bucket-diff: #FFC857;
+  --bucket-test: #A778FF;
+  --bucket-deploy: #74E89A;
+
+  --timing-sweetspot: #74E89A;
+  --timing-acceptable: #58D9FF;
+  --timing-hazard: #FF5C9A;
 
   --foil-gold: linear-gradient(135deg, #D4AF37 0%, #FFF4B8 45%, #AA771C 75%, #F5D77F 100%);
-  --foil-silver: linear-gradient(135deg, #C0C0C0 0%, #F5F5F5 45%, #8A8A8A 75%, #E0E0E0 100%);
-  --foil-scratched: rgba(240, 244, 248, 0.95);
+  --foil-silver: linear-gradient(135deg, #8A939D 0%, #E4E9EE 45%, #565E67 75%, #B9C1C9 100%);
+  --foil-scratched: rgba(20, 24, 29, 0.96);
 
-  --merge-t1: #64748B;
-  --merge-t2: #0284C7;
-  --merge-t3: #7C3AED;
-  --merge-t4: #D97706;
-  --merge-t5: #059669;
+  --merge-t1: #6F7882;
+  --merge-t2: #58D9FF;
+  --merge-t3: #A778FF;
+  --merge-t4: #FFC857;
+  --merge-t5: #74E89A;
 
-  --tech-unlocked: #059669;
-  --tech-available: #0284C7;
-  --tech-locked: #94A3B8;
-}
+  --tech-unlocked: #74E89A;
+  --tech-available: #58D9FF;
+  --tech-locked: #4A525B;
 
-/* Specific Evolution Tier Nuances */
-[data-theme="ethereal"] {
-  --border-focus: #7C3AED;
-}
-
-[data-theme="growth"] {
-  --border-focus: #0284C7;
+  /* Evolution-tier identity (defaults = garage; tiers.css overrides) */
+  --tier-material: #292F36;
+  --tier-accent: #A7AFB8;
+  --tier-glow: rgba(167, 175, 184, 0.10);
+  --tier-backdrop: none;
 }

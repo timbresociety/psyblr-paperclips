@@ -90,11 +90,11 @@ export const AlertInbox: React.FC<AlertInboxProps> = ({ alerts, dispatch }) => {
         bottom: '16px',
         width: '320px',
         maxHeight: '420px',
-        backgroundColor: 'rgba(255, 255, 255, 0.96)',
+        backgroundColor: 'rgba(26, 31, 37, 0.96)',
         backdropFilter: 'blur(20px)',
         border: '1px solid var(--border-hairline)',
         borderRadius: '12px',
-        boxShadow: '0 20px 40px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 60,
@@ -111,7 +111,7 @@ export const AlertInbox: React.FC<AlertInboxProps> = ({ alerts, dispatch }) => {
           padding: '12px 14px',
           borderBottom: '1px solid var(--border-hairline)',
           cursor: 'pointer',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--surface-card)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -195,14 +195,14 @@ export const AlertInbox: React.FC<AlertInboxProps> = ({ alerts, dispatch }) => {
                 <div
                   key={alert.id}
                   style={{
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: 'var(--surface-card)',
                     border: `1px solid ${isCritical ? 'rgba(239, 68, 68, 0.35)' : isWarning ? 'rgba(245, 158, 11, 0.35)' : 'var(--border-hairline)'}`,
                     borderRadius: '10px',
                     padding: '10px 12px',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '6px',
-                    boxShadow: isCritical ? '0 4px 14px rgba(239, 68, 68, 0.12)' : '0 2px 6px rgba(15, 23, 42, 0.04)',
+                    boxShadow: isCritical ? '0 4px 14px rgba(239, 68, 68, 0.12)' : '0 2px 6px rgba(0, 0, 0, 0.04)',
                     position: 'relative',
                   }}
                 >

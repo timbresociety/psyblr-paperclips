@@ -67,13 +67,13 @@ export const LedgerDrawer: React.FC<LedgerDrawerProps> = ({ ledger, isOpen: cont
         right: 0,
         bottom: 0,
         width: isOpen ? '380px' : '0px',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'var(--surface-card)',
         borderLeft: isOpen ? '1px solid var(--border-hairline)' : 'none',
         display: 'flex',
         flexDirection: 'column',
         transition: 'width 240ms cubic-bezier(0.16, 1, 0.3, 1)',
         zIndex: 50,
-        boxShadow: isOpen ? '-12px 0 36px rgba(15, 23, 42, 0.08)' : 'none',
+        boxShadow: isOpen ? '-12px 0 36px rgba(0, 0, 0, 0.08)' : 'none',
         overflow: 'hidden',
       }}
     >
@@ -87,7 +87,7 @@ export const LedgerDrawer: React.FC<LedgerDrawerProps> = ({ ledger, isOpen: cont
           padding: '16px 18px',
           borderBottom: '1px solid var(--border-hairline)',
           cursor: 'pointer',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--surface-card)',
           flexShrink: 0,
         }}
       >
@@ -99,7 +99,7 @@ export const LedgerDrawer: React.FC<LedgerDrawerProps> = ({ ledger, isOpen: cont
               fontWeight: 800,
               padding: '2px 6px',
               borderRadius: '5px',
-              backgroundColor: '#F1F5F9',
+              backgroundColor: 'var(--surface-secondary)',
               color: 'var(--text-secondary)',
             }}
           >
@@ -137,7 +137,7 @@ export const LedgerDrawer: React.FC<LedgerDrawerProps> = ({ ledger, isOpen: cont
               <div
                 key={item.id}
                 style={{
-                  backgroundColor: isChurn ? 'rgba(239, 68, 68, 0.05)' : '#F8FAFC',
+                  backgroundColor: isChurn ? 'rgba(239, 68, 68, 0.05)' : 'var(--surface-modal)',
                   border: isChurn ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid var(--border-hairline)',
                   borderLeft: isChurn ? '4px solid #EF4444' : '1px solid var(--border-hairline)',
                   borderRadius: '8px',

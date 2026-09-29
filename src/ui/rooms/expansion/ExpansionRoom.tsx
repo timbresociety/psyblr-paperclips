@@ -673,7 +673,7 @@ export const ExpansionRoom: React.FC<ExpansionRoomProps> = ({ state, dispatch })
                       padding: "12px 14px",
                       borderRadius: "10px",
                       border: "1.5px dashed var(--border-hairline)",
-                      backgroundColor: "rgba(15, 23, 42, 0.02)",
+                      backgroundColor: "rgba(2, 4, 6, 0.02)",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
@@ -752,7 +752,7 @@ export const ExpansionRoom: React.FC<ExpansionRoomProps> = ({ state, dispatch })
                         borderRadius: gridDim >= 6 ? "6px" : "8px",
                         backgroundColor: cell
                           ? chainMeta?.bg || "rgba(255,255,255,0.05)"
-                          : "rgba(255, 255, 255, 0.65)",
+                          : "rgba(20, 24, 29, 0.65)",
                         border: isSelected
                           ? "2px solid #F59E0B"
                           : cell
@@ -973,7 +973,7 @@ export const ExpansionRoom: React.FC<ExpansionRoomProps> = ({ state, dispatch })
                   }}
                 >
                   <span>Synthesize Feature ($15)</span>
-                  <kbd className="btn-kbd" style={{ background: "rgba(255,255,255,0.25)", color: "#000" }}>Space</kbd>
+                  <kbd className="btn-kbd" style={{ background: "rgba(26,31,37,0.25)", color: "var(--text-bright)" }}>Space</kbd>
                 </button>
               </div>
 

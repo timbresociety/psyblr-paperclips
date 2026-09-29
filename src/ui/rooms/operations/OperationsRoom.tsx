@@ -332,7 +332,7 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
           title="Batch open and redeem all active station tickets simultaneously"
         >
           <span>Batch Resolve All</span>
-          <kbd className="btn-kbd" style={{ background: "rgba(255,255,255,0.25)", color: "#fff", fontSize: "9px" }}>Space</kbd>
+          <kbd className="btn-kbd" style={{ background: "rgba(26,31,37,0.25)", color: "var(--surface-card)", fontSize: "9px" }}>Space</kbd>
         </button>
       </div>
 
@@ -737,7 +737,7 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
                       style={{
                         fontSize: "9.5px",
                         fontWeight: 800,
-                        color: "#94A3B8",
+                        color: "var(--text-muted)",
                         letterSpacing: "0.06em",
                       }}
                     >
@@ -763,7 +763,7 @@ export const OperationsRoom: React.FC<OperationsRoomProps> = ({ state, dispatch 
                         style={{
                           width: "70%",
                           height: "3px",
-                          backgroundColor: "rgba(255,255,255,0.2)",
+                          backgroundColor: "rgba(26,31,37,0.2)",
                           borderRadius: "2px",
                           marginTop: "4px",
                           overflow: "hidden",

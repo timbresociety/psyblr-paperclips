@@ -73,12 +73,12 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
           width: '100%',
           maxWidth: '920px',
           maxHeight: '90vh',
-          backgroundColor: 'var(--surface-modal, #FFFFFF)',
-          color: 'var(--text-ink, #0F172A)',
-          border: '1px solid var(--border-hairline, rgba(15, 23, 42, 0.08))',
+          backgroundColor: 'var(--surface-modal, #14181D)',
+          color: 'var(--text-ink, #F4F6F7)',
+          border: '1px solid var(--border-hairline, rgba(244, 246, 247, 0.08))',
           borderRadius: '20px',
           padding: '24px 28px',
-          boxShadow: '0 24px 64px -12px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0 24px 64px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04)',
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
@@ -106,14 +106,14 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
               style={{
                 fontSize: '22px',
                 fontWeight: 800,
-                color: 'var(--text-ink, #0F172A)',
+                color: 'var(--text-ink, #F4F6F7)',
                 letterSpacing: '-0.02em',
                 margin: 0,
               }}
             >
               Founder Relics & End-of-Run Achievements
             </h1>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary, #64748B)', marginTop: '4px', margin: 0 }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary, #6F7882)', marginTop: '4px', margin: 0 }}>
               Enduring operational monuments earned across lifecycles. Unlocking relics grants permanent meta-buffs and unlocks high-frequency simulation speeds.
             </p>
           </div>
@@ -143,28 +143,28 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
             flexWrap: 'wrap',
             gap: '14px',
             padding: '10px 16px',
-            backgroundColor: '#F8FAFC',
-            border: '1px solid rgba(15, 23, 42, 0.08)',
+            backgroundColor: 'var(--surface-modal)',
+            border: '1px solid rgba(244, 246, 247, 0.08)',
             borderRadius: '10px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span className="font-mono" style={{ fontSize: '9px', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>
+              <span className="font-mono" style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
                 Relics Unlocked
               </span>
-              <span className="font-mono" style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A' }}>
+              <span className="font-mono" style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-bright)' }}>
                 {totalUnlocked} / {FOUNDER_ACHIEVEMENTS_AND_RELICS.length}
               </span>
             </div>
 
-            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(15, 23, 42, 0.1)' }} />
+            <div style={{ width: '1px', height: '24px', backgroundColor: 'rgba(2, 4, 6, 0.1)' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span className="font-mono" style={{ fontSize: '9px', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>
+              <span className="font-mono" style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
                 Max Simulation Speed
               </span>
-              <span className="font-mono" style={{ fontSize: '16px', fontWeight: 800, color: '#0284C7' }}>
+              <span className="font-mono" style={{ fontSize: '16px', fontWeight: 800, color: 'var(--accent-product)' }}>
                 {maxSpeed}× Real-Time
               </span>
             </div>
@@ -179,12 +179,12 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                 gap: '6px',
                 padding: '4px 10px',
                 borderRadius: '6px',
-                backgroundColor: maxSpeed >= 2 ? 'rgba(16, 185, 129, 0.1)' : '#F1F5F9',
-                border: `1px solid ${maxSpeed >= 2 ? 'rgba(16, 185, 129, 0.3)' : '#E2E8F0'}`,
+                backgroundColor: maxSpeed >= 2 ? 'rgba(16, 185, 129, 0.1)' : 'var(--surface-secondary)',
+                border: `1px solid ${maxSpeed >= 2 ? 'rgba(16, 185, 129, 0.3)' : 'var(--border-raised)'}`,
               }}
             >
               <span style={{ fontSize: '11px' }}>{maxSpeed >= 2 ? '⚡' : '🔒'}</span>
-              <span className="font-mono" style={{ fontSize: '10px', fontWeight: 700, color: maxSpeed >= 2 ? '#059669' : '#64748B' }}>
+              <span className="font-mono" style={{ fontSize: '10px', fontWeight: 700, color: maxSpeed >= 2 ? '#059669' : 'var(--text-muted)' }}>
                 2× Speed {maxSpeed >= 2 ? 'Active' : 'Locked'}
               </span>
             </div>
@@ -196,12 +196,12 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                 gap: '6px',
                 padding: '4px 10px',
                 borderRadius: '6px',
-                backgroundColor: maxSpeed >= 5 ? 'rgba(16, 185, 129, 0.1)' : '#F1F5F9',
-                border: `1px solid ${maxSpeed >= 5 ? 'rgba(16, 185, 129, 0.3)' : '#E2E8F0'}`,
+                backgroundColor: maxSpeed >= 5 ? 'rgba(16, 185, 129, 0.1)' : 'var(--surface-secondary)',
+                border: `1px solid ${maxSpeed >= 5 ? 'rgba(16, 185, 129, 0.3)' : 'var(--border-raised)'}`,
               }}
             >
               <span style={{ fontSize: '11px' }}>{maxSpeed >= 5 ? '🌀' : '🔒'}</span>
-              <span className="font-mono" style={{ fontSize: '10px', fontWeight: 700, color: maxSpeed >= 5 ? '#059669' : '#64748B' }}>
+              <span className="font-mono" style={{ fontSize: '10px', fontWeight: 700, color: maxSpeed >= 5 ? '#059669' : 'var(--text-muted)' }}>
                 5× Speed {maxSpeed >= 5 ? 'Active' : 'Locked'}
               </span>
             </div>
@@ -218,9 +218,9 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                 borderRadius: '8px',
                 fontSize: '11px',
                 fontWeight: 700,
-                border: activeTab === 'all' ? '1px solid #0284C7' : '1px solid #E2E8F0',
-                backgroundColor: activeTab === 'all' ? '#0284C7' : '#F8FAFC',
-                color: activeTab === 'all' ? '#FFFFFF' : '#475569',
+                border: activeTab === 'all' ? '1px solid var(--accent-product)' : '1px solid var(--border-raised)',
+                backgroundColor: activeTab === 'all' ? 'var(--accent-product)' : 'var(--surface-modal)',
+                color: activeTab === 'all' ? '#FFFFFF' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 transition: 'all 120ms ease',
               }}
@@ -234,9 +234,9 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                 borderRadius: '8px',
                 fontSize: '11px',
                 fontWeight: 700,
-                border: activeTab === 'easy' ? '1px solid #059669' : '1px solid #E2E8F0',
-                backgroundColor: activeTab === 'easy' ? '#059669' : '#F8FAFC',
-                color: activeTab === 'easy' ? '#FFFFFF' : '#475569',
+                border: activeTab === 'easy' ? '1px solid #059669' : '1px solid var(--border-raised)',
+                backgroundColor: activeTab === 'easy' ? '#059669' : 'var(--surface-modal)',
+                color: activeTab === 'easy' ? '#FFFFFF' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 transition: 'all 120ms ease',
                 display: 'flex',
@@ -253,9 +253,9 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                 borderRadius: '8px',
                 fontSize: '11px',
                 fontWeight: 700,
-                border: activeTab === 'effort' ? '1px solid #D97706' : '1px solid #E2E8F0',
-                backgroundColor: activeTab === 'effort' ? '#D97706' : '#F8FAFC',
-                color: activeTab === 'effort' ? '#FFFFFF' : '#475569',
+                border: activeTab === 'effort' ? '1px solid #D97706' : '1px solid var(--border-raised)',
+                backgroundColor: activeTab === 'effort' ? '#D97706' : 'var(--surface-modal)',
+                color: activeTab === 'effort' ? '#FFFFFF' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 transition: 'all 120ms ease',
                 display: 'flex',
@@ -267,7 +267,7 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
             </button>
           </div>
 
-          <div className="font-mono" style={{ fontSize: '10px', color: '#64748B' }}>
+          <div className="font-mono" style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
             {activeTab === 'easy'
               ? 'Easy to unlock // Solid starter operational buffs'
               : activeTab === 'effort'
@@ -297,9 +297,9 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
               <div
                 key={item.id}
                 style={{
-                  backgroundColor: isUnlocked ? '#FFFFFF' : '#F8FAFC',
+                  backgroundColor: isUnlocked ? 'var(--surface-card)' : 'var(--surface-modal)',
                   border: isEquipped
-                    ? '1.5px solid #0284C7'
+                    ? '1.5px solid var(--accent-product)'
                     : isMonolith
                     ? '1.5px solid #F59E0B'
                     : isUnlocked
@@ -333,8 +333,8 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                         width: '38px',
                         height: '38px',
                         borderRadius: '8px',
-                        backgroundColor: isEffort ? 'rgba(217, 119, 6, 0.06)' : '#F1F5F9',
-                        border: isEffort ? '1px solid rgba(217, 119, 6, 0.15)' : '1px solid rgba(15, 23, 42, 0.08)',
+                        backgroundColor: isEffort ? 'rgba(217, 119, 6, 0.06)' : 'var(--surface-secondary)',
+                        border: isEffort ? '1px solid rgba(217, 119, 6, 0.15)' : '1px solid rgba(244, 246, 247, 0.08)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -375,7 +375,7 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                             padding: '1px 5px',
                             borderRadius: '4px',
                             backgroundColor: 'rgba(2, 132, 199, 0.1)',
-                            color: '#0284C7',
+                            color: 'var(--accent-product)',
                             border: '1px solid rgba(2, 132, 199, 0.25)',
                           }}
                         >
@@ -389,9 +389,9 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                           fontWeight: 800,
                           padding: '1px 5px',
                           borderRadius: '4px',
-                          backgroundColor: isUnlocked ? 'rgba(16, 185, 129, 0.1)' : '#E2E8F0',
-                          color: isUnlocked ? '#059669' : '#64748B',
-                          border: isUnlocked ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid #CBD5E1',
+                          backgroundColor: isUnlocked ? 'rgba(16, 185, 129, 0.1)' : '#21262D',
+                          color: isUnlocked ? '#059669' : 'var(--text-muted)',
+                          border: isUnlocked ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid #2E353D',
                           textTransform: 'uppercase',
                         }}
                       >
@@ -401,14 +401,14 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                   </div>
 
                   {/* Relic & Achievement Name */}
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', lineHeight: 1.25 }}>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-bright)', lineHeight: 1.25 }}>
                     {item.unlockedRelic.name}
                   </div>
                   <div
                     className="font-mono"
                     style={{
                       fontSize: '9px',
-                      color: isEffort ? 'var(--accent-monetisation, #D97706)' : '#64748B',
+                      color: isEffort ? 'var(--accent-monetisation, #D97706)' : 'var(--text-muted)',
                       marginTop: '2px',
                       textTransform: 'uppercase',
                       letterSpacing: '0.04em',
@@ -423,26 +423,26 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                     className="font-mono"
                     style={{
                       fontSize: '9.5px',
-                      color: isEffort ? '#0F172A' : '#1E293B',
+                      color: isEffort ? 'var(--text-bright)' : '#D9DEE3',
                       marginTop: '6px',
                       lineHeight: 1.35,
-                      backgroundColor: isEffort ? '#FFFBEB' : '#F8FAFC',
+                      backgroundColor: isEffort ? '#14181DBEB' : 'var(--surface-modal)',
                       padding: '6px 8px',
                       borderRadius: '6px',
-                      border: isEffort ? '1px solid rgba(245, 158, 11, 0.2)' : '1px solid rgba(15, 23, 42, 0.06)',
+                      border: isEffort ? '1px solid rgba(245, 158, 11, 0.2)' : '1px solid rgba(244, 246, 247, 0.06)',
                     }}
                   >
                     {item.unlockedRelic.effectSummary}
                   </div>
 
                   {/* Unlock Condition */}
-                  <div style={{ fontSize: '9.5px', color: '#64748B', marginTop: '6px', lineHeight: 1.35 }}>
-                    <strong style={{ color: '#334155' }}>Requirement:</strong> {item.description}
+                  <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', marginTop: '6px', lineHeight: 1.35 }}>
+                    <strong style={{ color: 'var(--text-secondary)' }}>Requirement:</strong> {item.description}
                   </div>
                 </div>
 
                 {/* Bottom Action: Equip */}
-                <div style={{ paddingTop: '8px', borderTop: '1px solid rgba(15, 23, 42, 0.06)' }}>
+                <div style={{ paddingTop: '8px', borderTop: '1px solid rgba(244, 246, 247, 0.06)' }}>
                   {isUnlocked ? (
                     <button
                       onClick={() => handleEquip(item.relicId)}
@@ -464,7 +464,7 @@ export const FounderRelicsModal: React.FC<FounderRelicsModalProps> = ({
                       className="font-mono"
                       style={{
                         fontSize: '9px',
-                        color: isEffort ? '#B45309' : '#94A3B8',
+                        color: isEffort ? '#B45309' : 'var(--text-muted)',
                         textAlign: 'center',
                         padding: '4px',
                       }}

@@ -395,3 +395,14 @@
 .cracked-glass-overlay {
   animation: cracked-glass-flicker 0.2s infinite ease-in-out;
 }
+
+
+/* Reduced motion: meaning through state and contrast, not movement */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

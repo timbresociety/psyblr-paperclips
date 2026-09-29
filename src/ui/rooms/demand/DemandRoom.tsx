@@ -3,6 +3,8 @@ import type { GameState, DemandSignal, CustomerSegment, DemandTriageOutcome } fr
 import type { GameAction } from '../../../engine/actions'
 import { DEMAND_CHANNELS, DEMAND_CHANNEL_LIMITS, SEGMENT_PROFILES, LUCK_VARIANCE_CONFIG } from '../../../engine/constants'
 import { sound } from '../../../audio/soundEngine'
+import { SwipeCard } from '../shared/SwipeCard'
+import { RadarScope } from './RadarScope'
 
 interface DemandRoomProps {
   state: GameState
@@ -270,7 +272,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
         return '#7C3AED'
       case 'creator':
       default:
-        return '#0284C7'
+        return 'var(--accent-product)'
     }
   }
 
@@ -396,9 +398,10 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
           maxWidth: '680px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+          <RadarScope signalIds={demandSignals.map(x => x.id)} size={44} />
           <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-ink)' }}>
-            📡 Market Scanner: {demandSignals.length} Active Inbound Signals
+            Market Scanner: <strong style={{ color: 'var(--accent-demand)' }}>{demandSignals.length}</strong> Active Inbound Signals
           </span>
           {automateRank > 0 && (
             <span
@@ -449,7 +452,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
             }}
           >
             <span>Qualify All Channels</span>
-            <kbd style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '3px', background: 'rgba(255, 255, 255, 0.25)' }}>
+            <kbd style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '3px', background: 'rgba(26, 31, 37, 0.25)' }}>
               ↵ Enter
             </kbd>
           </button>
@@ -571,7 +574,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                 className={isFail ? 'animate-demand-fail' : 'animate-demand-success'}
                 style={{
                   borderRadius: '12px',
-                  backgroundColor: isFail ? 'rgba(254, 242, 242, 0.97)' : 'rgba(236, 253, 245, 0.97)',
+                  backgroundColor: isFail ? 'rgba(29, 17, 19, 0.97)' : 'rgba(13, 23, 18, 0.97)',
                   border: isFail ? '2.5px solid #EF4444' : '2.5px solid #10B981',
                   boxShadow: isFail
                     ? '0 0 28px rgba(239, 68, 68, 0.5), 0 8px 24px rgba(0,0,0,0.12)'
@@ -621,7 +624,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                   <div
                     style={{
                       border: isFail ? '4px solid #DC2626' : '4px solid #059669',
-                      backgroundColor: isFail ? '#FEF2F2' : '#ECFDF5',
+                      backgroundColor: isFail ? '#1D1113' : '#0D1712',
                       color: isFail ? '#DC2626' : '#059669',
                       padding: '8px 16px',
                       borderRadius: '8px',
@@ -636,7 +639,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                       transform: isFail ? 'rotate(-6deg)' : 'rotate(4deg)',
                     }}
                   >
-                    {isFail ? '❌ DISQUALIFIED' : '✓ QUALIFIED & ROUTED'}
+                    {isFail ? '✕ DISQUALIFIED' : '✓ QUALIFIED & ROUTED'}
                   </div>
                 </div>
 
@@ -666,7 +669,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                     {signalTitle}
                   </div>
                   <div style={{ fontSize: '9.5px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 700 }}>
-                    {signalSegment.toUpperCase()} SEGMENT {outcome.isHyper ? '· HYPER 2×' : ''} {outcome.isLuckyWhale ? '· 🐋 WHALE CATALYST' : ''}
+                    {signalSegment.toUpperCase()} SEGMENT {outcome.isHyper ? '· HYPER 2×' : ''} {outcome.isLuckyWhale ? '· WHALE CATALYST' : ''}
                   </div>
                 </div>
 
@@ -685,7 +688,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                   }}
                 >
                   <div style={{ fontSize: '11px', fontWeight: 800, color: isFail ? '#DC2626' : '#059669', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>{isFail ? '⚠️ DID NOT PROCEED TO PRODUCT' : '🚀 ROUTED TO PRODUCT CODING PODS'}</span>
+                    <span>{isFail ? 'DID NOT PROCEED TO PRODUCT' : 'ROUTED TO PRODUCT CODING PODS'}</span>
                   </div>
                   <div style={{ fontSize: '10px', fontWeight: 600, color: isFail ? '#991B1B' : '#065F46', lineHeight: 1.35 }}>
                     {isFail
@@ -739,8 +742,19 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
           const canAffordHyper = isViral || state.cashCents >= baseHyperCac
 
           return (
+            <SwipeCard
+              key={`${channel.id}:${signal?.id ?? 'empty'}`}
+              disabled={!signal || isTriaging}
+              rightBlocked={!canAffordQualify}
+              upBlocked={!canAffordHyper}
+              onLeft={() => signal && handleDismiss(signal, channelIndex)}
+              onRight={() => signal && handleQualify(signal, channelIndex)}
+              onUp={() => signal && handleHyper(signal, channelIndex)}
+              leftLabel="PASS"
+              rightLabel={`QUALIFY $${effectiveCacDollars}`}
+              upLabel={`HYPER 2× $${effectiveHyperCacDollars}`}
+            >
             <div
-              key={channel.id}
               onClick={() => setSelectedChannelIndex(channelIndex)}
               style={{
                 borderRadius: '12px',
@@ -1016,7 +1030,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                             style={{
                               fontSize: '9px',
                               fontWeight: 700,
-                              color: canAffordHyper ? '#0284C7' : '#94A3B8',
+                              color: canAffordHyper ? 'var(--accent-product)' : 'var(--text-muted)',
                               backgroundColor: canAffordHyper ? 'rgba(2, 132, 199, 0.08)' : 'rgba(148, 163, 184, 0.1)',
                               padding: '1px 4px',
                               borderRadius: '3px',
@@ -1104,7 +1118,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                           fontSize: '8.5px',
                           padding: '1px 4px',
                           borderRadius: '3px',
-                          background: canAffordHyper ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.12)',
+                          background: canAffordHyper ? 'rgba(26, 31, 37, 0.25)' : 'rgba(0, 0, 0, 0.12)',
                           color: canAffordHyper ? '#FFF' : 'var(--text-muted)',
                           margin: 0,
                         }}
@@ -1147,7 +1161,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                           fontSize: '8.5px',
                           padding: '1px 4px',
                           borderRadius: '3px',
-                          background: canAffordQualify ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.12)',
+                          background: canAffordQualify ? 'rgba(26, 31, 37, 0.25)' : 'rgba(0, 0, 0, 0.12)',
                           color: canAffordQualify ? '#FFF' : 'var(--text-muted)',
                           margin: 0,
                         }}
@@ -1229,6 +1243,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                 </div>
               )}
             </div>
+            </SwipeCard>
           )
         })}
 
@@ -1242,7 +1257,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
             }}
             style={{
               borderRadius: '12px',
-              backgroundColor: 'rgba(255, 255, 255, 0.65)',
+              backgroundColor: 'rgba(26, 31, 37, 0.65)',
               border: '1.5px dashed var(--border-graphite)',
               padding: '16px 14px',
               display: 'flex',
@@ -1283,7 +1298,7 @@ export const DemandRoom: React.FC<DemandRoomProps> = ({ state, dispatch }) => {
                 color: 'var(--text-muted)',
                 padding: '2px 8px',
                 borderRadius: '4px',
-                backgroundColor: '#F1F5F9',
+                backgroundColor: 'var(--surface-secondary)',
                 border: '1px solid var(--border-hairline)',
               }}
             >

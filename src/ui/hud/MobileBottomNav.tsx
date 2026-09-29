@@ -21,7 +21,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'demand', code: '01', label: 'Demand', icon: '/assets/2.5d/nav_demand.png', accentColor: '#E11D48' },
-  { id: 'product', code: '02', label: 'Product', icon: '/assets/2.5d/nav_product.png', accentColor: '#0284C7' },
+  { id: 'product', code: '02', label: 'Product', icon: '/assets/2.5d/nav_product.png', accentColor: 'var(--accent-product)' },
   { id: 'monetisation', code: '03', label: 'Monetise', icon: '/assets/2.5d/nav_monetise.png', accentColor: '#D97706' },
   { id: 'retention', code: '04', label: 'Retention', icon: '/assets/2.5d/nav_retention.png', accentColor: '#4F46E5' },
   { id: 'expansion', code: '05', label: 'Expansion', icon: '/assets/2.5d/nav_expansion.png', accentColor: '#7C3AED' },

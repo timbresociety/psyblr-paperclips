@@ -22,7 +22,7 @@ const NODES: NodeCoord[] = [
   { id: 'product', code: 'PRD', label: 'Product', x: 130, y: 18, color: '#10B981' },
   { id: 'monetisation', code: 'MON', label: 'Monetise', x: 216, y: 34, color: '#F59E0B' },
   { id: 'expansion', code: 'EXP', label: 'Expansion', x: 216, y: 104, color: '#A855F7' },
-  { id: 'operations', code: 'OPS', label: 'Operations', x: 130, y: 118, color: '#64748B' },
+  { id: 'operations', code: 'OPS', label: 'Operations', x: 130, y: 118, color: 'var(--text-muted)' },
   { id: 'retention', code: 'RET', label: 'Retention', x: 44, y: 104, color: '#EC4899' },
 ]
 
@@ -60,9 +60,9 @@ export const CompanyTopology: React.FC<CompanyTopologyProps> = ({ state, dispatc
           height: '148px',
           position: 'relative',
           borderRadius: '12px',
-          background: 'linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.85) 100%)',
+          background: 'linear-gradient(180deg, rgba(18, 22, 27, 0.95) 0%, rgba(26, 31, 37, 0.9) 100%)',
           border: '1px solid var(--border-hairline)',
-          boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.02), 0 2px 8px rgba(15, 23, 42, 0.04)',
+          boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0, 0, 0, 0.04)',
           overflow: 'hidden',
         }}
       >
@@ -82,7 +82,7 @@ export const CompanyTopology: React.FC<CompanyTopologyProps> = ({ state, dispatc
             <radialGradient id="founderCore" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#FFFFFF" />
               <stop offset="40%" stopColor="#38BDF8" />
-              <stop offset="100%" stopColor="#0284C7" />
+              <stop offset="100%" stopColor="var(--accent-product)" />
             </radialGradient>
 
             {/* Glowing filter */}
@@ -202,7 +202,7 @@ export const CompanyTopology: React.FC<CompanyTopologyProps> = ({ state, dispatc
                   cy={node.y}
                   r={isHovered ? '11' : '9.5'}
                   fill="#FFFFFF"
-                  stroke={isActiveRoom ? '#0284C7' : isHovered ? '#64748B' : 'rgba(203, 213, 225, 0.9)'}
+                  stroke={isActiveRoom ? 'var(--accent-product)' : isHovered ? 'var(--text-muted)' : 'rgba(203, 213, 225, 0.9)'}
                   strokeWidth={isActiveRoom ? '2' : '1.5'}
                   filter="url(#nodeShadow)"
                   style={{ transition: 'all 120ms ease' }}
@@ -213,7 +213,7 @@ export const CompanyTopology: React.FC<CompanyTopologyProps> = ({ state, dispatc
                   cx={node.x}
                   cy={node.y}
                   r="3.5"
-                  fill={isAutomated ? '#10B981' : isActiveRoom ? '#0284C7' : '#94A3B8'}
+                  fill={isAutomated ? '#10B981' : isActiveRoom ? 'var(--accent-product)' : 'var(--text-muted)'}
                 />
 
                 {/* Department Code Label */}
@@ -266,7 +266,7 @@ export const CompanyTopology: React.FC<CompanyTopologyProps> = ({ state, dispatc
               width="64"
               height="14"
               rx="7"
-              fill="#0F172A"
+              fill="var(--surface-card)"
             />
             <text
               x={CENTER.x}

@@ -86,7 +86,7 @@ export const UnicornVictoryModal: React.FC<UnicornVictoryProps> = ({ state, disp
         </div>
 
         <div>
-          <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.14em', color: '#0284C7', fontWeight: 800 }}>
+          <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--accent-product)', fontWeight: 800 }}>
             [ ASCENSION · $1,000,000,000 VALUATION MILESTONE ]
           </div>
           <h1
@@ -135,7 +135,7 @@ export const UnicornVictoryModal: React.FC<UnicornVictoryProps> = ({ state, disp
 
           <div>
             <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Founder Equity</div>
-            <div className="font-mono" style={{ fontSize: '17px', fontWeight: 800, color: '#0284C7', marginTop: '2px' }}>
+            <div className="font-mono" style={{ fontSize: '17px', fontWeight: 800, color: 'var(--accent-product)', marginTop: '2px' }}>
               {founderEquityDisplay}
             </div>
           </div>

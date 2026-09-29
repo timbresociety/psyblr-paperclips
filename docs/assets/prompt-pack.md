@@ -1,0 +1,64 @@
+# SoloUnicorn image-gen prompt pack
+
+Per-asset prompts for OpenAI image gen (ChatGPT Images) or Google Nano Banana Pro.
+Generate → share the conversation → `npm run assets:pull -- <shareUrl> /tmp/raw.png [--index N]` → `npm run assets:intake -- <asset-id> /tmp/raw.png`.
+Icons need a genuinely transparent background; scene backdrops do not.
+Drop-in override: saving a file directly at the entry's `dest` path also works — intake just validates and normalizes it for you.
+
+=== nav_demand -> public/assets/2.5d/nav_demand.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: orbital phased-array antenna radar scanner dish on a heavy armored base. Material: matte charcoal basalt / dark obsidian graphite chassis with vibrant accent circuitry veins. Accent: hot-pink signal circuitry (#FF5C9A).
+
+=== nav_product -> public/assets/2.5d/nav_product.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: holographic logic core cube with floating component wafers snapping into it. Material: matte charcoal basalt / dark obsidian graphite chassis with vibrant accent circuitry veins. Accent: electric cyan conduits (#58D9FF).
+
+=== nav_monetise -> public/assets/2.5d/nav_monetise.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: heavy industrial gold coin press with a dynamic pricing caliper arm. Material: matte charcoal basalt / dark obsidian graphite chassis with vibrant accent circuitry veins. Accent: golden amber glow (#FFC857).
+
+=== nav_retention -> public/assets/2.5d/nav_retention.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: obsidian safety anchor wrapped by a gyroscopic life-preserver ring. Material: matte charcoal basalt / dark obsidian graphite chassis with vibrant accent circuitry veins. Accent: royal cobalt energy (#6F8CFF).
+
+=== nav_expansion -> public/assets/2.5d/nav_expansion.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: fractal branching crystal tree growing out of modular server rack units. Material: matte charcoal basalt / dark obsidian graphite chassis with vibrant accent circuitry veins. Accent: regal violet luminescence (#A778FF).
+
+=== nav_operations -> public/assets/2.5d/nav_operations.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: cryogenic cooling turbine with exposed thermal heatsink core and coolant pipes. Material: matte charcoal basalt / dark obsidian graphite chassis with vibrant accent circuitry veins. Accent: acid lime coolant glow (#B5F35A).
+
+=== nav_finance -> public/assets/2.5d/nav_finance.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: biometric treasury vault door with a liquidity balance scale mounted on top. Material: matte charcoal basalt / dark obsidian graphite chassis with vibrant accent circuitry veins. Accent: cool sky-blue holo readouts (#38BDF8).
+
+=== founder_figure -> public/assets/hq/founder_figure.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: young founder in a hoodie hunched over an old black ThinkPad laptop at work, seen from a three-quarter back angle, stylized realistic 3D character, no face detail needed. Material: matte charcoal basalt / dark obsidian graphite chassis with vibrant accent circuitry veins. Accent: laptop screen glow (#F4F6F7).
+
+=== agent_drone -> public/assets/hq/agent_drone.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: small hovering spherical AI agent drone orb with a single lens eye and thin floating halo ring. Material: physically convincing iridescent liquid-metal mercury with subtle cosmic pearl spectral shift, form-preserving dark reflections, NOT rainbow foil or glitter. Accent: soft pearl luminescence (#E9D5FF).
+
+=== desk_base_t1 -> public/assets/hq/desk_base_t1.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: isometric scrappy garage work desk: folding table, tangled cables, single monitor, coffee mug. Material: matte charcoal basalt / dark obsidian graphite chassis with vibrant accent circuitry veins. Accent: dim desk-lamp warmth (#292F36).
+
+=== desk_base_t2 -> public/assets/hq/desk_base_t2.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: isometric precision engineering workstation desk with dual monitors and cable management. Material: brushed gunmetal titanium aerospace alloy with micro-chamfers and specular silver rim. Accent: clean silver highlights (#CBD5E1).
+
+=== desk_base_t3 -> public/assets/hq/desk_base_t3.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: isometric executive desk with triple curved displays and engraved gold trim. Material: high-polish mirror gold and radiant brass chassis with glowing warm amber core. Accent: warm amber core glow (#FBBF24).
+
+=== desk_base_t4 -> public/assets/hq/desk_base_t4.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: isometric floating glass command console desk with holographic projection surfaces. Material: refractive liquid-glass optical crystal with prismatic caustic light dispersion. Accent: prismatic caustics (#BAE6FD).
+
+=== desk_base_t5 -> public/assets/hq/desk_base_t5.png ===
+Hyperrealistic 3D game asset, 30-degree isometric perspective, cool white studio key light from top-left (5500K), soft ambient occlusion and realistic self-shadowing, subtle cyan rim light, bold readable silhouette optimized for small sizes, single centered object, fully transparent background, no text, no background card, premium contextual game icon. Object: isometric ethereal liquid-metal command altar desk, sculptural flowing form, weightless. Material: physically convincing iridescent liquid-metal mercury with subtle cosmic pearl spectral shift, form-preserving dark reflections, NOT rainbow foil or glitter. Accent: pearl spectral sheen (#E9D5FF).
+
+=== backdrop_garage -> public/assets/tiers/backdrop_garage.png ===
+Hyperrealistic isometric game environment art: wide isometric empty garage interior at night: bare concrete floor, corrugated shutter door, exposed wiring, one hanging work lamp pool of light, moody near-black graphite palette, large open floor space in the center for game sprites, no people, no text. Dominant material language: matte charcoal basalt / dark obsidian graphite chassis with vibrant accent circuitry veins. Accent color #FF5C9A used sparingly for meaning. Cinematic soft studio lighting, high detail, no text, no watermark, no people.
+
+=== backdrop_workshop -> public/assets/tiers/backdrop_workshop.png ===
+Hyperrealistic isometric game environment art: wide isometric empty hardware workshop loft interior: brushed gunmetal wall panels, tool racks, server crate stacks, cool white strip lighting, dark graphite floor with large open center space for game sprites, no people, no text. Dominant material language: brushed gunmetal titanium aerospace alloy with micro-chamfers and specular silver rim. Accent color #58D9FF used sparingly for meaning. Cinematic soft studio lighting, high detail, no text, no watermark, no people.
+
+=== backdrop_workstation -> public/assets/tiers/backdrop_workstation.png ===
+Hyperrealistic isometric game environment art: wide isometric empty premium studio office interior: dark stone floor, polished gold wall inlays, warm amber accent lighting, floor-to-ceiling window showing night city, large open center space for game sprites, no people, no text. Dominant material language: high-polish mirror gold and radiant brass chassis with glowing warm amber core. Accent color #FFC857 used sparingly for meaning. Cinematic soft studio lighting, high detail, no text, no watermark, no people.
+
+=== backdrop_growth -> public/assets/tiers/backdrop_growth.png ===
+Hyperrealistic isometric game environment art: wide isometric empty futuristic headquarters atrium: liquid-glass crystal architecture, refractive prismatic light caustics, elevated walkways, cool dark floor with large open center space for game sprites, no people, no text. Dominant material language: refractive liquid-glass optical crystal with prismatic caustic light dispersion. Accent color #BAE6FD used sparingly for meaning. Cinematic soft studio lighting, high detail, no text, no watermark, no people.
+
+=== backdrop_ethereal -> public/assets/tiers/backdrop_ethereal.png ===
+Hyperrealistic isometric game environment art: wide isometric ethereal sky campus: monumental iridescent liquid-metal architecture floating in pale cyan lavender blush clouds, soft fog, reflective mirror floor platform with large open center space for game sprites, aspirational and weightless, no people, no text. Dominant material language: physically convincing iridescent liquid-metal mercury with subtle cosmic pearl spectral shift, form-preserving dark reflections, NOT rainbow foil or glitter. Accent color #E9D5FF used sparingly for meaning. Cinematic soft studio lighting, high detail, no text, no watermark, no people.
+

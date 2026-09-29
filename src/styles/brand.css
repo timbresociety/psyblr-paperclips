@@ -1,0 +1,162 @@
+/* ==========================================================================
+   SOLOUNICORN BRAND SYSTEM — Y2K retrofuturist Structure/Spark identity
+   The bold layer: chrome display type, iridescent reward salience, the Spark
+   as signature punctuation. Sits on top of the MACHINE token base.
+   ========================================================================== */
+
+:root {
+  --brand-magenta: #FF3EE8;
+  --brand-magenta-soft: rgba(255, 62, 232, 0.14);
+  --brand-cut: #090B0E; /* negative-space color inside the Structure mark */
+  /* Chrome text: layered metallic gradient for display headings */
+  --brand-chrome: linear-gradient(177deg, #F7FAFF 0%, #C6D2E0 32%, #8A97A8 52%, #EDF3FA 66%, #9BA8B8 100%);
+  --brand-chrome-shadow: 0 1px 0 rgba(0, 0, 0, 0.5), 0 0 18px rgba(155, 232, 255, 0.14);
+  --brand-font-display: 'Inter Tight', 'Inter', sans-serif;
+}
+
+/* The Structure mark tints to the active tier accent, cut shows the canvas */
+/* Structure mark fills through the mask: brand magenta at garage, tier
+   material later. Shape is the owner's art (masked); only color/texture vary. */
+.structure-mark {
+  background: var(--brand-magenta);
+}
+.brand-structure {
+  background: var(--brand-magenta);
+  filter: drop-shadow(0 0 10px rgba(255, 62, 232, 0.35));
+  transition: filter 400ms ease;
+}
+[data-theme='workshop'] .brand-structure { background: linear-gradient(150deg, #E4E9EE, #8A939D); filter: drop-shadow(0 0 10px rgba(203, 213, 225, 0.3)); }
+[data-theme='workstation'] .brand-structure { background: linear-gradient(150deg, #FFF4B8, #D4AF37); filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.35)); }
+[data-theme='growth'] .brand-structure { background: linear-gradient(150deg, #BAE6FD, #38BDF8); filter: drop-shadow(0 0 10px rgba(186, 230, 253, 0.35)); }
+[data-theme='ethereal'] .brand-structure { background: var(--reward-iridescent); background-size: 200% 100%; filter: drop-shadow(0 0 12px rgba(233, 213, 255, 0.4)); animation: brand-shimmer 6s ease-in-out infinite; }
+
+/* Spark mark tints to currentColor context via its background */
+.spark-mark { background: currentColor; }
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-words {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Chrome wordmark */
+.brand-wordmark {
+  font-family: var(--brand-font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  background: var(--brand-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.6));
+}
+
+.brand-wordmark-spark {
+  /* second half carries a faint iridescent shimmer */
+  background: var(--reward-iridescent);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: brand-shimmer 6s ease-in-out infinite;
+}
+
+@keyframes brand-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.brand-tier {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+
+/* ===== Chrome display heading utility — the bold room/section titles ===== */
+.chrome-title {
+  font-family: var(--brand-font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: var(--brand-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(var(--brand-chrome-shadow));
+}
+
+/* ===== Spark punctuation — kicker labels get a leading spark ===== */
+.brand-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tier-accent, var(--accent-product));
+}
+
+.brand-kicker .spark-mark {
+  background: var(--tier-accent, var(--accent-product));
+  animation: spark-pulse 3.4s ease-in-out infinite;
+}
+
+@keyframes spark-pulse {
+  0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.85; }
+  50% { transform: rotate(45deg) scale(1.15); opacity: 1; }
+}
+
+/* Reward-moment spark: a spinning, glowing burst (milestones, tier-ups) */
+.spark-reward {
+  background: var(--brand-magenta);
+  filter: drop-shadow(0 0 12px var(--brand-magenta));
+  animation: spark-spin 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes spark-spin {
+  0% { transform: rotate(0deg) scale(0.9); }
+  50% { transform: rotate(180deg) scale(1.2); }
+  100% { transform: rotate(360deg) scale(0.9); }
+}
+
+/* ===== Panel framing — the branded "instrument" card ===== */
+.brand-panel {
+  position: relative;
+  background: var(--surface-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+}
+
+/* A hairline chrome top-edge so panels read as machined instruments */
+.brand-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(244, 246, 247, 0.25) 20%, rgba(244, 246, 247, 0.25) 80%, transparent 100%);
+  border-radius: 14px 14px 0 0;
+}
+
+/* The active/tier-accented instrument frame */
+.brand-frame-active {
+  border-color: var(--tier-accent, var(--accent-product));
+  box-shadow: 0 0 0 1px var(--tier-accent, var(--accent-product)), 0 0 22px var(--tier-glow, rgba(88, 217, 255, 0.18)), var(--shadow-card);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-wordmark-spark, .brand-kicker .spark-mark, .spark-reward { animation: none; }
+}

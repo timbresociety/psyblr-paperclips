@@ -108,7 +108,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({ state, dispatch, onOpenS
           border: '1px solid var(--border-hairline)',
           borderRadius: '20px',
           padding: '28px 32px',
-          boxShadow: '0 24px 64px -12px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0 24px 64px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04)',
           display: 'flex',
           flexDirection: 'column',
           gap: '24px',
@@ -128,7 +128,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({ state, dispatch, onOpenS
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#0284C7',
+                color: 'var(--accent-product)',
                 boxShadow: '0 2px 10px rgba(14, 165, 233, 0.18)',
               }}
             >
@@ -144,7 +144,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({ state, dispatch, onOpenS
                   fontWeight: 800,
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
-                  color: '#0284C7',
+                  color: 'var(--accent-product)',
                 }}
               >
                 <span
@@ -181,7 +181,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({ state, dispatch, onOpenS
               border: '1px solid rgba(14, 165, 233, 0.3)',
               fontSize: '11px',
               fontWeight: 700,
-              color: '#0284C7',
+              color: 'var(--accent-product)',
               letterSpacing: '0.04em',
             }}
           >
@@ -218,7 +218,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({ state, dispatch, onOpenS
                 letterSpacing: '0.06em',
               }}
             >
-              <span className="font-mono" style={{ fontSize: '9px', fontWeight: 800, color: '#0284C7', letterSpacing: '0.08em' }}>[TIME]</span>
+              <span className="font-mono" style={{ fontSize: '9px', fontWeight: 800, color: 'var(--accent-product)', letterSpacing: '0.08em' }}>[TIME]</span>
               Timeline & Period
             </div>
             <div
@@ -386,12 +386,12 @@ export const PauseModal: React.FC<PauseModalProps> = ({ state, dispatch, onOpenS
               <kbd
                 className="btn-kbd"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(26, 31, 37, 0.2)',
                   color: '#FFFFFF',
                   fontWeight: 700,
                   padding: '2px 6px',
                   borderRadius: '4px',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  border: '1px solid rgba(244, 246, 247, 0.3)',
                 }}
               >
                 Space
@@ -399,12 +399,12 @@ export const PauseModal: React.FC<PauseModalProps> = ({ state, dispatch, onOpenS
               <kbd
                 className="btn-kbd"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(26, 31, 37, 0.2)',
                   color: '#FFFFFF',
                   fontWeight: 700,
                   padding: '2px 6px',
                   borderRadius: '4px',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  border: '1px solid rgba(244, 246, 247, 0.3)',
                 }}
               >
                 Esc
@@ -412,12 +412,12 @@ export const PauseModal: React.FC<PauseModalProps> = ({ state, dispatch, onOpenS
               <kbd
                 className="btn-kbd"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
+                  background: 'rgba(26, 31, 37, 0.2)',
                   color: '#FFFFFF',
                   fontWeight: 700,
                   padding: '2px 6px',
                   borderRadius: '4px',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  border: '1px solid rgba(244, 246, 247, 0.3)',
                 }}
               >
                 P
@@ -463,7 +463,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({ state, dispatch, onOpenS
                     fontWeight: active ? 800 : 600,
                     borderRadius: '6px',
                     backgroundColor: active ? '#0EA5E9' : 'var(--surface-work)',
-                    color: isLocked ? '#94A3B8' : active ? '#FFFFFF' : 'var(--text-secondary)',
+                    color: isLocked ? 'var(--text-muted)' : active ? '#FFFFFF' : 'var(--text-secondary)',
                     border: active ? '1px solid #0EA5E9' : '1px solid var(--border-hairline)',
                     cursor: isLocked ? 'not-allowed' : 'pointer',
                     opacity: isLocked ? 0.45 : 1,
